@@ -1,10 +1,6 @@
 #include <grid.h>
 #include <cmath>
 
-/*******************
- * Class definition.
- *******************/
-
 template <class T>
 class OrdinalGrid : public Grid<T> {
  public:
