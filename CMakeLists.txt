@@ -12,6 +12,8 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(PROJECT_CXX_DIR ${PROJECT_SOURCE_DIR}/src)
+set(PROJECT_LIBS_DIR ${PROJECT_SOURCE_DIR}/libs)
+
 set(PROJECT_EXT_DIR ${PROJECT_SOURCE_DIR}/external)
 
 
@@ -119,18 +121,24 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/common/
 )
 
+file(GLOB PROJECT_LIBS_FILES ${PROJECT_LIBS_DIR}/*.cpp)
+file(GLOB PROJECT_CXX_FILES ${PROJECT_CXX_DIR}/*.cpp)
+add_library(INT_LIBS 
+  ${PROJECT_LIBS_FILES}
+)
+
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
   glfw
   ${GLFW_LIBRARIES}
-	GLEW        
+	GLEW
+  INT_LIBS        
 )
 
-file(GLOB PROJECT_SRC_FILES ${PROJECT_CXX_DIR}/*.cpp)
 
 #Below here is where your executable should be added instead of test
 add_executable(${PROJECT_NAME_STR}
-  ${PROJECT_SRC_FILES}
+  ${PROJECT_CXX_FILES}
 )
 
 set(EXT_DEPS
@@ -164,6 +172,9 @@ include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(${PROJECT_TEST_NAME} 
                ${TEST_SRC_FILES}
+)
+target_link_libraries(${PROJECT_TEST_NAME}
+  ${ALL_LIBS}
 )
 # Create dependency of MainTest on googletest
 add_dependencies(${PROJECT_TEST_NAME} ${EXT_DEPS})
