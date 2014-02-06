@@ -49,7 +49,7 @@ class Grid {
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T get(float i, float j) {
+  T getInterpolated(float i, float j) {
     unsigned int lowerI = floor(i);
     unsigned int upperI = ceil(i);
     unsigned int lowerJ = floor(j);
@@ -73,7 +73,7 @@ class Grid {
   /**
    * Set value of the stored quantity.
    */
-  T set(unsigned int i, unsigned int j, T value) {
+  void set(unsigned int i, unsigned int j, T value) {
     quantities[j*w + i] = value;
   };
 
