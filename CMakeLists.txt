@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-set(PROJECT_NAME_STR Opengl-Bootstrap)
+set(PROJECT_NAME_STR pink-fluid)
 project(${PROJECT_NAME_STR})
 
 #Set up the includes
@@ -119,6 +119,8 @@ include_directories(
 )
 
 
+
+
 # This is since common only rolls with header only libraries currently (Might change in the future)
 # TODO: Put this in include/common instead
 include_directories(
@@ -132,9 +134,11 @@ set(ALL_LIBS
 	GLEW        
 )
 
+file(GLOB PROJECT_SRC_FILES ${PROJECT_CXX_DIR}/*.cpp)
+
 #Below here is where your executable should be added instead of test
 add_executable(${PROJECT_NAME_STR}
-  ${PROJECT_CXX_DIR}/opengl-bootstrap.cpp
+  ${PROJECT_SRC_FILES}
 )
 
 add_dependencies(${PROJECT_NAME_STR} glm)
