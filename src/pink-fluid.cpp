@@ -23,6 +23,8 @@
 #include <common/Shader.h>
 
 #include <grid.h>
+#include <state.h>
+#include <simulator.h>
 
 int main( void ) {
   
@@ -67,6 +69,8 @@ int main( void ) {
 
 
   Grid<double> g(10, 10);
+  State state(10, 10);
+  Simulator sim(10, 10);
      
   do{
 
