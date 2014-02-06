@@ -1,7 +1,3 @@
-/*******************
- * Class definition.
- *******************/
-
 template <class T>
 class Grid {
  public:
