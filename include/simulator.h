@@ -10,16 +10,15 @@ class Simulator {
 public:
   Simulator(unsigned int width, unsigned int height);
   ~Simulator();
+  void step(State * const readFrom, State* writeTo, float dt);
 
-  void step(State *state, float dt);
-
-private:
-  void advecVelocity(OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
-  void calcGravity(OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid, glm::vec2 g);
-  void calcDivergence(OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
+  glm::vec2 backTrack(State const * readFrom, int i,int j, float dt); 
+  void advect(State const * readFrom, State * writeTo, float dt);
+  void calcGravity(const OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid, glm::vec2 g);
+  void calcDivergence(const OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
   void jacobiIteration();
-  void gradientSubtraction(OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
-
-  OrdinalGrid<double> *pressureGrid;
-  unsigned int w, h;
+  void gradientSubtraction(const OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
+private:
+  int w,h;
 };
+

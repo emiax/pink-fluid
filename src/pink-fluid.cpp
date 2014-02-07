@@ -68,8 +68,8 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
 
-  Grid<double> g(10, 10);
-  State state(10, 10);
+  State prevState(10, 10);
+  State newState(10, 10);
   Simulator sim(10, 10);
      
   do{

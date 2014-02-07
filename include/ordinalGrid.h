@@ -1,6 +1,6 @@
 #include <grid.h>
 #include <cmath>
-
+#include <glm/glm.hpp>
 template <class T>
 class OrdinalGrid : public Grid<T> {
  public:
@@ -17,7 +17,7 @@ class OrdinalGrid : public Grid<T> {
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T getInterpolated(float i, float j) {
+  T getInterpolated(float i, float j) const{
     unsigned int lowerI = floor(i);
     unsigned int upperI = ceil(i);
     unsigned int lowerJ = floor(j);
@@ -36,6 +36,14 @@ class OrdinalGrid : public Grid<T> {
 
     return lerp(v0, v1, ti);
   }
+  
+  /**
+   * A thin frontend for T getInterpolated(float i, float j)
+   * @param p, A vector to interpolate from
+   */
+  T getInterpolated(glm::vec2 p) const{
+    return getInterpolated(p.x,p.y);
+  }
 
  private:
   /**
@@ -44,8 +52,8 @@ class OrdinalGrid : public Grid<T> {
    * @param b The second value
    * @param t A number between 0 and 1.
    */
-  T lerp(T a, T b, float t) {
-    return a*(1.0 - t) + b*t;
+  T lerp(T a, T b, float t) const{
+    return a*(1.0f - t) + b*t;
   }
 
 };

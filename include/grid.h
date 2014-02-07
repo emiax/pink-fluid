@@ -11,17 +11,17 @@ class Grid {
     this->h = h;
     int size = this->size();
     quantities = new T[w*h];
-    for (unsigned int i = 0; i < size; ++i) {
-      quantities[i] = 0;
-    }
   };
-
+  
+  ~Grid(){
+    delete[] quantities;
+  }
 
   /**
    * Size.
    * @returns the total number of cells
    */
-  unsigned int size() {
+  unsigned int size() const{
     return w*h;
   };
 
@@ -31,10 +31,11 @@ class Grid {
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T get(unsigned int i, unsigned int j) {
+  T get(unsigned int i, unsigned int j) const{
     return quantities[j*w + i];
   };
 
+  
   
   /**
    * Set value of the stored quantity.
