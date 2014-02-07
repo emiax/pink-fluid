@@ -121,12 +121,6 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/common/
 )
 
-file(GLOB PROJECT_LIBS_FILES ${PROJECT_LIBS_DIR}/*.cpp)
-file(GLOB PROJECT_CXX_FILES ${PROJECT_CXX_DIR}/*.cpp)
-add_library(INT_LIBS 
-  ${PROJECT_LIBS_FILES}
-)
-
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
   glfw
@@ -134,18 +128,29 @@ set(ALL_LIBS
 	GLEW
   INT_LIBS        
 )
-
-
-#Below here is where your executable should be added instead of test
-add_executable(${PROJECT_NAME_STR}
-  ${PROJECT_CXX_FILES}
-)
-
 set(EXT_DEPS
     glm
     glfw
     googletest
     pthread
+)
+
+
+
+file(GLOB PROJECT_LIBS_FILES ${PROJECT_LIBS_DIR}/*.cpp)
+add_library(INT_LIBS 
+  ${PROJECT_LIBS_FILES}
+)
+
+add_dependencies(INT_LIBS
+        ${EXT_DEPS}
+        )
+
+
+file(GLOB PROJECT_CXX_FILES ${PROJECT_CXX_DIR}/*.cpp)
+#Below here is where your executable should be added instead of test
+add_executable(${PROJECT_NAME_STR}
+  ${PROJECT_CXX_FILES}
 )
 
 add_dependencies(${PROJECT_NAME_STR} ${EXT_DEPS})
