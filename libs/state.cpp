@@ -13,8 +13,8 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
  *
  */
 void State::setPressureGrid(OrdinalGrid<double> *pressure){
-  for(int i = 0u; i < w; i++){
-    for(int j = 0u; h < h; j++){
+  for(unsigned int i = 0u; i < w; i++){
+    for(unsigned int j = 0u; h < h; j++){
       pressureGrid->set(i, j, pressure->get(i,j));
     }
   }
@@ -25,8 +25,8 @@ void State::setPressureGrid(OrdinalGrid<double> *pressure){
  */
 void State::setVelocityGrid(OrdinalGrid<float>** velocity){
   velocityGrid = velocity;
-  for(int i = 0u; i < w; i++){
-    for(int j = 0u; h < h; j++){
+  for(unsigned int i = 0u; i < w; i++){
+    for(unsigned int j = 0u; h < h; j++){
       velocityGrid[0]->set(i, j, velocity[0]->get(i,j));
       velocityGrid[1]->set(i, j, velocity[1]->get(i,j));
     }

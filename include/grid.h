@@ -9,7 +9,7 @@ class Grid {
   Grid(unsigned int w, unsigned int h) {
     this->w = w;
     this->h = h;
-    int size = this->size();
+    // int size = this->size();
     quantities = new T[w*h];
   };
   
