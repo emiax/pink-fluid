@@ -29,6 +29,7 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(
+       -g
   -Wall
   -Werror
 	-DTW_STATIC

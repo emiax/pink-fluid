@@ -1,12 +1,12 @@
 #version 400 core
 
+in vec2 fragPosition;
+uniform sampler2D myFloatTex;
 // Ouput data
-out vec3 color;
+out vec4 color;
 
 void main()
 {
-
-	// Output color = red 
-	color = vec3(1,0,0);
-
+  vec4 value = texture(myFloatTex, fragPosition);
+  color = value;
 }

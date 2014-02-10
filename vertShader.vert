@@ -1,8 +1,11 @@
 #version 400 core
-in vec3 inputColor;
-in vec4 inputPosition;
-out vec3 color;
+
+layout(location = 0) in vec3 inputPosition;
+layout(location = 1) in vec2 texCoord;
+uniform float time;
+
+out vec2 fragPosition;
 void main(void) {
-  color = abs(inputPosition.xyz);
-  gl_Position = inputPosition;
+  fragPosition = texCoord;
+  gl_Position = vec4(inputPosition,1);
 }

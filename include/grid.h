@@ -45,7 +45,7 @@ class Grid {
   };
 
 
- private:
+ protected:
   unsigned int w, h;
   T *quantities;
   
