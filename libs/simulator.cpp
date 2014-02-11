@@ -17,6 +17,7 @@ void Simulator::step(State * const readFrom, State* writeTo, float dt){
  * @param dt time step length
  */
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
+  //X
   for(int i = 0; i <= w; i++){
     for(int j = 0; j < h; j++){
       glm::vec2 position = backTrack(readFrom, i, j, dt);
@@ -24,6 +25,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
                                     readFrom->velocityGrid[0]->getInterpolated(position));
     }
   }
+  //Y
   for(int i = 0; i < w; i++){
     for(int j = 0; j <= h; j++){
       glm::vec2 position = backTrack(readFrom, i, j, dt);

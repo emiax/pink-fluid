@@ -37,7 +37,6 @@ int main( void ) {
 
   //Initialize glfw
   init.glfw(4,1);
-  glfwSwapInterval(1);
   //Open a window
   GLFWwindow* window = init.window();
 
@@ -63,9 +62,9 @@ int main( void ) {
   static const GLfloat g_vertex_buffer_data[] = { 
     -1.0f, 1.0f, 0.0f, 
     1.0f, 1.0f, 0.0f, 
-    1.0f,-1.0f, 0.0f,
+    1.0f, -1.0f, 0.0f,
 
-    1.0f,-1.0f, 0.0f,
+    1.0f, -1.0f, 0.0f,
     -1.0f, -1.0f, 0.0f,
     -1.0f, 1.0f, 0.0f
   };
@@ -74,6 +73,7 @@ int main( void ) {
     0.0f, 0.0f,
     1.0f, 0.0f,
     1.0f, 1.0f,
+
     1.0f, 1.0f,
     0.0f, 1.0f,
     0.0f, 0.0f
@@ -96,15 +96,14 @@ int main( void ) {
   std::cout << "Setting up basic state" << std::endl;
   velocities[0] = new OrdinalGrid<float>(w+1, h);
   velocities[1] = new OrdinalGrid<float>(w, h+1);
-  for(int i = 0; i <= w; i++){
-    for(int j = 0; j < h; j++){
-      velocities[0]->set(i,j,i*0.1);
+  for(int i = w/4; i <= 3*w/4; i++){
+    for(int j = h/4; j < 3*h/4; j++){
+      velocities[0]->set(i,j,1);
     }
-    
   }
-  for(int i = 0; i < w; i++){
-    for(int j = 0; j <= h; j++){
-      velocities[1]->set(i,j,0);
+  for(int i = w/4; i < 3*w/4; i++){
+    for(int j = h/4; j <= 3*h/4; j++){
+      velocities[1]->set(i,j,1);
     }
   }
   prevState.setVelocityGrid(velocities);
@@ -115,6 +114,7 @@ int main( void ) {
   Texture2D tex2D(w, h);
 
   float lastRun = glfwGetTime();
+  glfwSwapInterval(1);
   do{
     lastRun = glfwGetTime();
     float deltaT = glfwGetTime()-lastRun;
@@ -131,8 +131,9 @@ int main( void ) {
     GLuint location = glGetUniformLocation(prog, "time");
     glUniform1f(location, glfwGetTime());
 
-    for(int i=0;i<w;++i) {
-      for(int j = 0; j < h; ++j){
+
+    for(int j = 0; j < h; ++j){
+        for(int i=0;i<w;++i) {
         tex2D.set(i,j,0, newState.getVelocityGrid()[0]->get(i,j));
         tex2D.set(i,j,1, newState.getVelocityGrid()[1]->get(i,j));
         tex2D.set(i,j,2, 0.0f);
