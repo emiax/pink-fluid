@@ -13,8 +13,9 @@ protected:
     velocities[1] = new OrdinalGrid<float>(w, h+1);
     for(int i = 0; i <= w; i++){
       for(int j = 0; j < h; j++){
-        velocities[0]->set(i,j,i);
+        velocities[0]->set(i,j,0);
       }
+      velocities[0]->set(i,0,1);
     }
     for(int i = 0; i < w; i++){
       for(int j = 0; j <= h; j++){
@@ -36,14 +37,18 @@ protected:
 TEST_F(SimulatorTest, instantiateAndDelete) {}
 
 TEST_F(SimulatorTest, BackTrack){
-  glm::vec2 pos = sim->backTrack(s, 2, 0, 1);
-  ASSERT_EQ(pos, glm::vec2(1,0));
+  glm::vec2 pos = sim->backTrack(s, 1, 0, 1);
+  ASSERT_EQ(glm::vec2(0,0), pos);
 }
 
 
 TEST_F(SimulatorTest, Advect){
   State *writeState = new State(w, h);
   sim->advect(s, writeState, 1);
-  float v = (*(writeState->getVelocityGrid()))->get(2,0);
-  ASSERT_EQ(v, 1);
+  float v1 = (*(writeState->getVelocityGrid()))->get(2,0);
+  ASSERT_EQ(v1, 1);
+  sim->advect(writeState, s, 1);
+  float v2 = (*(s->getVelocityGrid()))->get(3,0);
+  ASSERT_EQ(v2, 1);
+  
 }
