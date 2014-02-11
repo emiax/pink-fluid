@@ -25,6 +25,11 @@ class OrdinalGrid : public Grid<T> {
       unsigned int indexJ = floor(std::min(j,(float)this->h-1));
       return getInterpolated(indexI,indexJ);
     }
+    else if(i < 0 || j < 0){
+      unsigned int indexI = floor(std::max(i,0.0f));
+      unsigned int indexJ = floor(std::max(j,0.0f));
+      return getInterpolated(indexI,indexJ);
+    }
     else{
       unsigned int lowerI = floor(i);
       unsigned int upperI = ceil(i);
