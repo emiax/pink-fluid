@@ -10,8 +10,8 @@ public:
     glBindTexture(GL_TEXTURE_2D, textureID);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);	
     data = new GLfloat[h*w*d];
-    for (int i = 0; i < h; ++i) {
-      for (int j = 0; j < w; ++j){
+    for (unsigned int i = 0; i < h; ++i) {
+      for (unsigned int j = 0; j < w; ++j){
         data[indexTranslation(i,j,0)] = 0.0f;
         data[indexTranslation(i,j,1)] = 0.0f;
         data[indexTranslation(i,j,2)] = 0.0f;

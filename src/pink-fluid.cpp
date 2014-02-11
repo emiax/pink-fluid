@@ -26,7 +26,7 @@
 #include <common/Init.h>
 #include <common/Shader.h>
 #include <common/Texture2D.h>
-#include <OrdinalGrid.h>
+#include <ordinalGrid.h>
 #include <state.h>
 #include <simulator.h>
 
@@ -113,11 +113,11 @@ int main( void ) {
   
   Texture2D tex2D(w, h);
 
-  float lastRun = glfwGetTime();
+  // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
   do{
-    lastRun = glfwGetTime();
-    float deltaT = glfwGetTime()-lastRun;
+    // lastRun = glfwGetTime();
+    // float deltaT = glfwGetTime()-lastRun;
     sim.advect(&prevState, &newState, 1);
      
     
