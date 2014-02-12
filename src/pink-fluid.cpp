@@ -140,6 +140,9 @@ int main( void ) {
   Texture2D tex2D(w, h);
   float deltaT = 0.02f; // TODO: change time step according to Bridson 3.2
 
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
   do{
@@ -161,12 +164,13 @@ int main( void ) {
     // corresponding cell-value instead of the edge velocities.
     for(unsigned int j = 0; j < h; ++j){
         for(unsigned int i=0;i<w;++i) {
-
-
-        tex2D.set(i,j,0, newState.getVelocityGrid()->u->get(i,j));
-        tex2D.set(i,j,1, newState.getVelocityGrid()->v->get(i,j));
-        tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i, j));
-        tex2D.set(i,j,3, 1.0f);
+          
+          
+          tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+          tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+          tex2D.set(i,j,2, 0.5 + 
+newState.getBoundaryGrid()->get(i, j));
+          tex2D.set(i,j,3, 1.0f);
         // std::cout << newState.getVelocityGrid()[0]->get(i,j) << std::endl;
       }
     }

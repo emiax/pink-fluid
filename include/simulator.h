@@ -23,7 +23,7 @@ public:
 
   // pressure
   void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
-  void jacobiIteration(unsigned int nIterations);
+  void jacobiIteration(State const* readFrom, unsigned int nIterations);
   void copyBoundaries(State const* readFrom, State* writeTo);
 
   void gradientSubtraction(State *state, float dt);

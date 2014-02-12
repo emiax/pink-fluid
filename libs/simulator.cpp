@@ -29,12 +29,11 @@ void Simulator::step(float dt) {
   copyBoundaries(stateFrom, stateTo);
   advect(stateFrom, stateTo, dt);
   calculateDivergence(stateTo, divergenceGrid);
-  jacobiIteration(40);
+  jacobiIteration(stateTo, 40);
   gradientSubtraction(stateTo, dt);
 
   // swap states
   std::swap(stateFrom, stateTo);
-  resetPressureGrid();
 }
 
 /**
@@ -84,35 +83,65 @@ glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){
 
 
 void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
+  OrdinalGrid<float> *u = readFrom->velocityGrid->u;
+  OrdinalGrid<float> *v = readFrom->velocityGrid->v;
+
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
-      float entering = readFrom->velocityGrid->u->get(i, j) + readFrom->velocityGrid->v->get(i, j);
-      float leaving = readFrom->velocityGrid->u->get(i + 1, j) + readFrom->velocityGrid->v->get(i, j + 1);
+      float entering = u->get(i, j) + v->get(i, j);
+      float leaving = u->get(i + 1, j) + v->get(i, j + 1);
 
       float divergence = leaving - entering;
+
       toDivergenceGrid->set(i, j, divergence*0.5);
     }
   }
 }
 
-void Simulator::jacobiIteration(unsigned int nIterations) {
-  double pL, pR, pU, pD, p;
-  float divergence;
+void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations) {
+
   const float sqDeltaX = 1.0f;
-
+  Grid<bool> const* const boundaryGrid = readFrom->getBoundaryGrid();
+  
+  resetPressureGrid();
   for(unsigned int k = 0; k < nIterations; ++k) {
-
     for (unsigned int j = 0; j < h; ++j) {
       for (unsigned int i = 0; i < w; ++i) {
-        pL = pressureGrid->getInterpolated(i-1, j);
-        pR = pressureGrid->getInterpolated(i+1, j);
-        pU = pressureGrid->getInterpolated(i-1, j);
-        pD = pressureGrid->getInterpolated(i+1, j);
+
+        float divergence;
+        int neighbouringFluidCells = 0;
+
+        // is current cell solid?
+        if (boundaryGrid->get(i, j)) {
+          continue;
+        }
+
+        double pL = 0;
+        if (!boundaryGrid->get(i - 1, j)) {
+          pL = pressureGrid->getInterpolated(i - 1, j);
+          neighbouringFluidCells++;
+        } 
+        double pR = 0;
+        if (!boundaryGrid->get(i + 1, j)) {
+          pR = pressureGrid->getInterpolated(i + 1, j);
+          neighbouringFluidCells++;
+        } 
+        double pU = 0;
+        if (!boundaryGrid->get(i, j - 1)) {
+          pU = pressureGrid->getInterpolated(i, j - 1);
+          neighbouringFluidCells++;
+        } 
+        double pD = 0;
+        if (!boundaryGrid->get(i, j + 1)) {
+          pD = pressureGrid->getInterpolated(i, j + 1);
+          neighbouringFluidCells++;
+        } 
+
         divergence = divergenceGrid->get(i, j);
 
         // discretized poisson equation
-        p = pL + pR + pU + pD - sqDeltaX * divergence;
-        p *= 0.25;
+        double p = pL + pR + pU + pD - sqDeltaX * divergence;
+        p /= (double) neighbouringFluidCells;
 
         pressureGrid->set(i, j, p);
       }
@@ -153,6 +182,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
     }
   }
 }
+
 
 OrdinalGrid<double>* Simulator::resetPressureGrid() {
   for (unsigned int j = 0; j < h; ++j) {
