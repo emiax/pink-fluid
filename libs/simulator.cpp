@@ -92,7 +92,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
 
 void Simulator::jacobiIteration(unsigned int nIterations) {
   for(unsigned int i = 0; i < nIterations; ++i) {
-
+    
   }
 }
 

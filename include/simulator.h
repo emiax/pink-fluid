@@ -27,6 +27,7 @@ public:
   void gradientSubtraction(const OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
 
   OrdinalGrid<double>* resetPressureGrid();
+  //  void setBoundaries(Grid<bool> *boundaryGrid);
 
 private:
   unsigned int w,h;
