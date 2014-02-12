@@ -94,31 +94,29 @@ int main( void ) {
   State prevState(w, h);
   State newState(w, h);
 
-  OrdinalGrid<float>** velocities = new OrdinalGrid<float>*[2];
-  velocities[0] = new OrdinalGrid<float>(w+1, h);
-  velocities[1] = new OrdinalGrid<float>(w, h+1);
+  VelocityGrid* velocities = new VelocityGrid(w,h);
   
   // init velocity grids
   // X velocities
   for(unsigned int i = 0; i <= w; i++){
     for(unsigned int j = 0; j < h; j++){
-      velocities[0]->set(i,j,0.0f);
+      velocities->u->set(i,j,0.0f);
     }
   }
-  for(unsigned int i = w/3; i <= 2*w/3; i++){
-    for(unsigned int j = h/3; j < 2*h/3; j++){
-      velocities[0]->set(i,j,1.0f);
+  for(unsigned int i = w/4; i <= 3*w/4; i++){
+    for(unsigned int j = h/4; j < 3*h/4; j++){
+      velocities->u->set(i,j,1.0f);
     }
   }
   // Y velocities
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j <= h; j++){
-      velocities[1]->set(i,j,0.0f);
+      velocities->v->set(i,j,0.0f);
     }
   }
-  for(unsigned int i = w/3; i < 2*w/3; i++){
-    for(unsigned int j = h/3; j <= 2*h/3; j++){
-      velocities[1]->set(i,j,1.0f);
+  for(unsigned int i = w/4; i < 3*w/4; i++){
+    for(unsigned int j = h/4; j <= 3*h/4; j++){
+      velocities->v->set(i,j,1);
     }
   }
 
@@ -152,8 +150,8 @@ int main( void ) {
     // corresponding cell-value instead of the edge velocities.
     for(unsigned int j = 0; j < h; ++j){
         for(unsigned int i=0;i<w;++i) {
-        tex2D.set(i,j,0, newState.getVelocityGrid()[0]->get(i,j));
-        tex2D.set(i,j,1, newState.getVelocityGrid()[1]->get(i,j));
+        tex2D.set(i,j,0, newState.getVelocityGrid()->u->get(i,j));
+        tex2D.set(i,j,1, newState.getVelocityGrid()->v->get(i,j));
         tex2D.set(i,j,2, 0.0f);
         tex2D.set(i,j,3, 1.0f);
         // std::cout << newState.getVelocityGrid()[0]->get(i,j) << std::endl;

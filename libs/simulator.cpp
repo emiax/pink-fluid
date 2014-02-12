@@ -47,8 +47,8 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   for(unsigned int i = 0; i <= w; i++){
     for(unsigned int j = 0; j < h; j++){
       glm::vec2 position = backTrack(readFrom, i, j, dt);
-      writeTo->velocityGrid[0]->set(i,j,
-        readFrom->velocityGrid[0]->getInterpolated(position)
+      writeTo->velocityGrid->u->set(i,j,
+                                    readFrom->velocityGrid->u->getInterpolated(position)
       );
     }
   }
@@ -56,8 +56,8 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j <= h; j++){
       glm::vec2 position = backTrack(readFrom, i, j, dt);
-      writeTo->velocityGrid[1]->set(i,j,
-        readFrom->velocityGrid[1]->getInterpolated(position)
+      writeTo->velocityGrid->v->set(i,j,
+                                    readFrom->velocityGrid->v->getInterpolated(position)
       );
     }
   }
@@ -66,12 +66,12 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
 
 glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){
   glm::vec2 position(i,j);
-  glm::vec2 v = glm::vec2(readFrom->velocityGrid[0]->get(i,j), 
-                          readFrom->velocityGrid[1]->get(i,j));
+  glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->get(i,j), 
+                          readFrom->velocityGrid->v->get(i,j));
   glm::vec2 midPos = position - (dt/2) * v;
   
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid[0]->getInterpolated(midPos), 
-                             readFrom->velocityGrid[1]->getInterpolated(midPos));
+  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos), 
+                             readFrom->velocityGrid->v->getInterpolated(midPos));
   return position-dt*midV;
 }
 
@@ -80,8 +80,8 @@ glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){
 void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
-      float entering = readFrom->velocityGrid[0]->get(i, j) + readFrom->velocityGrid[1]->get(i, j);
-      float leaving = readFrom->velocityGrid[0]->get(i + 1, j) + readFrom->velocityGrid[1]->get(i, j + 1);
+      float entering = readFrom->velocityGrid->u->get(i, j) + readFrom->velocityGrid->v->get(i, j);
+      float leaving = readFrom->velocityGrid->u->get(i + 1, j) + readFrom->velocityGrid->v->get(i, j + 1);
       
       float divergence = leaving - entering;
       toDivergenceGrid->set(i, j, divergence*0.5);
@@ -123,7 +123,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   const float scale = dt / (density * deltaX);
 
   float u, wu, pL, pR;
-  OrdinalGrid<float> *uVelocityGrid = state->velocityGrid[0];
+  OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
 
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
@@ -136,7 +136,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   }
 
   float v, wv, pU, pD;
-  OrdinalGrid<float> *vVelocityGrid = state->velocityGrid[1];
+  OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
 
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {

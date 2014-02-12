@@ -1,10 +1,20 @@
 #include <state.h>
 #include <ordinalGrid.h>
 
+
+
+VelocityGrid::VelocityGrid(int w, int h){
+    u = new OrdinalGrid<float>(w+1,h);
+    v = new OrdinalGrid<float>(w,h+1);
+}
+VelocityGrid::~VelocityGrid(){
+  delete u;
+  delete v;
+}
+
+
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
-  velocityGrid = new OrdinalGrid<float>*[2];
-  velocityGrid[0] = new OrdinalGrid<float>(w+1,h);
-  velocityGrid[1] = new OrdinalGrid<float>(w,h+1);
+  velocityGrid = new VelocityGrid(w,h);
   resetVelocityGrids();
 }
 
@@ -12,12 +22,12 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
 void State::resetVelocityGrids() {
   for(unsigned int i = 0u; i <= w; i++){
     for(unsigned int j = 0u; j < h; j++){
-      velocityGrid[0]->set(i, j, 0.0f);
+      velocityGrid->u->set(i, j, 0.0f);
     }
   }
   for(unsigned int i = 0u; i < w; i++){
     for(unsigned int j = 0u; j <= h; j++){
-      velocityGrid[1]->set(i, j, 0.0f);
+      velocityGrid->v->set(i, j, 0.0f);
     }
   }
 }
@@ -25,11 +35,11 @@ void State::resetVelocityGrids() {
 /**
  * Copies velocity grid to internal velocity grid
  */
-void State::setVelocityGrid(OrdinalGrid<float>** velocity){
+void State::setVelocityGrid(VelocityGrid *velocity){
   for(unsigned int i = 0u; i < w; i++){
     for(unsigned int j = 0u; j < h; j++){
-      velocityGrid[0]->set(i, j, velocity[0]->get(i,j));
-      velocityGrid[1]->set(i, j, velocity[1]->get(i,j));
+      velocityGrid->u->set(i, j, velocity->u->get(i,j));
+      velocityGrid->v->set(i, j, velocity->v->get(i,j));
     }
   }
 }
@@ -42,12 +52,10 @@ unsigned int State::getH() {
   return h;
 }
 
-OrdinalGrid<float>const *const *const State::getVelocityGrid() const{
+VelocityGrid const *const State::getVelocityGrid() const{
   return velocityGrid;
 };
 
 State::~State() {
-  delete velocityGrid[0];
-  delete velocityGrid[1];
-  delete[] velocityGrid;
+  delete velocityGrid;
 }

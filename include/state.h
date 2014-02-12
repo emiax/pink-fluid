@@ -5,17 +5,23 @@ class Grid;
 
 class Simulator;
 
+struct VelocityGrid{
+  VelocityGrid(int w, int h);
+  ~VelocityGrid();
+  OrdinalGrid<float> *u, *v; 
+};
+
 class State {
 public:
   State(unsigned int width, unsigned int height);
   ~State();
-  OrdinalGrid<float>const *const *const getVelocityGrid() const;
-  void setVelocityGrid(OrdinalGrid<float>**);
+  VelocityGrid const *const getVelocityGrid() const;
+  void setVelocityGrid(VelocityGrid*);
   unsigned int getW();
   unsigned int getH();
 private:
   void resetVelocityGrids();
-  OrdinalGrid<float> ** velocityGrid;
+  VelocityGrid *velocityGrid;
   unsigned int w, h;
 
   friend class Simulator;
