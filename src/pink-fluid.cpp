@@ -90,7 +90,7 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 100, h = 100;
+  unsigned int w = 30, h = 30;
   State prevState(w, h);
   State newState(w, h);
 
@@ -105,8 +105,8 @@ int main( void ) {
       velocities[0]->set(i,j,0.0f);
     }
   }
-  for(unsigned int i = w/4; i <= 3*w/4; i++){
-    for(unsigned int j = h/4; j < 3*h/4; j++){
+  for(unsigned int i = w/3; i <= 2*w/3; i++){
+    for(unsigned int j = h/3; j < 2*h/3; j++){
       velocities[0]->set(i,j,1.0f);
     }
   }
@@ -116,9 +116,9 @@ int main( void ) {
       velocities[1]->set(i,j,0.0f);
     }
   }
-  for(unsigned int i = w/4; i < 3*w/4; i++){
-    for(unsigned int j = h/4; j <= 3*h/4; j++){
-      velocities[1]->set(i,j,1);
+  for(unsigned int i = w/3; i < 2*w/3; i++){
+    for(unsigned int j = h/3; j <= 2*h/3; j++){
+      velocities[1]->set(i,j,1.0f);
     }
   }
 
@@ -129,7 +129,7 @@ int main( void ) {
 
   //Object which encapsulates a texture + The destruction of a texture.
   Texture2D tex2D(w, h);
-  float deltaT = 1.0f; // TODO: change time step according to Bridson 3.2
+  float deltaT = 0.02f; // TODO: change time step according to Bridson 3.2
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
