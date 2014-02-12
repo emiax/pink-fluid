@@ -27,6 +27,7 @@ Simulator::~Simulator() {}
  * @param dt Time step, deltaT
  */
 void Simulator::step(float dt) {
+  copyBoundaries(stateFrom, stateTo);
   advect(stateFrom, stateTo, dt);
   // calculateDivergence(stateTo, divergenceGrid);
 
@@ -64,6 +65,11 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     }
   }
 }
+
+void Simulator::copyBoundaries(State const* readFrom, State* writeTo) {
+  writeTo->setBoundaryGrid(readFrom->getBoundaryGrid());
+}
+
 
 
 glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){

@@ -123,6 +123,17 @@ int main( void ) {
   }
 
   prevState.setVelocityGrid(velocities);
+
+  
+  Grid<bool> *boundaries = new Grid<bool>(w, h);
+  // init boundary grid
+  for(unsigned int i = 0; i < w; i++){
+    for(unsigned int j = 0; j < h; j++){
+      boundaries->set(i,j, (i == 0) || (j == 0) || (i == w - 1) || (j == h - 1));
+    }
+  }
+  prevState.setBoundaryGrid(boundaries);
+
   
   // init simulator
   Simulator sim(&prevState, &newState);
@@ -154,7 +165,7 @@ int main( void ) {
         for(unsigned int i=0;i<w;++i) {
         tex2D.set(i,j,0, newState.getVelocityGrid()[0]->get(i,j));
         tex2D.set(i,j,1, newState.getVelocityGrid()[1]->get(i,j));
-        tex2D.set(i,j,2, 0.0f);
+        tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i, j));
         tex2D.set(i,j,3, 1.0f);
         // std::cout << newState.getVelocityGrid()[0]->get(i,j) << std::endl;
       }
