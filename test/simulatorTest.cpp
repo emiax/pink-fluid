@@ -28,6 +28,11 @@ protected:
     }
     velocities[0]->set(1,1,1);
     readState->setVelocityGrid(velocities);
+    writeState->setVelocityGrid(velocities);
+    delete velocities[0];
+    delete velocities[1];
+    delete[] velocities;
+
   }
 
   ~SimulatorTest() {
@@ -49,11 +54,17 @@ TEST_F(SimulatorTest, BackTrack){
 
 
 TEST_F(SimulatorTest, Advect){
-  // sim->advect(readState, writeState, 1.0f);
-  // float v1 = writeState->getVelocityGrid()[0]->get(1,1);
-  // ASSERT_EQ(v1, 0.5);
+  sim->advect(readState, writeState, 1.0f);
+  float v1 = writeState->getVelocityGrid()[0]->get(1,1);
+  ASSERT_EQ(v1, 0.5);
 }
 
 TEST_F(SimulatorTest, PressureGridReset) {
-  
+  OrdinalGrid<double> *p = sim->resetPressureGrid();
+
+  for (int j = 0; j < h; ++j) {
+    for (int i = 0; i < w; ++i) {
+      ASSERT_EQ(p->get(i,j), 0.0);
+    }
+  }
 }

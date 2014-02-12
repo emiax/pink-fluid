@@ -42,7 +42,8 @@ class OrdinalGrid : public Grid<T> {
     
     return lerp(v0, v1, ti);
   }
-  
+  ~OrdinalGrid(){
+  }
   /**
    * A thin frontend for T getInterpolated(float i, float j)
    * @param p, A vector to interpolate from
