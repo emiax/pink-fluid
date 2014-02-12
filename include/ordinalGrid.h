@@ -20,35 +20,27 @@ class OrdinalGrid : public Grid<T> {
    * @param j, the position along the y axis (h)
    */
   T getInterpolated(float i, float j) const{
-    if(i >= this->w || j >= this->h){
-      unsigned int indexI = floor(std::min(i,(float)this->w-1));
-      unsigned int indexJ = floor(std::min(j,(float)this->h-1));
-      return getInterpolated(indexI,indexJ);
-    }
-    else if(i < 0 || j < 0){
-      unsigned int indexI = floor(std::max(i,0.0f));
-      unsigned int indexJ = floor(std::max(j,0.0f));
-      return getInterpolated(indexI,indexJ);
-    }
-    else{
-      unsigned int lowerI = floor(i);
-      unsigned int upperI = ceil(i);
-      unsigned int lowerJ = floor(j);
-      unsigned int upperJ = ceil(j);
-
-      float ti = fmod(i, 1.0);
-      float tj = fmod(j, 1.0);
-
-      T v00 = this->get(lowerI, lowerJ);
-      T v01 = this->get(lowerI, upperJ);
-      T v10 = this->get(upperI, lowerJ);
-      T v11 = this->get(upperI, upperJ);
-
-      T v0 = lerp(v00, v01, tj);
-      T v1 = lerp(v10, v11, tj);
-
-      return lerp(v0, v1, ti);
-    }
+    if (i > this->w - 1) i = this->w - 1;
+    if (j > this->h - 1) j = this->h - 1;
+    if (i < 0) i = 0;
+    if (j < 0) j = 0;
+    unsigned int lowerI = floor(i);
+    unsigned int upperI = ceil(i);
+    unsigned int lowerJ = floor(j);
+    unsigned int upperJ = ceil(j);
+    
+    float ti = fmod(i, 1.0);
+    float tj = fmod(j, 1.0);
+    
+    T v00 = this->get(lowerI, lowerJ);
+    T v01 = this->get(lowerI, upperJ);
+    T v10 = this->get(upperI, lowerJ);
+    T v11 = this->get(upperI, upperJ);
+    
+    T v0 = lerp(v00, v01, tj);
+    T v1 = lerp(v10, v11, tj);
+    
+    return lerp(v0, v1, ti);
   }
   
   /**
