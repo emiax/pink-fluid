@@ -8,10 +8,14 @@ Simulator::Simulator(State *sPing, State *sPong) : stateFrom(sPing), stateTo(sPo
   w = sPing->getW();
   h = sPing->getH();
 
-  // TODO: check for size mismatch
+  // TODO: finish check for size mismatch
   if( w != sPong->getW() || h != sPong->getH() ) {
     // throw std::exeption();
   }
+
+  // init non-state grids
+  divergenceGrid = new OrdinalGrid<float>(w, h);
+  pressureGrid = new OrdinalGrid<double>(w, h);
 }
 
 Simulator::~Simulator() {}
@@ -25,7 +29,6 @@ Simulator::~Simulator() {}
 void Simulator::step(float dt) {
   advect(stateFrom, stateTo, dt);
   calculateDivergence(stateTo, divergenceGrid);
-  
 
   // swap states
   State *tempState = stateFrom;
@@ -58,7 +61,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
         readFrom->velocityGrid[1]->getInterpolated(position)
       );
     }
-  } 
+  }
 }
 
 
@@ -85,4 +88,19 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
       toDivergenceGrid->set(i, j, divergence);
     }
   }
+}
+
+void Simulator::jacobiIteration(unsigned int nIterations) {
+  for(unsigned int i = 0; i < nIterations; ++i) {
+
+  }
+}
+
+OrdinalGrid<double>* Simulator::resetPressureGrid() {
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      pressureGrid->set(i, j, 0.0);
+    }
+  }
+  return pressureGrid;
 }
