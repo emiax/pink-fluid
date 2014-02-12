@@ -8,5 +8,5 @@ out vec4 color;
 void main()
 {
   vec4 value = texture(myFloatTex, fragPosition);
-  color = value;
+  color = abs(value);
 }
