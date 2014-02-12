@@ -13,6 +13,8 @@ public:
   OrdinalGrid<float>const *const *const getVelocityGrid() const;
   void setPressureGrid(OrdinalGrid<double>*);
   void setVelocityGrid(OrdinalGrid<float>**);
+  unsigned int getW();
+  unsigned int getH();
 private:
   OrdinalGrid<double> *pressureGrid;
   OrdinalGrid<float> ** velocityGrid;

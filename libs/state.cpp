@@ -32,6 +32,15 @@ void State::setVelocityGrid(OrdinalGrid<float>** velocity){
     }
   }
 }
+
+unsigned int State::getW() {
+  return w;
+}
+
+unsigned int State::getH() {
+  return h;
+}
+
 OrdinalGrid<double>const *const State::getPressureGrid() const{
   return pressureGrid;
 };
@@ -39,8 +48,6 @@ OrdinalGrid<double>const *const State::getPressureGrid() const{
 OrdinalGrid<float>const *const *const State::getVelocityGrid() const{
   return velocityGrid;
 };
-
-
 
 State::~State() {
   delete pressureGrid;

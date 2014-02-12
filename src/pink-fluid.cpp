@@ -89,27 +89,32 @@ int main( void ) {
   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
-
-  int w = 100, h = 100;
+  // declare ping/pong states
+  unsigned int w = 100, h = 100;
   State prevState(w, h);
+  State newState(w, h);
+
   OrdinalGrid<float>** velocities = new OrdinalGrid<float>*[2];
   std::cout << "Setting up basic state" << std::endl;
   velocities[0] = new OrdinalGrid<float>(w+1, h);
   velocities[1] = new OrdinalGrid<float>(w, h+1);
-  for(int i = w/4; i <= 3*w/4; i++){
-    for(int j = h/4; j < 3*h/4; j++){
+  
+  // init velocity grids
+  for(unsigned int i = w/4; i <= 3*w/4; i++){
+    for(unsigned int j = h/4; j < 3*h/4; j++){
       velocities[0]->set(i,j,1);
     }
   }
-  for(int i = w/4; i < 3*w/4; i++){
-    for(int j = h/4; j <= 3*h/4; j++){
+  for(unsigned int i = w/4; i < 3*w/4; i++){
+    for(unsigned int j = h/4; j <= 3*h/4; j++){
       velocities[1]->set(i,j,1);
     }
   }
+
   prevState.setVelocityGrid(velocities);
-  State newState(w, h);
-  State tempState(w, h);
-  Simulator sim(w, h);
+  
+  // init simulator (for implicit step)
+  Simulator sim(&prevState, &newState);
   
   Texture2D tex2D(w, h);
 
@@ -118,7 +123,7 @@ int main( void ) {
   do{
     // lastRun = glfwGetTime();
     // float deltaT = glfwGetTime()-lastRun;
-    sim.advect(&prevState, &newState, 1);
+    sim.step(1.0f);
      
     
     int width, height;
@@ -132,8 +137,8 @@ int main( void ) {
     glUniform1f(location, glfwGetTime());
 
 
-    for(int j = 0; j < h; ++j){
-        for(int i=0;i<w;++i) {
+    for(unsigned int j = 0; j < h; ++j){
+        for(unsigned int i=0;i<w;++i) {
         tex2D.set(i,j,0, newState.getVelocityGrid()[0]->get(i,j));
         tex2D.set(i,j,1, newState.getVelocityGrid()[1]->get(i,j));
         tex2D.set(i,j,2, 0.0f);
@@ -177,10 +182,7 @@ int main( void ) {
 
     glfwPollEvents();
     glfwSwapBuffers(window);
-
-    tempState = prevState;
-    prevState = newState;
-    newState = tempState;
+    
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
   std::cout << "Cleaning up!" << std::endl;
