@@ -1,15 +1,15 @@
 #include <simulator.h>
 #include <state.h>
 #include <ordinalGrid.h>
-#include <exception>
-
-Simulator::Simulator(State *sPing, State *sPong) : stateFrom(sPing), stateTo(sPong) {
+// #include <exception>
+#include <algorithm>
+Simulator::Simulator(State *sf, State *st) : stateFrom(sf), stateTo(st) {
   
-  w = sPing->getW();
-  h = sPing->getH();
+  w = sf->getW();
+  h = sf->getH();
 
   // TODO: finish check for size mismatch
-  if( w != sPong->getW() || h != sPong->getH() ) {
+  if( w != st->getW() || h != st->getH() ) {
     // throw std::exeption();
   }
 
@@ -28,12 +28,13 @@ Simulator::~Simulator() {}
  */
 void Simulator::step(float dt) {
   advect(stateFrom, stateTo, dt);
-  calculateDivergence(stateTo, divergenceGrid);
+  // calculateDivergence(stateTo, divergenceGrid);
 
   // swap states
-  State *tempState = stateFrom;
-  stateFrom = stateTo;
-  stateTo = tempState;
+  std::swap(stateFrom, stateTo);
+  //State *tempState = stateFrom;
+  //stateFrom = stateTo;
+  //stateTo = tempState;
 
 }
 

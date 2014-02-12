@@ -9,12 +9,11 @@ class State {
 public:
   State(unsigned int width, unsigned int height);
   ~State();
-  //  OrdinalGrid<double>const *const getPressureGrid() const;
   OrdinalGrid<float>const *const *const getVelocityGrid() const;
-  //  void setPressureGrid(OrdinalGrid<double>*);
-  void setVelocityGrid(OrdinalGrid<float>**);
-  void setFluidGrid(Grid<bool>*);
-  void setBoundaryGrid(Grid<bool>*);
+  Grid<bool>const *const getBoundaryGrid() const;
+  void setVelocityGrid(OrdinalGrid<float>const* const*);
+  void setFluidGrid(Grid<bool> const* const);
+  void setBoundaryGrid(Grid<bool> const* const);
   unsigned int getW();
   unsigned int getH();
 private:
@@ -22,8 +21,8 @@ private:
   OrdinalGrid<float> **velocityGrid;
   Grid<bool> *fluidGrid;
   Grid<bool> *boundaryGrid;
+  void resetVelocityGrids();
   unsigned int w, h;
-
 
   friend class Simulator;
 };

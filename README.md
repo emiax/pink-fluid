@@ -2,7 +2,7 @@
 In order to clone, compile and run this:
 
     git clone --recursive https://github.com/emiax/pink-fluid.git
-    cd opengl-bootstrap/build
+    cd pink-fluid/build
     cmake ..
     make -j4
     ./pink-fluid

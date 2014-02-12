@@ -1,34 +1,37 @@
 #include <state.h>
 #include <ordinalGrid.h>
+#include <iostream>
 
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
-  // pressureGrid = new OrdinalGrid<double>(w,h);
   velocityGrid = new OrdinalGrid<float>*[2];
   velocityGrid[0] = new OrdinalGrid<float>(w + 1, h);
   velocityGrid[1] = new OrdinalGrid<float>(w, h + 1);
   fluidGrid = new Grid<bool>(w, h);
   boundaryGrid = new Grid<bool>(w, h);
+  resetVelocityGrids();
+
+}
+
+
+void State::resetVelocityGrids() {
+  for(unsigned int i = 0u; i <= w; i++){
+    for(unsigned int j = 0u; j < h; j++){
+      velocityGrid[0]->set(i, j, 0.0f);
+    }
+  }
+  for(unsigned int i = 0u; i < w; i++){
+    for(unsigned int j = 0u; j <= h; j++){
+      velocityGrid[1]->set(i, j, 0.0f);
+    }
+  }
 }
 
 /**
- * Copies pressure grid to internal pressure grid
- *
- */
-// void State::setPressureGrid(OrdinalGrid<double> *pressure){
-//   for(unsigned int i = 0u; i < w; i++){
-//     for(unsigned int j = 0u; h < h; j++){
-//       pressureGrid->set(i, j, pressure->get(i,j));
-//     }
-//   }
-// }
-
-/**
  * Copy velocity grid to internal velocity grid
- *
  */
-void State::setVelocityGrid(OrdinalGrid<float>** velocity){
+void State::setVelocityGrid(OrdinalGrid<float>const* const* velocity){
   for(unsigned int i = 0u; i < w; i++){
-    for(unsigned int j = 0u; h < h; j++){
+    for(unsigned int j = 0u; j < h; j++){
       velocityGrid[0]->set(i, j, velocity[0]->get(i,j));
       velocityGrid[1]->set(i, j, velocity[1]->get(i,j));
     }
@@ -55,9 +58,9 @@ unsigned int State::getH() {
 /**
  * Set boundary grid
  */
-void State::setBoundaryGrid(Grid<bool>* boundary) {
+void State::setBoundaryGrid(Grid<bool>const* const boundary) {
   for(unsigned int i = 0u; i < w; i++){
-    for(unsigned int j = 0u; h < h; j++){
+    for(unsigned int j = 0u; j < h; j++){
       this->boundaryGrid->set(i, j, boundary->get(i, j));
     }
   }
@@ -67,14 +70,13 @@ void State::setBoundaryGrid(Grid<bool>* boundary) {
 /**
  * Set fluid grid
  */
-void State::setFluidGrid(Grid<bool>* fluid) {
+void State::setFluidGrid(Grid<bool>const* const fluid) {
   for(unsigned int i = 0u; i < w; i++){
-    for(unsigned int j = 0u; h < h; j++){
+    for(unsigned int j = 0u; j < h; j++){
       this->fluidGrid->set(i, j, fluid->get(i, j));
     }
   }
 }
-
 
 
 // OrdinalGrid<double>const *const State::getPressureGrid() const{
@@ -84,12 +86,21 @@ void State::setFluidGrid(Grid<bool>* fluid) {
 /**
  * Get velocity grid 
  */
+
 OrdinalGrid<float>const *const *const State::getVelocityGrid() const{
   return velocityGrid;
 };
 
+
+/**
+ * Get boundary grid
+ */
+Grid<bool>const *const State::getBoundaryGrid() const {
+  return boundaryGrid;
+}
+
+
 State::~State() {
-  // delete pressureGrid;
   delete velocityGrid[0];
   delete velocityGrid[1];
   delete[] velocityGrid;

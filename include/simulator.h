@@ -8,7 +8,7 @@ class State;
 
 class Simulator {
 public:
-  Simulator(State *statePing, State *statePong);
+  Simulator(State *sf, State *st);
   ~Simulator();
 
   void step(State * const readFrom, State* writeTo, float dt);
