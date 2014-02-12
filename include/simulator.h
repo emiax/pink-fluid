@@ -8,7 +8,6 @@ class State;
 
 class Simulator {
 public:
-  Simulator(unsigned int width, unsigned int height);
   Simulator(State *statePing, State *statePong);
   ~Simulator();
 
@@ -20,14 +19,15 @@ public:
   void advect(State const * readFrom, State * writeTo, float dt);
 
   // ext. forces
-  void calcGravity(const OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid, glm::vec2 g);
+  void applyGravity(const OrdinalGrid<float> *velocityGrid, glm::vec2 g);
 
   // pressure
-  void calcDivergence(const OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
+  void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
   void jacobiIteration();
   void gradientSubtraction(const OrdinalGrid<float> *fromVelocityGrid, OrdinalGrid<float> *toVelocityGrid);
 
 private:
   unsigned int w,h;
-  State *statePing, *statePong;
+  State *stateFrom, *stateTo;
+  OrdinalGrid<float> *divergenceGrid;
 };

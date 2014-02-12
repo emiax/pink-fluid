@@ -3,12 +3,7 @@
 #include <ordinalGrid.h>
 #include <exception>
 
-Simulator::Simulator(unsigned int width, unsigned int height) : w(width), h(height) {
-  statePing = nullptr;
-  statePong = nullptr;
-}
-
-Simulator::Simulator(State *sPing, State *sPong) : statePing(sPing), statePong(sPong) {
+Simulator::Simulator(State *sPing, State *sPong) : stateFrom(sPing), stateTo(sPong) {
   
   w = sPing->getW();
   h = sPing->getH();
@@ -21,16 +16,6 @@ Simulator::Simulator(State *sPing, State *sPong) : statePing(sPing), statePong(s
 
 Simulator::~Simulator() {}
 
-/**
- * Explicit step function for testing and manual
- * control of read->write states
- * @param readFrom State to read grids from
- * @param writeTo  State to write grids to
- * @param dt       Time step, deltaT
- */
-void Simulator::step(State * const readFrom, State* writeTo, float dt){
-  advect(readFrom, writeTo, dt);
-}
 
 /**
  * Implicit step function, can only be used if 
@@ -38,18 +23,14 @@ void Simulator::step(State * const readFrom, State* writeTo, float dt){
  * @param dt Time step, deltaT
  */
 void Simulator::step(float dt) {
-
-  // TODO: exception handling
-  if( statePing == nullptr || statePong == nullptr ) {
-    // throw std::exception();
-  } else {
-    advect(statePing, statePong, dt);
-  }
+  advect(stateFrom, stateTo, dt);
+  calculateDivergence(stateTo, divergenceGrid);
+  
 
   // swap states
-  State *tempState = statePing;
-  statePing = statePong;
-  statePong = tempState;
+  State *tempState = stateFrom;
+  stateFrom = stateTo;
+  stateTo = tempState;
 
 }
 
@@ -92,3 +73,16 @@ glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){
   return position-dt*midV;
 }
 
+
+
+void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
+  for(unsigned int i = 0; i < w; i++){
+    for(unsigned int j = 0; j < h; j++){
+      float entering = readFrom->velocityGrid[0]->get(i, j) + readFrom->velocityGrid[1]->get(i, j);
+      float leaving = readFrom->velocityGrid[0]->get(i + 1, j) + readFrom->velocityGrid[1]->get(i, j + 1);
+      
+      float divergence = leaving - entering;
+      toDivergenceGrid->set(i, j, divergence);
+    }
+  }
+}
