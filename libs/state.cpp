@@ -112,4 +112,6 @@ Grid<bool>const *const State::getBoundaryGrid() const {
 
 State::~State() {
   delete velocityGrid;
+  delete fluidGrid;
+  delete boundaryGrid;
 }
