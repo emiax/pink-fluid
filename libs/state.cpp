@@ -51,9 +51,14 @@ void State::resetVelocityGrids() {
  */
 void State::setVelocityGrid(VelocityGrid const* const velocity){
   for(unsigned int i = 0u; i < w; i++){
+    for(unsigned int j = 0u; j <= h; j++){
+      velocityGrid->v->set(i, j, velocity->v->get(i,j));
+    }
+  }
+
+  for(unsigned int i = 0u; i <= w; i++){
     for(unsigned int j = 0u; j < h; j++){
       velocityGrid->u->set(i, j, velocity->u->get(i,j));
-      velocityGrid->v->set(i, j, velocity->v->get(i,j));
     }
   }
 }
