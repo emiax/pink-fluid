@@ -1,9 +1,10 @@
 #include <simulator.h>
 #include <state.h>
 #include <ordinalGrid.h>
+#include <velocityGrid.h>
 // #include <exception>
 #include <algorithm>
-Simulator::Simulator(State *sf, State *st) : stateFrom(sf), stateTo(st) {
+Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
   
   w = sf->getW();
   h = sf->getH();
@@ -31,6 +32,8 @@ void Simulator::step(float dt) {
   jacobiIteration(40);
   gradientSubtraction(stateTo, dt);
 
+  // Variable time step calculation
+  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0));
   // swap states
   std::swap(stateFrom, stateTo);
   resetPressureGrid();
@@ -156,4 +159,27 @@ OrdinalGrid<double>* Simulator::resetPressureGrid() {
     }
   }
   return pressureGrid;
+}
+
+glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
+  glm::vec2 maxVec = velocity->getCell(0,0);
+  for(int i = 0; i < w; i++){
+    for(int j = 0; j < h; j++){
+      if(glm::length(maxVec) < glm::length(velocity->getCell(i,j))){
+        maxVec = velocity->getCell(i,j);
+      }
+    }
+  }
+  return maxVec;
+}
+
+float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
+  //TODO: glm::length(gravity) should be changed to something else relating to gravity
+  float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
+  float dT = 5*gridSize/max;
+  return dT;
+}
+
+float Simulator::getDeltaT(){
+  return deltaT;
 }

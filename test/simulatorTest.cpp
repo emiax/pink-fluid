@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <simulator.h>
 #include <state.h>
+#include <velocityGrid.h>
 #include <ordinalGrid.h>
 #include <iostream>
 class SimulatorTest : public ::testing::Test{

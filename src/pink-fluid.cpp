@@ -29,7 +29,7 @@
 #include <ordinalGrid.h>
 #include <state.h>
 #include <simulator.h>
-
+#include <velocityGrid.h>
 int main( void ) {
   
   //Create init object
@@ -90,22 +90,18 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 30, h = 30;
+  unsigned int w = 100, h = 100;
   State prevState(w, h);
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   
   // init velocity grids
+  //Make everything zero
   // X velocities
   for(unsigned int i = 0; i <= w; i++){
     for(unsigned int j = 0; j < h; j++){
       velocities->u->set(i,j,0.0f);
-    }
-  }
-  for(unsigned int i = w/4; i <= 3*w/4; i++){
-    for(unsigned int j = h/4; j < 3*h/4; j++){
-      velocities->u->set(i,j,1.0f);
     }
   }
   // Y velocities
@@ -114,20 +110,28 @@ int main( void ) {
       velocities->v->set(i,j,0.0f);
     }
   }
-  for(unsigned int i = w/4; i < 3*w/4; i++){
-    for(unsigned int j = h/4; j <= 3*h/4; j++){
-      velocities->v->set(i,j,1);
+
+  //Create new velocity positions
+  
+  for(unsigned int i = 10; i < w/4; i++){
+    for(unsigned int j = h/3; j <= 2*h/3; j++){
+      velocities->u->set(i,j,5.0);
+    }
+  }
+  for(unsigned int i = 3*w/4; i < w; i++){
+    for(unsigned int j = 1.5*h/3; j <= 0.9*h; j++){
+      velocities->u->set(i,j,-5.0);
     }
   }
 
   prevState.setVelocityGrid(velocities);
   
   // init simulator
-  Simulator sim(&prevState, &newState);
+  Simulator sim(&prevState, &newState,0.1f);
 
   //Object which encapsulates a texture + The destruction of a texture.
   Texture2D tex2D(w, h);
-  float deltaT = 0.02f; // TODO: change time step according to Bridson 3.2
+  float deltaT = 0.01; //First time step
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
@@ -135,7 +139,7 @@ int main( void ) {
     // lastRun = glfwGetTime();
     // float deltaT = glfwGetTime()-lastRun;
     sim.step(deltaT);
-     
+    //deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);

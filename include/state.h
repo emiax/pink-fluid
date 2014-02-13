@@ -1,15 +1,12 @@
+#pragma once
+#include <glm/glm.hpp>
 template<typename T>
 class OrdinalGrid;
 template<typename T>
 class Grid;
 
 class Simulator;
-
-struct VelocityGrid{
-  VelocityGrid(int w, int h);
-  ~VelocityGrid();
-  OrdinalGrid<float> *u, *v; 
-};
+class VelocityGrid;
 
 class State {
 public:

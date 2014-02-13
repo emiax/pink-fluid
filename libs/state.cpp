@@ -1,16 +1,8 @@
 #include <state.h>
+#include <velocityGrid.h>
 #include <ordinalGrid.h>
 
 
-
-VelocityGrid::VelocityGrid(int w, int h){
-    u = new OrdinalGrid<float>(w+1,h);
-    v = new OrdinalGrid<float>(w,h+1);
-}
-VelocityGrid::~VelocityGrid(){
-  delete u;
-  delete v;
-}
 
 
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {

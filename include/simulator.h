@@ -1,14 +1,15 @@
+#pragma once
 template<typename T>
 class OrdinalGrid;
 template<typename T>
 class Grid;
 class State;
-
+class VelocityGrid;
 #include <glm/glm.hpp>
 
 class Simulator {
 public:
-  Simulator(State *sf, State *st);
+  Simulator(State *sf, State *st, float scale = 1.0f);
   ~Simulator();
 
   void step(State * const readFrom, State* writeTo, float dt);
@@ -27,10 +28,16 @@ public:
   void gradientSubtraction(State *state, float dt);
 
   OrdinalGrid<double>* resetPressureGrid();
-
+  
+  float calculateDeltaT(glm::vec2 maxVelocity, glm::vec2 gravity, float gridSize);
+  glm::vec2 maxVelocity(VelocityGrid const *const velocity);
+  float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
+  float getDeltaT();
 private:
   unsigned int w,h;
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
   OrdinalGrid<double> *pressureGrid;
+  float deltaT;
+  float gridSize;
 };
