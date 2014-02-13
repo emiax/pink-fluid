@@ -236,9 +236,6 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
 }
 
 /**
- * TODO: should iterate pressure cells and update neighbouring
- * velocity values instead of vice-versa.
- * 
  * Subtract pressure gradients from velocity grid
  * @param state State to work on
  * @param dt, The time step

@@ -112,14 +112,14 @@ int main( void ) {
   }
 
   //Create new velocity positions
-  for(unsigned int i = w/5; i < w/2; i++){
-    for(unsigned int j = h/5; j < h/2; j++){
-      velocities->u->set(i,j,5.0f);
+  for(unsigned int i = w/3; i < 2*w/3; i++){
+    for(unsigned int j = h/3; j < 2*h/3; j++){
+      velocities->u->set(i,j, (float)h/2-j);
     }
   }
-  for(unsigned int i = w/2; i < 4*w/5; i++){
-    for(unsigned int j = h/2; j < 4*h/5; j++){
-      velocities->u->set(i,j,-5.0f);
+  for(unsigned int i = w/3; i < 2*w/3; i++){
+    for(unsigned int j = h/3; j < 2*h/3; j++){
+      velocities->v->set(i,j, i-(float)w/2);
     }
   }
 
@@ -144,12 +144,12 @@ int main( void ) {
     }
   }
   for(unsigned int i = w/4; i < w/2; i++){
-    for(unsigned int j = h/4 - 3; j < 3*h/4 - 3; j++){
+    for(unsigned int j = h/3; j < 2*h/3; j++){
       ink->set( i, j, glm::vec3(1, 0, 0) );
     }
   }
   for(unsigned int i = w/2; i < 3*w/4; i++){
-    for(unsigned int j = h/4 + 3; j < 3*h/4 + 3; j++){
+    for(unsigned int j = h/3; j < 2*h/3; j++){
       ink->set( i, j, glm::vec3(0, 0, 1) );
     }
   }
