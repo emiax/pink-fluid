@@ -90,19 +90,19 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 100, h = 100;
+  unsigned int w = 70, h = 70;
   State prevState(w, h);
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   //Create new velocity positions
-  for(unsigned int i = 3; i < w/3; i++){
-    for(unsigned int j = h/4 - 3; j < 3*h/4 - 3; j++){
-      velocities->u->set(i,j,10.0f);
+  for(unsigned int i = w/5; i < w/2; i++){
+    for(unsigned int j = h/5; j < h/2; j++){
+      velocities->u->set(i,j,5.0f);
     }
   }
-  for(unsigned int i = 3*w/4; i < w - 3; i++){
-    for(unsigned int j = h/4 + 3; j < 3*h/4 + 3; j++){
+  for(unsigned int i = w/2; i < 4*w/5; i++){
+    for(unsigned int j = h/2; j < 4*h/5; j++){
       velocities->u->set(i,j,-5.0f);
     }
   }
@@ -127,12 +127,12 @@ int main( void ) {
       ink->set( i, j, glm::vec3(0.0f) );
     }
   }
-  for(unsigned int i = 3; i < w/3; i++){
+  for(unsigned int i = w/4; i < w/2; i++){
     for(unsigned int j = h/4 - 3; j < 3*h/4 - 3; j++){
       ink->set( i, j, glm::vec3(1, 0, 0) );
     }
   }
-  for(unsigned int i = 3*w/4; i < w - 3; i++){
+  for(unsigned int i = w/2; i < 3*w/4; i++){
     for(unsigned int j = h/4 + 3; j < 3*h/4 + 3; j++){
       ink->set( i, j, glm::vec3(0, 0, 1) );
     }

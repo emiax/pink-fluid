@@ -11,7 +11,7 @@ VelocityGrid::~VelocityGrid(){
 }
 glm::vec2 VelocityGrid::getCell(unsigned int i, unsigned int j) const{
   return glm::vec2(
-                   u->getInterpolated((float)i+0.5, j), 
-                   v->getInterpolated(i, (float)j+0.5)
-                   );
+    u->getInterpolated((float)i+0.5, j), 
+    v->getInterpolated(i, (float)j+0.5)
+  );
 }
