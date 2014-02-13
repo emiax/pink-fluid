@@ -95,22 +95,6 @@ int main( void ) {
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
-  
-  // init velocity grids
-  //Make everything zero
-  // X velocities
-  for(unsigned int i = 0; i <= w; i++){
-    for(unsigned int j = 0; j < h; j++){
-      velocities->u->set(i,j,0.0f);
-    }
-  }
-  // Y velocities
-  for(unsigned int i = 0; i < w; i++){
-    for(unsigned int j = 0; j <= h; j++){
-      velocities->v->set(i,j,0.0f);
-    }
-  }
-
   //Create new velocity positions
   for(unsigned int i = w/3; i < 2*w/3; i++){
     for(unsigned int j = h/3; j < 2*h/3; j++){
