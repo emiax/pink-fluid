@@ -24,15 +24,19 @@ public:
 
   // pressure
   void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
-  void jacobiIteration(unsigned int nIterations);
+  void jacobiIteration(State const* readFrom, unsigned int nIterations);
+  void copyBoundaries(State const* readFrom, State* writeTo);
+
   void gradientSubtraction(State *state, float dt);
 
   OrdinalGrid<double>* resetPressureGrid();
   
-  float calculateDeltaT(glm::vec2 maxVelocity, glm::vec2 gravity, float gridSize);
   glm::vec2 maxVelocity(VelocityGrid const *const velocity);
   float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
   float getDeltaT();
+  //  void setBoundaries(Grid<bool> *boundaryGrid);
+
+
 private:
   unsigned int w,h;
   State *stateFrom, *stateTo;

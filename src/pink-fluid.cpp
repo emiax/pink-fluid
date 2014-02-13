@@ -112,19 +112,48 @@ int main( void ) {
   }
 
   //Create new velocity positions
-  
-  for(unsigned int i = 10; i < w/4; i++){
-    for(unsigned int j = h/3; j <= 2*h/3; j++){
-      velocities->u->set(i,j,5.0);
+  for(unsigned int i = 3; i < w/3; i++){
+    for(unsigned int j = h/4 - 3; j < 3*h/4 - 3; j++){
+      velocities->u->set(i,j,10.0f);
     }
   }
-  for(unsigned int i = 3*w/4; i < w; i++){
-    for(unsigned int j = 1.5*h/3; j <= 0.9*h; j++){
-      velocities->u->set(i,j,-5.0);
+  for(unsigned int i = 3*w/4; i < w - 3; i++){
+    for(unsigned int j = h/4 + 3; j < 3*h/4 + 3; j++){
+      velocities->u->set(i,j,-5.0f);
     }
   }
 
+  
   prevState.setVelocityGrid(velocities);
+
+  
+  Grid<bool> *boundaries = new Grid<bool>(w, h);
+  // init boundary grid
+  for(unsigned int i = 0; i < w; i++){
+    for(unsigned int j = 0; j < h; j++){
+      boundaries->set(i,j, (i == 0) || (j == 0) || (i == w - 1) || (j == h - 1));
+    }
+  }
+  prevState.setBoundaryGrid(boundaries);
+
+  // instantiate ink grid
+  OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      ink->set( i, j, glm::vec3(0.0f) );
+    }
+  }
+  for(unsigned int i = 3; i < w/3; i++){
+    for(unsigned int j = h/4 - 3; j < 3*h/4 - 3; j++){
+      ink->set( i, j, glm::vec3(1, 0, 0) );
+    }
+  }
+  for(unsigned int i = 3*w/4; i < w - 3; i++){
+    for(unsigned int j = h/4 + 3; j < 3*h/4 + 3; j++){
+      ink->set( i, j, glm::vec3(0, 0, 1) );
+    }
+  }
+  prevState.setInkGrid(ink);
   
   // init simulator
   Simulator sim(&prevState, &newState,0.1f);
@@ -133,13 +162,16 @@ int main( void ) {
   Texture2D tex2D(w, h);
   float deltaT = 0.01; //First time step
 
+
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
   do{
     // lastRun = glfwGetTime();
     // float deltaT = glfwGetTime()-lastRun;
     sim.step(deltaT);
-    //deltaT = sim.getDeltaT();
+    deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -154,11 +186,16 @@ int main( void ) {
     // corresponding cell-value instead of the edge velocities.
     for(unsigned int j = 0; j < h; ++j){
         for(unsigned int i=0;i<w;++i) {
-        tex2D.set(i,j,0, newState.getVelocityGrid()->u->get(i,j));
-        tex2D.set(i,j,1, newState.getVelocityGrid()->v->get(i,j));
-        tex2D.set(i,j,2, 0.0f);
-        tex2D.set(i,j,3, 1.0f);
-        // std::cout << newState.getVelocityGrid()[0]->get(i,j) << std::endl;
+          
+          // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+          // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+          // tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j));
+          // tex2D.set(i,j,3, 1.0f);
+
+          tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
+          tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
+          tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
+          tex2D.set(i,j,3, 1.0f);
       }
     }
 
