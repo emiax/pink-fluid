@@ -16,7 +16,9 @@ public:
   void step(float dt);
 
   // advection
-  glm::vec2 backTrack(State const * readFrom, int i,int j, float dt); 
+  glm::vec2 backTrackU(State const * readFrom, int i,int j, float dt);
+  glm::vec2 backTrackV(State const * readFrom, int i,int j, float dt);
+  glm::vec2 backTrackMid(State const * readFrom, int i,int j, float dt);
   void advect(State const * readFrom, State * writeTo, float dt);
 
   // ext. forces
