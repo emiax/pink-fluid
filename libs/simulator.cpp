@@ -203,33 +203,33 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   const float density = 1.0f;
   const float scale = dt / (density * deltaX);
 
-  float u, wu, pL, pR;
   OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
-
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-      wu = uVelocityGrid->get(i, j);
-      pL = pressureGrid->getInterpolated(i-1, j);
-      pR = pressureGrid->get(i, j);
-      u = wu - scale * (pR - pL);
-      uVelocityGrid->set(i, j, u);
-    }
-  }
-
-  float v, wv, pU, pD;
   OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
 
+  // looping through pressure cells
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
-      wv = vVelocityGrid->get(i, j);
-      pU = pressureGrid->getInterpolated(i, j-1);
-      pD = pressureGrid->get(i, j);
-      v = wv - scale * (pD - pU);
-      vVelocityGrid->set(i, j, v);
+
+      float uL = uVelocityGrid->get(i, j);
+      float uR = uVelocityGrid->get(i+1, j);
+
+      float vU = vVelocityGrid->get(i, j);
+      float vD = vVelocityGrid->get(i, j+1);
+
+      float p = pressureGrid->get(i, j);
+
+      uL -= scale * p;
+      uR += scale * p;
+      vU -= scale * p;
+      vD += scale * p;
+
+      uVelocityGrid->set(i, j, uL);
+      uVelocityGrid->set(i+1, j, uR);
+      vVelocityGrid->set(i, j, vU);
+      vVelocityGrid->set(i, j+1, vD);
     }
   }
 }
-
 
 /**
  * Reset pressure grid
