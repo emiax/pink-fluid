@@ -18,9 +18,10 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
   fluidGrid = new Grid<bool>(w, h);
   boundaryGrid = new Grid<bool>(w, h);
+  inkGrid = new OrdinalGrid<glm::vec3>(w, h);
+
   resetVelocityGrids();
 }
-
 
 void State::resetVelocityGrids() {
   for(unsigned int i = 0u; i <= w; i++){
@@ -87,16 +88,27 @@ void State::setFluidGrid(Grid<bool>const* const fluid) {
   }
 }
 
+/**
+ * Set ink grid
+ * @param ink grid to copy concentration values from
+ */
+void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      this->inkGrid->set( i, j, ink->get(i, j) );
+    }
+  }
+}
+
 
 // OrdinalGrid<double>const *const State::getPressureGrid() const{
 //   return pressureGrid;
 // };
 
+
 /**
  * Get velocity grid 
  */
-
-
 VelocityGrid const *const State::getVelocityGrid() const{
   return velocityGrid;
 };
@@ -107,6 +119,14 @@ VelocityGrid const *const State::getVelocityGrid() const{
  */
 Grid<bool>const *const State::getBoundaryGrid() const {
   return boundaryGrid;
+}
+
+/**
+ * Get ink grid
+ * @return const pointer to ink grid.
+ */
+OrdinalGrid<glm::vec3> const *const State::getInkGrid() const {
+  return inkGrid;
 }
 
 

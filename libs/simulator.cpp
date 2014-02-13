@@ -29,7 +29,7 @@ void Simulator::step(float dt) {
   copyBoundaries(stateFrom, stateTo);
   advect(stateFrom, stateTo, dt);
   calculateDivergence(stateTo, divergenceGrid);
-  jacobiIteration(stateTo, 40);
+  jacobiIteration(stateTo, 60);
   gradientSubtraction(stateTo, dt);
 
   // swap states
@@ -43,13 +43,14 @@ void Simulator::step(float dt) {
  * @param dt time step length
  */
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
+  
   //X
   for(unsigned int i = 0; i <= w; i++){
     for(unsigned int j = 0; j < h; j++){
       glm::vec2 position = backTrack(readFrom, i, j, dt);
       writeTo->velocityGrid->u->set(i,j,
-                                    readFrom->velocityGrid->u->getInterpolated(position)
-                                    );
+        readFrom->velocityGrid->u->getInterpolated(position)
+      );
     }
   }
   //Y
@@ -57,10 +58,21 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for(unsigned int j = 0; j <= h; j++){
       glm::vec2 position = backTrack(readFrom, i, j, dt);
       writeTo->velocityGrid->v->set(i,j,
-                                    readFrom->velocityGrid->v->getInterpolated(position)
-                                    );
+        readFrom->velocityGrid->v->getInterpolated(position)
+      );
     }
   }
+
+  // ink grid
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      glm::vec2 position = backTrack(readFrom, i, j, dt);
+      writeTo->inkGrid->set(i,j,
+        readFrom->inkGrid->getInterpolated(position)
+      );
+    }
+  }
+
 }
 
 void Simulator::copyBoundaries(State const* readFrom, State* writeTo) {
@@ -68,7 +80,14 @@ void Simulator::copyBoundaries(State const* readFrom, State* writeTo) {
 }
 
 
-
+/**
+ * RK2 implementation
+ * @param  readFrom read from state
+ * @param  i        sample x-coord
+ * @param  j        sample y-coord
+ * @param  dt       time step
+ * @return          position to copy new value from
+ */
 glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){
   glm::vec2 position(i,j);
   glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->get(i,j),
@@ -150,6 +169,10 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
   }
 }
 
+/**
+ * TODO: should iterate pressure cells and update neighbouring
+ * velocity values instead of vice-versa.
+ */
 void Simulator::gradientSubtraction(State *state, float dt) {
 
   const float deltaX = 1.0f;
