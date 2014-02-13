@@ -12,6 +12,9 @@ class Grid {
     this->h = h;
     // int size = this->size();
     quantities = new T[w*h];
+    for(auto i = 0; i < size(); i++){
+      quantities[i] = T(0);
+    }
   };
   
   ~Grid(){
