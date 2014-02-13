@@ -13,7 +13,9 @@ VelocityGrid::~VelocityGrid(){
   delete v;
 }
 
-
+/**
+ * Constructor.
+ */
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
   fluidGrid = new Grid<bool>(w, h);
@@ -23,6 +25,20 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   resetVelocityGrids();
 }
 
+/**
+ * Destructor.
+ */
+State::~State() {
+  delete velocityGrid;
+  delete fluidGrid;
+  delete boundaryGrid;
+  delete inkGrid;
+}
+
+
+/**
+ * Reset velocity grids
+ */
 void State::resetVelocityGrids() {
   for(unsigned int i = 0u; i <= w; i++){
     for(unsigned int j = 0u; j < h; j++){
@@ -35,6 +51,7 @@ void State::resetVelocityGrids() {
     }
   }
 }
+
 
 /**
  * Copy velocity grid to internal velocity grid
@@ -100,11 +117,9 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
   }
 }
 
-
 // OrdinalGrid<double>const *const State::getPressureGrid() const{
 //   return pressureGrid;
 // };
-
 
 /**
  * Get velocity grid 
@@ -112,7 +127,6 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
 VelocityGrid const *const State::getVelocityGrid() const{
   return velocityGrid;
 };
-
 
 /**
  * Get boundary grid
@@ -130,8 +144,3 @@ OrdinalGrid<glm::vec3> const *const State::getInkGrid() const {
 }
 
 
-State::~State() {
-  delete velocityGrid;
-  delete fluidGrid;
-  delete boundaryGrid;
-}
