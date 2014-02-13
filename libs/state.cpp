@@ -13,7 +13,9 @@ VelocityGrid::~VelocityGrid(){
   delete v;
 }
 
-
+/**
+ * Constructor.
+ */
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
   fluidGrid = new Grid<bool>(w, h);
@@ -22,6 +24,19 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
 }
 
 
+/**
+ * Destructor.
+ */
+State::~State() {
+  delete velocityGrid;
+  delete fluidGrid;
+  delete boundaryGrid;
+}
+
+
+/**
+ * Reset velocity grids
+ */
 void State::resetVelocityGrids() {
   for(unsigned int i = 0u; i <= w; i++){
     for(unsigned int j = 0u; j < h; j++){
@@ -34,6 +49,7 @@ void State::resetVelocityGrids() {
     }
   }
 }
+
 
 /**
  * Copy velocity grid to internal velocity grid
@@ -88,15 +104,9 @@ void State::setFluidGrid(Grid<bool>const* const fluid) {
 }
 
 
-// OrdinalGrid<double>const *const State::getPressureGrid() const{
-//   return pressureGrid;
-// };
-
 /**
  * Get velocity grid 
  */
-
-
 VelocityGrid const *const State::getVelocityGrid() const{
   return velocityGrid;
 };
@@ -110,8 +120,3 @@ Grid<bool>const *const State::getBoundaryGrid() const {
 }
 
 
-State::~State() {
-  delete velocityGrid;
-  delete fluidGrid;
-  delete boundaryGrid;
-}

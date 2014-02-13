@@ -18,7 +18,11 @@ Simulator::Simulator(State *sf, State *st) : stateFrom(sf), stateTo(st) {
   pressureGrid = new OrdinalGrid<double>(w, h);
 }
 
+/**
+ * Destructor.
+ */
 Simulator::~Simulator() {}
+
 
 /**
  * Implicit step function, can only be used if
@@ -35,6 +39,7 @@ void Simulator::step(float dt) {
   // swap states
   std::swap(stateFrom, stateTo);
 }
+
 
 /**
  * Advects the velocity throughout the grid
@@ -63,12 +68,23 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   }
 }
 
+/**
+ * Copy boundaries
+ * @param readFrom State to read from
+ * @param writeTo State to write to
+ */
 void Simulator::copyBoundaries(State const* readFrom, State* writeTo) {
   writeTo->setBoundaryGrid(readFrom->getBoundaryGrid());
 }
 
 
-
+/**
+ * Find the previous position of the temporary particle in the grid that travelled to i, j.
+ * @param readFrom State to read from
+ * @param i x coordinate
+ * @param j y coordinate
+ @ param dt the time between the two steps
+ */
 glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){
   glm::vec2 position(i,j);
   glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->get(i,j),
@@ -81,7 +97,11 @@ glm::vec2 Simulator::backTrack(State const* readFrom, int i, int j, float dt){
 }
 
 
-
+/**
+ * Calculate divergence.
+ * @param readFrom State to read from
+ * @param toDivergenceGrid An ordinal grid of floats to write the divergences to
+ */
 void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
@@ -98,6 +118,12 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
   }
 }
 
+
+/**
+ * Perform nIterantions Jacobi iterations in order to calculate pressures.
+ * @param readFrom The state to read from
+ * @param nIterations number of iterations
+ */
 void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations) {
 
   const float sqDeltaX = 1.0f;
@@ -150,6 +176,12 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
   }
 }
 
+
+/**
+ * Subtract pressure gradients from velocity grid
+ * @param state State to work on
+ * @param dt, The time step
+ */
 void Simulator::gradientSubtraction(State *state, float dt) {
 
   const float deltaX = 1.0f;
@@ -184,6 +216,9 @@ void Simulator::gradientSubtraction(State *state, float dt) {
 }
 
 
+/**
+ * Reset pressure grid
+ */
 OrdinalGrid<double>* Simulator::resetPressureGrid() {
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
