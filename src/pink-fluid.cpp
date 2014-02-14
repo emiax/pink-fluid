@@ -38,7 +38,7 @@ int main( void ) {
   //Initialize glfw
   init.glfw(4,1);
   //Open a window
-  GLFWwindow* window = init.window();
+  GLFWwindow* window = init.window(400, 400);
 
   //Print window info
   init.printWindowInfo(window);
@@ -90,24 +90,34 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 70, h = 70;
+  unsigned int w = 50, h = 50;
   State prevState(w, h);
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   //Create new velocity positions
-  for(unsigned int i = w/3; i < 2*w/3; i++){
-    for(unsigned int j = h/3; j < 2*h/3; j++){
-      velocities->u->set(i,j, (float)h/2-j);
+  for(unsigned int i = 1; i < w/3; i++){
+    for(unsigned int j = 1; j < h/3; j++){
+      velocities->u->set( i, j, 0.0f );
     }
   }
-  for(unsigned int i = w/3; i < 2*w/3; i++){
-    for(unsigned int j = h/3; j < 2*h/3; j++){
-      velocities->v->set(i,j, i-(float)w/2);
+  for(unsigned int i = 1; i < w/3; i++){
+    for(unsigned int j = 1; j < h/3; j++){
+      velocities->v->set( i, j, -1.0f );
     }
   }
 
-  
+  for(unsigned int i = 2*w/3; i < w-2; i++){
+    for(unsigned int j = 2*h/3; j < h-2; j++){
+      velocities->u->set( i, j, 1.0f );
+    }
+  }
+  for(unsigned int i = 2*w/3; i < w-2; i++){
+    for(unsigned int j = 2*h/3; j < h-2; j++){
+      velocities->v->set( i, j, 1.0f );
+    }
+  }
+
   prevState.setVelocityGrid(velocities);
 
   
@@ -127,14 +137,14 @@ int main( void ) {
       ink->set( i, j, glm::vec3(0.0f) );
     }
   }
-  for(unsigned int i = w/4; i < w/2; i++){
-    for(unsigned int j = h/3; j < 2*h/3; j++){
-      ink->set( i, j, glm::vec3(1, 0, 0) );
+  for(unsigned int i = 1; i < w/3; i++){
+    for(unsigned int j = 1; j < h/3; j++){
+      ink->set( i, j, glm::vec3(0, 1, 1) );
     }
   }
-  for(unsigned int i = w/2; i < 3*w/4; i++){
-    for(unsigned int j = h/3; j < 2*h/3; j++){
-      ink->set( i, j, glm::vec3(0, 0, 1) );
+  for(unsigned int i = 2*w/3; i < w-1; i++){
+    for(unsigned int j = 2*h/3; j < h-1; j++){
+      ink->set( i, j, glm::vec3(1, 0, 1) );
     }
   }
   prevState.setInkGrid(ink);

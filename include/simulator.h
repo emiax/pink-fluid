@@ -30,6 +30,7 @@ public:
   void copyBoundaries(State const* readFrom, State* writeTo);
 
   void gradientSubtraction(State *state, float dt);
+  void enforceVelocityBoundaryConditions(State *state);
 
   OrdinalGrid<double>* resetPressureGrid();
   

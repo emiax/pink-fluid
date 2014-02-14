@@ -40,6 +40,7 @@ void Simulator::step(float dt) {
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100);
   gradientSubtraction(stateTo, dt);
+  enforceVelocityBoundaryConditions(stateTo);
 
   // calculateDivergence(stateTo, divergenceOut);
 
@@ -272,6 +273,30 @@ void Simulator::gradientSubtraction(State *state, float dt) {
       vVelocityGrid->set(i, j+1, vD);
     }
   }
+}
+
+void Simulator::enforceVelocityBoundaryConditions(State *state) {
+
+  Grid<bool> *boundaries = state->boundaryGrid;
+
+  OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
+  OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
+
+  // loop through boundary pressure cells
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+
+      // is current cell solid?
+      if (boundaries->get(i, j)) {
+        uVelocityGrid->set(i, j, 0.0f);
+        uVelocityGrid->set(i+1, j, 0.0f);
+        vVelocityGrid->set(i, j, 0.0f);
+        vVelocityGrid->set(i, j+1, 0.0f);
+      }
+
+    }
+  }
+
 }
 
 /**
