@@ -98,7 +98,7 @@ int main( void ) {
   //Create new velocity positions
   for(unsigned int i = 1; i < w/3; i++){
     for(unsigned int j = 1; j < h/3; j++){
-      velocities->u->set( i, j, 0.0f );
+      velocities->u->set( i, j, 1.0f );
     }
   }
   for(unsigned int i = 1; i < w/3; i++){
@@ -109,7 +109,7 @@ int main( void ) {
 
   for(unsigned int i = 2*w/3; i < w-2; i++){
     for(unsigned int j = 2*h/3; j < h-2; j++){
-      velocities->u->set( i, j, 1.0f );
+      velocities->u->set( i, j, -1.0f );
     }
   }
   for(unsigned int i = 2*w/3; i < w-2; i++){
@@ -139,12 +139,12 @@ int main( void ) {
   }
   for(unsigned int i = 1; i < w/3; i++){
     for(unsigned int j = 1; j < h/3; j++){
-      ink->set( i, j, glm::vec3(0, 1, 1) );
+      ink->set( i, j, glm::vec3(1, 0, 1) );
     }
   }
   for(unsigned int i = 2*w/3; i < w-1; i++){
     for(unsigned int j = 2*h/3; j < h-1; j++){
-      ink->set( i, j, glm::vec3(1, 0, 1) );
+      ink->set( i, j, glm::vec3(0, 1, 1) );
     }
   }
   prevState.setInkGrid(ink);

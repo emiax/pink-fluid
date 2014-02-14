@@ -130,7 +130,7 @@ glm::vec2 Simulator::backTrackU(State const* readFrom, int i, int j, float dt){
   glm::vec2 midPos = position - (dt/2) * v;
 
   glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos),
-                             readFrom->velocityGrid->v->getInterpolated(midPos));
+                             readFrom->velocityGrid->v->getInterpolated(midPos.x-0.5, midPos.y+0.5));
   return position-dt*midV;
 }
 
@@ -140,7 +140,7 @@ glm::vec2 Simulator::backTrackV(State const* readFrom, int i, int j, float dt){
                           readFrom->velocityGrid->v->getInterpolated(i,j));
   glm::vec2 midPos = position - (dt/2) * v;
 
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos),
+  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos.x+0.5, midPos.y-0.5),
                              readFrom->velocityGrid->v->getInterpolated(midPos));
   return position-dt*midV;
 }
@@ -151,8 +151,8 @@ glm::vec2 Simulator::backTrackMid(State const* readFrom, int i, int j, float dt)
                           readFrom->velocityGrid->v->getInterpolated(i,j+0.5));
   glm::vec2 midPos = position - (dt/2) * v;
 
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos),
-                             readFrom->velocityGrid->v->getInterpolated(midPos));
+  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos.x+0.5f, midPos.y),
+                             readFrom->velocityGrid->v->getInterpolated(midPos.x, midPos.y+0.5f));
   return position-dt*midV;
 }
 
@@ -275,6 +275,10 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   }
 }
 
+/**
+ * Enforces velocity boundary condition dot( u(n+1), n ) = dot( u(solid), n )
+ * @param state state to modify
+ */
 void Simulator::enforceVelocityBoundaryConditions(State *state) {
 
   Grid<bool> *boundaries = state->boundaryGrid;
