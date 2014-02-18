@@ -22,7 +22,7 @@ public:
   void advect(State const * readFrom, State * writeTo, float dt);
 
   // ext. forces
-  void applyGravity(const OrdinalGrid<float> *velocityGrid, glm::vec2 g);
+  void applyGravity(VelocityGrid *velocityGrid, glm::vec2 g, float deltaT);
 
   // pressure
   void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
@@ -34,6 +34,7 @@ public:
 
   OrdinalGrid<double>* resetPressureGrid();
   
+
   glm::vec2 maxVelocity(VelocityGrid const *const velocity);
   float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
   float getDeltaT();

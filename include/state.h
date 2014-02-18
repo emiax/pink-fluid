@@ -8,16 +8,19 @@ class Grid;
 class Simulator;
 class VelocityGrid;
 
+enum BoundaryType{
+  SOLID = -1, EMPTY = 0, FLUID = 1
+};
+
 class State {
 public:
   State(unsigned int width, unsigned int height);
   ~State();
-  Grid<bool>const *const getBoundaryGrid() const;
+  Grid<BoundaryType>const *const getBoundaryGrid() const;
   VelocityGrid const *const getVelocityGrid() const;
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
   
-  void setFluidGrid(Grid<bool> const* const);
-  void setBoundaryGrid(Grid<bool> const* const);
+  void setBoundaryGrid(Grid<BoundaryType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
   void setInkGrid(OrdinalGrid<glm::vec3> const* const);
   
@@ -29,8 +32,7 @@ private:
 
   //  OrdinalGrid<double> *pressureGrid;
   OrdinalGrid<glm::vec3> *inkGrid;
-  Grid<bool> *fluidGrid;
-  Grid<bool> *boundaryGrid;
+  Grid<BoundaryType> *boundaryGrid;
   VelocityGrid *velocityGrid;
   unsigned int w, h;
 

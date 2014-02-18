@@ -121,11 +121,27 @@ int main( void ) {
   prevState.setVelocityGrid(velocities);
 
   
-  Grid<bool> *boundaries = new Grid<bool>(w, h);
+  Grid<BoundaryType> *boundaries = new Grid<BoundaryType>(w, h);
   // init boundary grid
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
-      boundaries->set(i,j, (i == 0) || (j == 0) || (i == w - 1) || (j == h - 1));
+      BoundaryType bt;
+      if(i == 0){
+        bt = BoundaryType::SOLID;
+      }
+      else if(j == 0){
+        bt = BoundaryType::SOLID;
+      }
+      else if(i == w - 1){
+        bt = BoundaryType::SOLID;
+      }
+      else if(j == h - 1){
+        bt = BoundaryType::SOLID;
+      }
+      else{
+        bt = BoundaryType::FLUID;
+      }
+      boundaries->set(i,j, bt);
     }
   }
   prevState.setBoundaryGrid(boundaries);

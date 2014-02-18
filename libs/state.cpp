@@ -11,8 +11,7 @@
  */
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
-  fluidGrid = new Grid<bool>(w, h);
-  boundaryGrid = new Grid<bool>(w, h);
+  boundaryGrid = new Grid<BoundaryType>(w, h);
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
 
   resetVelocityGrids();
@@ -23,7 +22,6 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
  */
 State::~State() {
   delete velocityGrid;
-  delete fluidGrid;
   delete boundaryGrid;
   delete inkGrid;
 }
@@ -83,22 +81,10 @@ unsigned int State::getH() {
 /**
  * Set boundary grid
  */
-void State::setBoundaryGrid(Grid<bool>const* const boundary) {
+void State::setBoundaryGrid(Grid<BoundaryType>const* const boundary) {
   for(unsigned int i = 0u; i < w; i++){
     for(unsigned int j = 0u; j < h; j++){
       this->boundaryGrid->set(i, j, boundary->get(i, j));
-    }
-  }
-}
-
-
-/**
- * Set fluid grid
- */
-void State::setFluidGrid(Grid<bool>const* const fluid) {
-  for(unsigned int i = 0u; i < w; i++){
-    for(unsigned int j = 0u; j < h; j++){
-      this->fluidGrid->set(i, j, fluid->get(i, j));
     }
   }
 }
@@ -129,7 +115,7 @@ VelocityGrid const *const State::getVelocityGrid() const{
 /**
  * Get boundary grid
  */
-Grid<bool>const *const State::getBoundaryGrid() const {
+Grid<BoundaryType>const *const State::getBoundaryGrid() const {
   return boundaryGrid;
 }
 
