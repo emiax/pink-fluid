@@ -4,6 +4,8 @@
 #include <velocityGrid.h>
 // #include <exception>
 #include <algorithm>
+#include <iostream>
+
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
   
@@ -37,7 +39,7 @@ void Simulator::step(float dt) {
   //OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
 
   //Currently disabled, 
-  //applyGravity(stateFrom->velocityGrid, glm::vec2(0,0.00001), dt);
+  //  applyGravity(stateFrom->velocityGrid, glm::vec2(0,0.001), dt);
   copyBoundaries(stateFrom, stateTo);
   advect(stateFrom, stateTo, dt);
   
@@ -276,17 +278,12 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
   Grid<BoundaryType> const* const boundaries = state->getBoundaryGrid();
 
+  
   // looping through pressure cells
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
-
       // is current cell solid?
-      if (boundaries->get(i, j) == BoundaryType::SOLID) {
-        uVelocityGrid->set(i, j, 0.0f);
-        uVelocityGrid->set(i+1, j, 0.0f);
-        vVelocityGrid->set(i, j, 0.0f);
-        vVelocityGrid->set(i, j+1, 0.0f);
-      } else {
+      if (boundaries->get(i, j) == BoundaryType::FLUID) {
         float uL = uVelocityGrid->get(i, j);
         float uR = uVelocityGrid->get(i+1, j);
 
@@ -307,6 +304,20 @@ void Simulator::gradientSubtraction(State *state, float dt) {
       }
     }
   }
+
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      // is current cell solid?
+      if (boundaries->get(i, j) == BoundaryType::SOLID) {
+
+        uVelocityGrid->set(i, j, 0.0f);
+        uVelocityGrid->set(i+1, j, 0.0f);
+        vVelocityGrid->set(i, j, 0.0f);
+        vVelocityGrid->set(i, j+1, 0.0f);
+      } 
+    }
+  }
+
 }
 
 /**
