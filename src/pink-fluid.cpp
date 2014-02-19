@@ -170,10 +170,10 @@ int main( void ) {
 
   //Object which encapsulates a texture + The destruction of a texture.
   Texture2D tex2D(w, h);
-  float deltaT = 0.01; //First time step
+  float deltaT = 0.1; //First time step
 
 
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
@@ -181,7 +181,7 @@ int main( void ) {
     // lastRun = glfwGetTime();
     // float deltaT = glfwGetTime()-lastRun;
     sim.step(deltaT);
-    deltaT = sim.getDeltaT();
+    // deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -202,10 +202,16 @@ int main( void ) {
           // tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j));
           // tex2D.set(i,j,3, 1.0f);
 
-          tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-          tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-          tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
+          // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
+          // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
+          // tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
+          // tex2D.set(i,j,3, 1.0f);
+
+          tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
+          tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
+          tex2D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
           tex2D.set(i,j,3, 1.0f);
+
       }
     }
 
