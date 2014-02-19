@@ -39,8 +39,18 @@ class Grid {
     return quantities[j*w + i];
   };
 
+  /**
+   * Gets the value of a stored quantity, sets the value to T(0) if indicies are outside bounds
+   * @param i, the position along the x axis (w)
+   * @param j, the position along the y axis (h)
+   */
   
-  
+  T safeGet(int i, int j) const{
+    if(i < 0 || j < 0 || i > w - 1 || j > h - 1 ){
+      return T(0);
+    }
+    return get(i,j);
+  }
   /**
    * Set value of the stored quantity.
    */
