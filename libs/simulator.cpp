@@ -17,7 +17,8 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
 
   // init non-state grids
   divergenceGrid = new OrdinalGrid<float>(w, h);
-  pressureGrid = new OrdinalGrid<double>(w, h);
+  pressureGridFrom = new OrdinalGrid<double>(w, h);
+  pressureGridTo = new OrdinalGrid<double>(w, h);
 }
 
 /**
@@ -33,7 +34,8 @@ Simulator::~Simulator() {}
  */
 void Simulator::step(float dt) {
   
-  // OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
+  //OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
+
   //Currently disabled, 
   //applyGravity(stateFrom->velocityGrid, glm::vec2(0,0.00001), dt);
   copyBoundaries(stateFrom, stateTo);
@@ -42,25 +44,25 @@ void Simulator::step(float dt) {
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100);
   gradientSubtraction(stateTo, dt);
-  enforceVelocityBoundaryConditions(stateTo);
 
-  // calculateDivergence(stateTo, divergenceOut);
-
+  /*
+  calculateDivergence(stateTo, divergenceOut);
+  
   // divergence sum
-  // float sumDivIn = 0;
-  // float sumDivOut = 0;
-  // for (unsigned int j = 0; j < h; ++j) {
-  //   for (unsigned int i = 0; i < w; ++i) {
-  //     sumDivIn += fabs( divergenceGrid->get(i, j) );
-  //     sumDivOut += fabs( divergenceOut->get(i, j) );
-  //   }
-  // }
-  // std::cout << "avg. div in: " << sumDivIn / (w*h) << std::endl;
-  // std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
-  // std::cout << std::endl;
+  float sumDivIn = 0;
+  float sumDivOut = 0;
+  for (unsigned int j = 1; j < h-1; ++j) {
+    for (unsigned int i = 1; i < w-1; ++i) {
+      sumDivIn += fabs(divergenceGrid->get(i, j));
+      sumDivOut += fabs(divergenceOut->get(i, j));
+    }
+  }
+  std::cout << "avg. div in: " << sumDivIn / (w*h) << std::endl;
+  std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
+  std::cout << std::endl;
 
-  // std::cin.get();
-
+  std::cin.get();
+  */
   // Variable time step calculation
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0));
   // swap states
@@ -81,7 +83,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for(unsigned int j = 0; j < h; j++){
       glm::vec2 position = backTrackU(readFrom, i, j, dt);
       writeTo->velocityGrid->u->set(i,j,
-        readFrom->velocityGrid->u->getInterpolated(position)
+        readFrom->velocityGrid->u->getCrerp(position)
       );
     }
   }
@@ -90,7 +92,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for(unsigned int j = 0; j <= h; j++){
       glm::vec2 position = backTrackV(readFrom, i, j, dt);
       writeTo->velocityGrid->v->set(i,j,
-        readFrom->velocityGrid->v->getInterpolated(position)
+        readFrom->velocityGrid->v->getCrerp(position)
       );
     }
   }
@@ -100,7 +102,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for (unsigned int i = 0; i < w; ++i) {
       glm::vec2 position = backTrackMid(readFrom, i, j, dt);
       writeTo->inkGrid->set(i,j,
-        readFrom->inkGrid->getInterpolated(position)
+        readFrom->inkGrid->getCrerp(position)
       );
     }
   }
@@ -128,33 +130,33 @@ void Simulator::copyBoundaries(State const* readFrom, State* writeTo) {
 glm::vec2 Simulator::backTrackU(State const* readFrom, int i, int j, float dt){
   glm::vec2 position(i,j);
   glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->get(i,j),
-                          readFrom->velocityGrid->v->getInterpolated(i-0.5,j+0.5));
+                          readFrom->velocityGrid->v->getLerp(i-0.5,j+0.5));
   glm::vec2 midPos = position - (dt/2) * v;
 
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos),
-                             readFrom->velocityGrid->v->getInterpolated(midPos.x-0.5, midPos.y+0.5));
+  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getLerp(midPos),
+                             readFrom->velocityGrid->v->getLerp(midPos.x-0.5, midPos.y+0.5));
   return position-dt*midV;
 }
 
 glm::vec2 Simulator::backTrackV(State const* readFrom, int i, int j, float dt){
   glm::vec2 position(i,j);
   glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->get(i+0.5,j-0.5),
-                          readFrom->velocityGrid->v->getInterpolated(i,j));
+                          readFrom->velocityGrid->v->getLerp(i,j));
   glm::vec2 midPos = position - (dt/2) * v;
 
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos.x+0.5, midPos.y-0.5),
-                             readFrom->velocityGrid->v->getInterpolated(midPos));
+  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getLerp(midPos.x+0.5, midPos.y-0.5),
+                             readFrom->velocityGrid->v->getLerp(midPos));
   return position-dt*midV;
 }
 
 glm::vec2 Simulator::backTrackMid(State const* readFrom, int i, int j, float dt){
   glm::vec2 position(i,j);
-  glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->getInterpolated(i+0.5,j),
-                          readFrom->velocityGrid->v->getInterpolated(i,j+0.5));
+  glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->getLerp(i+0.5,j),
+                          readFrom->velocityGrid->v->getLerp(i,j+0.5));
   glm::vec2 midPos = position - (dt/2) * v;
 
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getInterpolated(midPos.x+0.5f, midPos.y),
-                             readFrom->velocityGrid->v->getInterpolated(midPos.x, midPos.y+0.5f));
+  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getLerp(midPos.x+0.5f, midPos.y),
+                             readFrom->velocityGrid->v->getLerp(midPos.x, midPos.y+0.5f));
   return position-dt*midV;
 }
 
@@ -209,6 +211,11 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
   resetPressureGrid();
 
   for(unsigned int k = 0; k < nIterations; ++k) {
+
+    OrdinalGrid<double> *tmp = pressureGridFrom;
+    pressureGridFrom = pressureGridTo;
+    pressureGridTo = tmp;
+
     for (unsigned int j = 0; j < h; ++j) {
       for (unsigned int i = 0; i < w; ++i) {
 
@@ -222,22 +229,22 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
 
         double pL = 0;
         if (boundaryGrid->get(i - 1, j) != BoundaryType::SOLID) {
-          pL = pressureGrid->get(i - 1, j);
+          pL = pressureGridFrom->get(i - 1, j);
           neighbouringFluidCells++;
         } 
         double pR = 0;
         if (boundaryGrid->get(i + 1, j) != BoundaryType::SOLID) {
-          pR = pressureGrid->get(i + 1, j);
+          pR = pressureGridFrom->get(i + 1, j);
           neighbouringFluidCells++;
         } 
         double pU = 0;
         if (boundaryGrid->get(i, j - 1) != BoundaryType::SOLID) {
-          pU = pressureGrid->get(i, j - 1);
+          pU = pressureGridFrom->get(i, j - 1);
           neighbouringFluidCells++;
         } 
         double pD = 0;
         if (boundaryGrid->get(i, j + 1) != BoundaryType::SOLID) {
-          pD = pressureGrid->get(i, j + 1);
+          pD = pressureGridFrom->get(i, j + 1);
           neighbouringFluidCells++;
         } 
 
@@ -247,7 +254,7 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
         double p = pL + pR + pU + pD - sqDeltaX * divergence;
         p /= (double) neighbouringFluidCells;
 
-        pressureGrid->set(i, j, p);
+        pressureGridTo->set(i, j, p);
       }
     }
 
@@ -267,44 +274,9 @@ void Simulator::gradientSubtraction(State *state, float dt) {
 
   OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
   OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
+  Grid<BoundaryType> const* const boundaries = state->getBoundaryGrid();
 
   // looping through pressure cells
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-
-      float uL = uVelocityGrid->get(i, j);
-      float uR = uVelocityGrid->get(i+1, j);
-
-      float vU = vVelocityGrid->get(i, j);
-      float vD = vVelocityGrid->get(i, j+1);
-
-      float p = pressureGrid->get(i, j);
-
-      uL -= scale * p;
-      uR += scale * p;
-      vU -= scale * p;
-      vD += scale * p;
-
-      uVelocityGrid->set(i, j, uL);
-      uVelocityGrid->set(i+1, j, uR);
-      vVelocityGrid->set(i, j, vU);
-      vVelocityGrid->set(i, j+1, vD);
-    }
-  }
-}
-
-/**
- * Enforces velocity boundary condition dot( u(n+1), n ) = dot( u(solid), n )
- * @param state state to modify
- */
-void Simulator::enforceVelocityBoundaryConditions(State *state) {
-
-  Grid<BoundaryType> *boundaries = state->boundaryGrid;
-
-  OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
-  OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
-
-  // loop through boundary pressure cells
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
 
@@ -314,11 +286,27 @@ void Simulator::enforceVelocityBoundaryConditions(State *state) {
         uVelocityGrid->set(i+1, j, 0.0f);
         vVelocityGrid->set(i, j, 0.0f);
         vVelocityGrid->set(i, j+1, 0.0f);
-      }
+      } else {
+        float uL = uVelocityGrid->get(i, j);
+        float uR = uVelocityGrid->get(i+1, j);
 
+        float vU = vVelocityGrid->get(i, j);
+        float vD = vVelocityGrid->get(i, j+1);
+
+        float p = pressureGridTo->get(i, j);
+
+        uL -= scale * p;
+        uR += scale * p;
+        vU -= scale * p;
+        vD += scale * p;
+
+        uVelocityGrid->set(i, j, uL);
+        uVelocityGrid->set(i+1, j, uR);
+        vVelocityGrid->set(i, j, vU);
+        vVelocityGrid->set(i, j+1, vD);
+      }
     }
   }
-
 }
 
 /**
@@ -327,10 +315,15 @@ void Simulator::enforceVelocityBoundaryConditions(State *state) {
 OrdinalGrid<double>* Simulator::resetPressureGrid() {
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
-      pressureGrid->set(i, j, 0.0);
+      pressureGridFrom->set(i, j, 0.0);
+      pressureGridTo->set(i, j, 0.0);
     }
   }
-  return pressureGrid;
+  return pressureGridFrom;
+}
+
+OrdinalGrid<float>* Simulator::getDivergenceGrid() {
+  return divergenceGrid;
 }
 
 glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){

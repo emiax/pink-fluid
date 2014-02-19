@@ -30,10 +30,9 @@ public:
   void copyBoundaries(State const* readFrom, State* writeTo);
 
   void gradientSubtraction(State *state, float dt);
-  void enforceVelocityBoundaryConditions(State *state);
 
   OrdinalGrid<double>* resetPressureGrid();
-  
+  OrdinalGrid<float>* getDivergenceGrid();  
 
   glm::vec2 maxVelocity(VelocityGrid const *const velocity);
   float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
@@ -45,7 +44,7 @@ private:
   unsigned int w,h;
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
-  OrdinalGrid<double> *pressureGrid;
+  OrdinalGrid<double> *pressureGridFrom, *pressureGridTo;
   float deltaT;
   float gridSize;
 };

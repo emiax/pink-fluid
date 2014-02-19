@@ -90,7 +90,7 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 100, h = 100;
+  unsigned int w = 200, h = 200;
   State prevState(w, h);
   State newState(w, h);
 
@@ -170,14 +170,13 @@ int main( void ) {
 
   //Object which encapsulates a texture + The destruction of a texture.
   Texture2D tex2D(w, h);
-
   double lastTime = glfwGetTime();
   int nbFrames = 0;
 
   float deltaT = 0.01; //First time step
 
 
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
@@ -201,6 +200,7 @@ int main( void ) {
     for(unsigned int j = 0; j < h; ++j){
         for(unsigned int i=0;i<w;++i) {
           
+
           //tex2D.set(i,j,0, newState.getVelocityGrid()->u->get(i,j));
           //tex2D.set(i,j,1, newState.getVelocityGrid()->v->get(i,j));
           //tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i, j));
@@ -210,6 +210,22 @@ int main( void ) {
            tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
            tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
            tex2D.set(i,j,3, 1.0f);
+
+          // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+          // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+          // tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j));
+          // tex2D.set(i,j,3, 1.0f);
+
+          // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
+          // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
+          // tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
+          // tex2D.set(i,j,3, 1.0f);
+
+          //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
+          //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
+          //tex2D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
+          //tex2D.set(i,j,3, 1.0f);
+
       }
     }
 

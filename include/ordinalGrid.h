@@ -18,13 +18,41 @@ class OrdinalGrid : public Grid<T> {
    */
  OrdinalGrid(unsigned int w, unsigned int h) : Grid<T>(w, h) {};
 
-
-  /**
+ /**
    * Get the linearly interpolated value of the stored quantity.
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T getInterpolated(float i, float j) const{
+  T getLerp(float i, float j) const{
+    if (i > this->w - 1) i = this->w - 1;
+    if (j > this->h - 1) j = this->h - 1;
+    if (i < 0) i = 0;
+    if (j < 0) j = 0;
+    unsigned int lowerI = floor(i);
+    unsigned int upperI = ceil(i);
+    unsigned int lowerJ = floor(j);
+    unsigned int upperJ = ceil(j);
+    
+    float ti = fmod(i, 1.0);
+    float tj = fmod(j, 1.0);
+    
+    T v00 = this->get(lowerI, lowerJ);
+    T v01 = this->get(lowerI, upperJ);
+    T v10 = this->get(upperI, lowerJ);
+    T v11 = this->get(upperI, upperJ);
+    
+    T v0 = lerp(v00, v01, tj);
+    T v1 = lerp(v10, v11, tj);
+    
+    return lerp(v0, v1, ti);
+  }
+
+  /**
+   * Get the Catmull-Rom interpolated value of the stored quantity.
+   * @param i, the position along the x axis (w)
+   * @param j, the position along the y axis (h)
+   */
+  T getCrerp(float i, float j) const{
     unsigned int i0 = floor(i)-1;
     unsigned int i1 = floor(i);
     unsigned int i2 = ceil(i);
@@ -93,8 +121,16 @@ class OrdinalGrid : public Grid<T> {
    * A thin frontend for T getInterpolated(float i, float j)
    * @param p, A vector to interpolate from
    */
-  T getInterpolated(glm::vec2 p) const{
-    return getInterpolated(p.x,p.y);
+  T getLerp(glm::vec2 p) const{
+    return getLerp(p.x,p.y);
+  }
+
+  T getCrerp(glm::vec2 p) const{
+    return getCrerp(p.x,p.y);
+  }
+
+  T getInterpolated(float x, float y) const {
+    return getLerp(x, y);
   }
 
  private:
