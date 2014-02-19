@@ -1,9 +1,12 @@
 #pragma once
+#define GLM_FORCE_RADIANS
 #include <grid.h>
 #include <cmath>
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <algorithm>
 #include <iostream>
+
 
 template <class T>
 class OrdinalGrid : public Grid<T> {
@@ -114,16 +117,16 @@ class OrdinalGrid : public Grid<T> {
    *
    */
   T crer(T x1, T x2, T x3, T x4, float t) const{
+    T minT = glm::min(x2,x3);
+    T maxT = glm::max(x2,x3);
     float t2 = t*t;
     float t3 = t2*t;
-    return (
-            x1 * (-t/2 + t2 - t3/2) +
-            x2 * (1 - 5*t2/2 + 3*t3/2) + 
-            x3 * (t/2 + 2*t2 - 3*t3/2) + 
-            x4 * (-t2/2 + t3/2)
-            );
-  }
-  inline float clamp(float x, float min, float max) const{
-    return x < min ? min : (x > max ? max : x);
+    return glm::clamp(0.5f * (
+                              (2.0f * x2) + 
+                              (-x1 + x3) * t + 
+                              (2.0f * x1 - 5.0f*x2 + 4.0f*x3 - x4) * t2 + 
+                              (-x1 + 3.0f*x2 - 3.0f*x3 + x4) * t3
+                              ), 
+                      minT, maxT);
   }
 };
