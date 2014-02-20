@@ -201,15 +201,15 @@ int main( void ) {
         for(unsigned int i=0;i<w;++i) {
           
 
-          //tex2D.set(i,j,0, newState.getVelocityGrid()->u->get(i,j));
-          //tex2D.set(i,j,1, newState.getVelocityGrid()->v->get(i,j));
-          //tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i, j));
-          //tex2D.set(i,j,3, 1.0f);
+          /*       tex2D.set(i,j,0, newState.getVelocityGrid()->u->get(i,j));
+          tex2D.set(i,j,1, newState.getVelocityGrid()->v->get(i,j));
+          tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i, j));
+          tex2D.set(i,j,3, 1.0f);*/
 
-           tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-           tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-           tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
-           tex2D.set(i,j,3, 1.0f);
+          tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
+          tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
+          tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
+          tex2D.set(i,j,3, 1.0f);
 
           //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
           //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
