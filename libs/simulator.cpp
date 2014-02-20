@@ -39,10 +39,12 @@ void Simulator::step(float dt) {
   //OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
 
   //Currently disabled, 
-  //  applyGravity(stateFrom->velocityGrid, glm::vec2(0,0.001), dt);
+
   copyBoundaries(stateFrom, stateTo);
   advect(stateFrom, stateTo, dt);
   
+  applyGravity(stateTo->velocityGrid, glm::vec2(0,0.1), dt);
+
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100);
   gradientSubtraction(stateTo, dt);
@@ -66,7 +68,7 @@ void Simulator::step(float dt) {
   std::cin.get();
   */
   // Variable time step calculation
-  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0));
+  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.1));
   // swap states
   std::swap(stateFrom, stateTo);
 }
@@ -189,12 +191,14 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
 
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
-      float entering = u->get(i, j) + v->get(i, j);
-      float leaving = u->get(i + 1, j) + v->get(i, j + 1);
+      if(readFrom->boundaryGrid->get(i,j) == BoundaryType::FLUID){
+        float entering = u->get(i, j) + v->get(i, j);
+        float leaving = u->get(i + 1, j) + v->get(i, j + 1);
 
-      float divergence = leaving - entering;
+        float divergence = leaving - entering;
 
-      toDivergenceGrid->set(i, j, divergence);
+        toDivergenceGrid->set(i, j, divergence);
+      }
     }
   }
 }
