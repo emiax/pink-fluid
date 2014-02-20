@@ -83,7 +83,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for(unsigned int j = 0; j < h; j++){
       glm::vec2 position = backTrackU(readFrom, i, j, dt);
       writeTo->velocityGrid->u->set(i,j,
-        readFrom->velocityGrid->u->getCrerp(position)
+        readFrom->velocityGrid->u->getLerp(position)
       );
     }
   }
@@ -92,7 +92,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for(unsigned int j = 0; j <= h; j++){
       glm::vec2 position = backTrackV(readFrom, i, j, dt);
       writeTo->velocityGrid->v->set(i,j,
-        readFrom->velocityGrid->v->getCrerp(position)
+        readFrom->velocityGrid->v->getLerp(position)
       );
     }
   }
@@ -102,7 +102,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for (unsigned int i = 0; i < w; ++i) {
       glm::vec2 position = backTrackMid(readFrom, i, j, dt);
       writeTo->inkGrid->set(i,j,
-        readFrom->inkGrid->getCrerp(position)
+        readFrom->inkGrid->getLerp(position)
       );
     }
   }

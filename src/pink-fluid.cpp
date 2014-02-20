@@ -90,30 +90,30 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 200, h = 200;
+  unsigned int w = 50, h = 50;
   State prevState(w, h);
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   //Create new velocity positions
-  for(unsigned int i = 1; i < w/3; i++){
-    for(unsigned int j = 1; j < h/3; j++){
+  for(unsigned int i = 3; i < w/3; i++){
+    for(unsigned int j = 3; j < h/3; j++){
       velocities->u->set( i, j, 1.0f );
     }
   }
-  for(unsigned int i = 1; i < w/3; i++){
-    for(unsigned int j = 1; j < h/3; j++){
+  for(unsigned int i = 3; i < w/3; i++){
+    for(unsigned int j = 3; j < h/3; j++){
       velocities->v->set( i, j, -1.0f );
     }
   }
 
-  for(unsigned int i = 2*w/3; i < w-2; i++){
-    for(unsigned int j = 2*h/3; j < h-2; j++){
+  for(unsigned int i = 2*w/3; i < w-3; i++){
+    for(unsigned int j = 2*h/3; j < h-3; j++){
       velocities->u->set( i, j, -1.0f );
     }
   }
-  for(unsigned int i = 2*w/3; i < w-2; i++){
-    for(unsigned int j = 2*h/3; j < h-2; j++){
+  for(unsigned int i = 2*w/3; i < w-3; i++){
+    for(unsigned int j = 2*h/3; j < h-3; j++){
       velocities->v->set( i, j, 1.0f );
     }
   }
@@ -126,16 +126,16 @@ int main( void ) {
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
       BoundaryType bt;
-      if(i == 0){
+      if(i < 3){
         bt = BoundaryType::SOLID;
       }
-      else if(j == 0){
+      else if(j < 3){
         bt = BoundaryType::SOLID;
       }
-      else if(i == w - 1){
+      else if(i > w - 3){
         bt = BoundaryType::SOLID;
       }
-      else if(j == h - 1){
+      else if(j > h - 3){
         bt = BoundaryType::SOLID;
       }
       else{
@@ -153,13 +153,13 @@ int main( void ) {
       ink->set( i, j, glm::vec3(0.0f) );
     }
   }
-  for(unsigned int i = 1; i < w/3; i++){
-    for(unsigned int j = 1; j < h/3; j++){
+  for(unsigned int i = 3; i < 25; i++){
+    for(unsigned int j = 3; j < 25; j++){
       ink->set( i, j, glm::vec3(1, 0, 1) );
     }
   }
-  for(unsigned int i = 2*w/3; i < w-1; i++){
-    for(unsigned int j = 2*h/3; j < h-1; j++){
+  for(unsigned int i = 2*w/3; i < w-3; i++){
+    for(unsigned int j = 2*h/3; j < h-3; j++){
       ink->set( i, j, glm::vec3(0, 1, 1) );
     }
   }
@@ -176,7 +176,7 @@ int main( void ) {
   float deltaT = 0.01; //First time step
 
 
-  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
@@ -210,16 +210,6 @@ int main( void ) {
            tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
            tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
            tex2D.set(i,j,3, 1.0f);
-
-          // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
-          // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-          // tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j));
-          // tex2D.set(i,j,3, 1.0f);
-
-          // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-          // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-          // tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
-          // tex2D.set(i,j,3, 1.0f);
 
           //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
           //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
