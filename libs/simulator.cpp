@@ -5,7 +5,7 @@
 // #include <exception>
 #include <algorithm>
 #include <iostream>
-
+#include <glm/ext.hpp>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
   
@@ -30,24 +30,60 @@ Simulator::~Simulator() {}
 
 
 /**
+ * 
+ */
+void Simulator::addAdvectedMarker(glm::vec2 p, float dt) {
+  glm::vec2 q = p + stateFrom->velocityGrid->getLerp(p)*dt;
+  unsigned int i = std::round(glm::clamp(q.x, 0.0f, (float)(w-1)));
+  unsigned int j = std::round(glm::clamp(q.y, 0.0f, (float)(h-1)));
+  stateTo->boundaryGrid->set(i, j, BoundaryType::FLUID);
+  //  std::cout << "YAO" << i << ", " << j << std::endl;
+}
+
+
+void Simulator::updateMarkers(float dt) {
+  resetBoundaryGrid(stateTo);
+  for (int i = 0; i < w; i++) {
+    for(int j = 0; j < h; j++) {
+      if (stateFrom->boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+                addAdvectedMarker(glm::vec2(i - 0.25f, j - 0.25f), dt);
+                addAdvectedMarker(glm::vec2(i - 0.25f, j + 0.25f), dt);
+                addAdvectedMarker(glm::vec2(i + 0.25f, j - 0.25f), dt);
+                addAdvectedMarker(glm::vec2(i + 0.25f, j + 0.25f), dt);
+      }
+    }
+  }
+  Grid<BoundaryType> *from = stateFrom->boundaryGrid;
+  Grid<BoundaryType> *to = stateTo->boundaryGrid;
+  for (int i = 0; i < w; i++) {
+    for(int j = 0; j < h; j++) {
+      if (from->get(i, j) == BoundaryType::SOLID) {
+        to->set(i, j, BoundaryType::SOLID);
+      }
+    }
+  }
+}
+
+
+/**
  * Implicit step function, can only be used if
  * Simulator is initialized with State constructor
  * @param dt Time step, deltaT
  */
 void Simulator::step(float dt) {
   
-  //OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
-
+  OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
+  
   //Currently disabled, 
-  //  applyGravity(stateFrom->velocityGrid, glm::vec2(0,0.001), dt);
-  copyBoundaries(stateFrom, stateTo);
+  applyGravity(stateFrom, glm::vec2(0,1), dt);
+  //  copyBoundaries(stateFrom, stateTo);
+  updateMarkers(dt);
   advect(stateFrom, stateTo, dt);
   
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100);
   gradientSubtraction(stateTo, dt);
 
-  /*
   calculateDivergence(stateTo, divergenceOut);
   
   // divergence sum
@@ -63,8 +99,6 @@ void Simulator::step(float dt) {
   std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
   std::cout << std::endl;
 
-  std::cin.get();
-  */
   // Variable time step calculation
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0));
   // swap states
@@ -116,8 +150,13 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
  * @param readFrom State to read from
  * @param writeTo State to write to
  */
-void Simulator::copyBoundaries(State const* readFrom, State* writeTo) {
-  writeTo->setBoundaryGrid(readFrom->getBoundaryGrid());
+void Simulator::resetBoundaryGrid(State* writeTo) {
+  Grid<BoundaryType> *grid = writeTo->boundaryGrid;
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      grid->set(i, j, BoundaryType::EMPTY);
+    }
+  }  
 }
 
 
@@ -164,15 +203,22 @@ glm::vec2 Simulator::backTrackMid(State const* readFrom, int i, int j, float dt)
 
 
 //Apply gravity to fluid cells
-void Simulator::applyGravity(VelocityGrid *velocityGrid, glm::vec2 g, float deltaT){
+void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
+  VelocityGrid *velocityGrid = state->velocityGrid;
+  Grid<BoundaryType> *boundaryGrid = state->boundaryGrid;
+
   for(auto i = 0u; i <= h; i++){
     for(auto j = 0u; j < w; j++){
-      velocityGrid->u->set(i,j, velocityGrid->u->get(i,j)+g.x*deltaT);
+      if (boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+        velocityGrid->u->set(i,j, velocityGrid->u->get(i,j)+g.x*deltaT);
+      }
     }
   }
   for(auto i = 0u; i < h; i++){
     for(auto j = 0u; j <= w; j++){
-      velocityGrid->v->set(i,j, velocityGrid->v->get(i,j)+g.y*deltaT);
+      if (boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+        velocityGrid->v->set(i,j, velocityGrid->v->get(i,j)+g.y*deltaT);
+      }
     }
   }
 }
@@ -189,12 +235,18 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
 
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
-      float entering = u->get(i, j) + v->get(i, j);
-      float leaving = u->get(i + 1, j) + v->get(i, j + 1);
 
-      float divergence = leaving - entering;
+      if (readFrom->boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+        float entering = u->get(i, j) + v->get(i, j);
+        float leaving = u->get(i + 1, j) + v->get(i, j + 1);
 
-      toDivergenceGrid->set(i, j, divergence);
+        float divergence = leaving - entering;
+
+
+        toDivergenceGrid->set(i, j, divergence);
+      } else {
+        toDivergenceGrid->set(i, j, 0);
+      }
     }
   }
 }
