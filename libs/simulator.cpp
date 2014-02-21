@@ -43,7 +43,7 @@ void Simulator::addAdvectedMarker(glm::vec2 p, float dt) {
 
 void Simulator::updateMarkers(float dt) {
   resetBoundaryGrid(stateTo);
-  for (int i = 0; i < w; i++) {
+  /*for (int i = 0; i < w; i++) {
     for(int j = 0; j < h; j++) {
       if (stateFrom->boundaryGrid->get(i, j) == BoundaryType::FLUID) {
                 addAdvectedMarker(glm::vec2(i - 0.25f, j - 0.25f), dt);
@@ -52,13 +52,15 @@ void Simulator::updateMarkers(float dt) {
                 addAdvectedMarker(glm::vec2(i + 0.25f, j + 0.25f), dt);
       }
     }
-  }
+    }*/
   Grid<BoundaryType> *from = stateFrom->boundaryGrid;
   Grid<BoundaryType> *to = stateTo->boundaryGrid;
   for (int i = 0; i < w; i++) {
     for(int j = 0; j < h; j++) {
       if (from->get(i, j) == BoundaryType::SOLID) {
         to->set(i, j, BoundaryType::SOLID);
+      } else {
+        to->set(i, j, BoundaryType::FLUID);
       }
     }
   }
@@ -75,13 +77,15 @@ void Simulator::step(float dt) {
   OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
   
   //Currently disabled, 
-  applyGravity(stateFrom, glm::vec2(0,1), dt);
+
   //  copyBoundaries(stateFrom, stateTo);
   updateMarkers(dt);
   advect(stateFrom, stateTo, dt);
+
+  //  applyGravity(stateTo, glm::vec2(0,0.01), dt);
   
   calculateDivergence(stateTo, divergenceGrid);
-  jacobiIteration(stateTo, 100);
+  jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
 
   calculateDivergence(stateTo, divergenceOut);
@@ -89,15 +93,16 @@ void Simulator::step(float dt) {
   // divergence sum
   float sumDivIn = 0;
   float sumDivOut = 0;
-  for (unsigned int j = 1; j < h-1; ++j) {
-    for (unsigned int i = 1; i < w-1; ++i) {
-      sumDivIn += fabs(divergenceGrid->get(i, j));
-      sumDivOut += fabs(divergenceOut->get(i, j));
+    for (unsigned int j = 1; j < h-1; ++j) {
+      for (unsigned int i = 1; i < w-1; ++i) {
+        sumDivIn += fabs(divergenceGrid->get(i, j));
+        sumDivOut += fabs(divergenceOut->get(i, j));
+      }
     }
-  }
-  std::cout << "avg. div in: " << sumDivIn / (w*h) << std::endl;
-  std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
-  std::cout << std::endl;
+    //  std::cout << "avg. div in: " << sumDivIn / (w*h) << std::endl;
+    //  std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
+    //  std::cout << std::endl;
+  //  std::cin.get();
 
   // Variable time step calculation
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0));
@@ -257,7 +262,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
  * @param readFrom The state to read from
  * @param nIterations number of iterations
  */
-void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations) {
+void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations, float dt) {
 
   const float sqDeltaX = 1.0f;
   Grid<BoundaryType> const* const boundaryGrid = readFrom->getBoundaryGrid();
@@ -277,7 +282,7 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
         int neighbouringFluidCells = 0;
 
         // is current cell solid?
-        if (boundaryGrid->get(i, j) == BoundaryType::SOLID) {
+        if (boundaryGrid->get(i, j) != BoundaryType::FLUID) {
           continue;
         }
 
@@ -302,11 +307,17 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations)
           neighbouringFluidCells++;
         } 
 
+        //        if (i == 5 && j == 5) {
+        //          std::cout << pL << " " << pR << " " << pU << " " << pD << std::endl;
+          //          std::cin.get();
+        //        }
+
         divergence = divergenceGrid->get(i, j);
+        //        std::cout << "divergence (" << i << ", " << j << ")" << divergence << std::endl; 
 
         // discretized poisson equation
-        double p = pL + pR + pU + pD - sqDeltaX * divergence;
-        p /= (double) neighbouringFluidCells;
+        double p = pL + pR + pU + pD - sqDeltaX * divergence/dt;
+        p /= ((double) neighbouringFluidCells);
 
         pressureGridTo->set(i, j, p);
       }

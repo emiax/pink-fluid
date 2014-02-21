@@ -26,7 +26,7 @@ public:
 
   // pressure
   void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
-  void jacobiIteration(State const* readFrom, unsigned int nIterations);
+  void jacobiIteration(State const* readFrom, unsigned int nIterations, float dt);
   //  void copyBoundaries(State const* readFrom, State* writeTo);
   void resetBoundaryGrid(State *state);
   void updateMarkers(float dt);

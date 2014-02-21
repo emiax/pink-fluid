@@ -100,7 +100,7 @@ int main( void ) {
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   //Create new velocity positions
-  /*u  for(unsigned int i = 2; i < w/3; i++){
+    for(unsigned int i = 2; i < w/3; i++){
     for(unsigned int j = 2; j < h/3; j++){
       velocities->u->set( i, j, 1.0f );
     }
@@ -120,7 +120,7 @@ int main( void ) {
     for(unsigned int j = 2*h/3; j < h-2; j++){
       velocities->v->set( i, j, 1.0f );
     }
-    }*/
+    }
 
   prevState.setVelocityGrid(velocities);
 
@@ -145,7 +145,7 @@ int main( void ) {
       else if (j > h/3 && j < 2*h/3 && i > 2 && i < w-2) {
         bt = BoundaryType::FLUID;
       } else {
-        bt = BoundaryType::EMPTY;
+        bt = BoundaryType::FLUID;
       }
       boundaries->set(i,j, bt);
     }
@@ -161,12 +161,12 @@ int main( void ) {
   }
   for(unsigned int i = 1; i < w/3; i++){
     for(unsigned int j = 1; j < h/3; j++){
-      ink->set( i, j, glm::vec3(1, 0, 1) );
+      ink->set( i, j, glm::vec3(0.5, 0, 0.5) );
     }
   }
   for(unsigned int i = 2*w/3; i < w-1; i++){
     for(unsigned int j = 2*h/3; j < h-1; j++){
-      ink->set( i, j, glm::vec3(0, 1, 1) );
+      ink->set( i, j, glm::vec3(0, 0.5, 0.5) );
     }
   }
   prevState.setInkGrid(ink);
@@ -179,7 +179,7 @@ int main( void ) {
   double lastTime = glfwGetTime();
   int nbFrames = 0;
 
-  float deltaT = 0.25; //First time step
+  float deltaT = 0.1; //First time step
 
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -190,7 +190,7 @@ int main( void ) {
     // lastRun = glfwGetTime();
     // float deltaT = glfwGetTime()-lastRun;
     sim.step(deltaT);
-    //    deltaT = sim.getDeltaT();
+    deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -221,13 +221,14 @@ int main( void ) {
 
           tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
           tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-          tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j));
+          //          tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j))
+          tex2D.set(i,j,2, 0.5);
           tex2D.set(i,j,3, 1.0f);
 
-          //tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-          //tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-           ///tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
-           //           tex2D.set(i,j,3, 1.0f);
+          tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
+          tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
+          tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
+          tex2D.set(i,j,3, 1.0f);
 
           //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
           //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
