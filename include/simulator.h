@@ -22,12 +22,15 @@ public:
   void advect(State const * readFrom, State * writeTo, float dt);
 
   // ext. forces
-  void applyGravity(VelocityGrid *velocityGrid, glm::vec2 g, float deltaT);
+  void applyGravity(State *state, glm::vec2 g, float deltaT);
 
   // pressure
   void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
-  void jacobiIteration(State const* readFrom, unsigned int nIterations);
-  void copyBoundaries(State const* readFrom, State* writeTo);
+  void jacobiIteration(State const* readFrom, unsigned int nIterations, float dt);
+  //  void copyBoundaries(State const* readFrom, State* writeTo);
+  void resetBoundaryGrid(State *state);
+  void updateMarkers(float dt);
+
 
   void gradientSubtraction(State *state, float dt);
 
@@ -41,6 +44,7 @@ public:
 
 
 private:
+  void addAdvectedMarker(glm::vec2 p, float dt);
   unsigned int w,h;
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;

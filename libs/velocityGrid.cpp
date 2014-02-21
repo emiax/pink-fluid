@@ -15,3 +15,11 @@ glm::vec2 VelocityGrid::getCell(unsigned int i, unsigned int j) const{
     v->getLerp(i, (float)j+0.5)
   );
 }
+
+
+glm::vec2 VelocityGrid::getLerp(glm::vec2 p) const{
+  return glm::vec2(
+    u->getLerp(p.x+0.5, p.y), 
+    v->getLerp(p.x, p.y+0.5)
+  );
+}
