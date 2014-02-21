@@ -13,7 +13,6 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
   boundaryGrid = new Grid<BoundaryType>(w, h);
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
-
   resetVelocityGrids();
 }
 
