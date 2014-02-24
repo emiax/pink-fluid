@@ -18,30 +18,32 @@ void LevelSet::initializeLevelSet(Grid<BoundaryType> const *const boundary){
     for(auto j = 0u; j < h; j++){
       //Currently only creates the levelset-based on fluid
       BoundaryType currentCellType = boundary->get(i,j);
-      if(boundary->safeGet(i+1,j) != currentCellType){
-        distanceGrid->set(i,j, glm::vec2(i+0.5, j));
-        doneGrid->set(i,j, true);
-      }
-      else if(boundary->safeGet(i-1,j) != currentCellType){
-        distanceGrid->set(i,j, glm::vec2(i-0.5, j));
-        doneGrid->set(i,j, true);
-      }
-      else if(boundary->safeGet(i,j+1) != currentCellType){
-        distanceGrid->set(i,j, glm::vec2(0.5, j+0.5));
-        doneGrid->set(i,j, true);
-      }
-      else if(boundary->safeGet(i,j-1) != currentCellType){
-        distanceGrid->set(i,j, glm::vec2(i, j-0.5));
-        doneGrid->set(i,j, true);
-      }
-      else{
-        doneGrid->set(i,j, false);
+      if(currentCellType == BoundaryType::FLUID){
+        if(boundary->safeGet(i+1,j) == BoundaryType::EMPTY){
+          distanceGrid->set(i,j, glm::vec2(i+0.5, j));
+          doneGrid->set(i,j, true);
+        }
+        else if(boundary->safeGet(i-1,j) == BoundaryType::EMPTY){
+          distanceGrid->set(i,j, glm::vec2(i-0.5, j));
+          doneGrid->set(i,j, true);
+        }
+        else if(boundary->safeGet(i,j+1) == BoundaryType::EMPTY){
+          distanceGrid->set(i,j, glm::vec2(0.5, j+0.5));
+          doneGrid->set(i,j, true);
+        }
+        else if(boundary->safeGet(i,j-1) == BoundaryType::EMPTY){
+          distanceGrid->set(i,j, glm::vec2(i, j-0.5));
+          doneGrid->set(i,j, true);
+        }
+        else{
+          doneGrid->set(i,j, Grid);
+        }
       }
     }
   }
 }
 
 
-Grid<bool> const *const LevelSet::getDoneGrid(){
+falsetr<bool> const *const LevelSet::getDoneGrid() const{
   return doneGrid;
 }

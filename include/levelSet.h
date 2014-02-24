@@ -11,7 +11,7 @@ public:
   void initializeLevelSet(Grid<BoundaryType> const *const);
   OrdinalGrid<BoundaryType> const *const advectLevelSet(VelocityGrid const* const);
   OrdinalGrid<BoundaryType> const *const getBoundaryGrid();
-  Grid<bool> const *const getDoneGrid();
+  Grid<bool> const *const getDoneGrid() const;
 private:
   OrdinalGrid<glm::vec2> *distanceGrid;
   Grid<bool> *doneGrid;

@@ -30,6 +30,7 @@
 #include <state.h>
 #include <simulator.h>
 #include <velocityGrid.h>
+#include <levelSet.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -214,9 +215,14 @@ int main( void ) {
 
           //tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
           //          tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-          tex2D.set(i,j,0, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
+          /*          tex2D.set(i,j,0, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
           tex2D.set(i,j,1, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
           tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i,j) == BoundaryType::SOLID ? 1.0 : 0.0);
+          tex2D.set(i,j,3, 1.0f);*/
+
+          tex2D.set(i,j,0, sim.getLevelSet()->getDoneGrid()->get(i,j) ? 1.0 : 0.0);
+          tex2D.set(i,j,1, 0);//newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
+          tex2D.set(i,j,2, 0);
           tex2D.set(i,j,3, 1.0f);
 
           /*          tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));

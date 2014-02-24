@@ -92,11 +92,12 @@ void Simulator::step(float dt) {
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
-  
-  levelSet->initializeLevelSet( stateTo->boundaryGrid);
+
+  copyBoundaries(stateFrom, stateTo);  
+  levelSet->initializeLevelSet( stateTo->boundaryGrid );
   
   calculateDivergence(stateTo, divergenceOut);
-  copyBoundaries(stateFrom, stateTo);
+
   // divergence sum
   float sumDivIn = 0;
   float sumDivOut = 0;
