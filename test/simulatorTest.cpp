@@ -51,7 +51,7 @@ TEST_F(SimulatorTest, BackTrack){
 TEST_F(SimulatorTest, Advect){
   sim->advect(readState, writeState, 1.0f);
   float v1 = writeState->getVelocityGrid()->u->get(1,1);
-  ASSERT_EQ(v1, 0.5);
+  ASSERT_EQ(v1, 0.5625);
 }
 
 TEST_F(SimulatorTest, PressureGridReset) {
