@@ -6,7 +6,7 @@ template<typename T>
 class Grid;
 
 class Simulator;
-class VelocityGrid;
+struct VelocityGrid;
 
 enum BoundaryType{
   SOLID = -1, EMPTY = 0, FLUID = 1

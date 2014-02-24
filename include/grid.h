@@ -13,7 +13,7 @@ class Grid {
     this->h = h;
     // int size = this->size();
     quantities = new T[w*h];
-    for(auto i = 0; i < size(); i++){
+    for(auto i = 0u; i < size(); i++){
       quantities[i] = T(0);
     }
   };
@@ -37,8 +37,8 @@ class Grid {
    * 
    */
   void setForEach(std::function< T (unsigned int i, unsigned int j)> func){
-    for(unsigned int i =  0; i < w; i++){
-      for(unsigned int j = 0; j < h; j++){
+    for(auto i = 0u; i < w; i++){
+      for(auto j = 0u; j < h; j++){
         set(i,j, func(i,j));
       }
     }
@@ -60,7 +60,7 @@ class Grid {
    */
   
   T safeGet(int i, int j) const{
-    if(i < 0 || j < 0 || i > w - 1 || j > h - 1 ){
+    if(i < 0 || j < 0 || i > int(w - 1) || j > int(h - 1) ){
       return T(0);
     }
     return get(i,j);

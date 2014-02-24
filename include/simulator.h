@@ -4,7 +4,7 @@ class OrdinalGrid;
 template<typename T>
 class Grid;
 class State;
-class VelocityGrid;
+struct VelocityGrid;
 #include <glm/glm.hpp>
 
 class Simulator {

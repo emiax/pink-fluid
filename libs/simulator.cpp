@@ -57,15 +57,14 @@ void Simulator::updateMarkers(float dt) {
     }*/
   Grid<BoundaryType> *from = stateFrom->boundaryGrid;
   Grid<BoundaryType> *to = stateTo->boundaryGrid;
-  for (int i = 0; i < w; i++) {
-    for(int j = 0; j < h; j++) {
+  to->setForEach([&](unsigned int i, unsigned int j){
       if (from->get(i, j) == BoundaryType::SOLID) {
-        to->set(i, j, BoundaryType::SOLID);
-      } else {
-        to->set(i, j, BoundaryType::FLUID);
+        return BoundaryType::SOLID;
+      } 
+      else{
+        return BoundaryType::FLUID;
       }
-    }
-  }
+    });
 }
 
 
@@ -118,35 +117,23 @@ void Simulator::step(float dt) {
  * @param dt time step length
  */
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
-  
   //X
-  for(unsigned int i = 0; i <= w; i++){
-    for(unsigned int j = 0; j < h; j++){
+  writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
       glm::vec2 position = backTrackU(readFrom, i, j, dt);
-      writeTo->velocityGrid->u->set(i,j,
-        readFrom->velocityGrid->u->getCrerp(position)
-      );
-    }
-  }
+      return readFrom->velocityGrid->u->getCrerp(position);
+    });
+
   //Y
-  for(unsigned int i = 0; i < w; i++){
-    for(unsigned int j = 0; j <= h; j++){
+  writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
       glm::vec2 position = backTrackV(readFrom, i, j, dt);
-      writeTo->velocityGrid->v->set(i,j,
-        readFrom->velocityGrid->v->getCrerp(position)
-      );
-    }
-  }
+      return readFrom->velocityGrid->v->getCrerp(position);
+    });
 
   // ink grid
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
+  writeTo->inkGrid->setForEach([&](unsigned int i, unsigned int j){
       glm::vec2 position = backTrackMid(readFrom, i, j, dt);
-      writeTo->inkGrid->set(i,j,
-        readFrom->inkGrid->getCrerp(position)
-      );
-    }
-  }
+      return readFrom->inkGrid->getCrerp(position);
+    });
 
 }
 
@@ -156,12 +143,9 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
  * @param writeTo State to write to
  */
 void Simulator::resetBoundaryGrid(State* writeTo) {
-  Grid<BoundaryType> *grid = writeTo->boundaryGrid;
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-      grid->set(i, j, BoundaryType::EMPTY);
-    }
-  }  
+  writeTo->boundaryGrid->setForEach([&](unsigned int i, unsigned int j){
+      return BoundaryType::EMPTY;
+    });
 }
 
 
@@ -212,20 +196,18 @@ void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
   VelocityGrid *velocityGrid = state->velocityGrid;
   Grid<BoundaryType> *boundaryGrid = state->boundaryGrid;
 
-  for(auto i = 0u; i <= h; i++){
-    for(auto j = 0u; j < w; j++){
+  velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
       if (boundaryGrid->get(i, j) == BoundaryType::FLUID) {
-        velocityGrid->u->set(i,j, velocityGrid->u->get(i,j)+g.x*deltaT);
+        return velocityGrid->u->get(i,j)+g.x*deltaT;
       }
-    }
-  }
-  for(auto i = 0u; i < h; i++){
-    for(auto j = 0u; j <= w; j++){
+      return velocityGrid->u->get(i,j);
+    });
+  velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
       if (boundaryGrid->get(i, j) == BoundaryType::FLUID) {
-        velocityGrid->v->set(i,j, velocityGrid->v->get(i,j)+g.y*deltaT);
+        return velocityGrid->v->get(i,j)+g.y*deltaT;
       }
-    }
-  }
+      return velocityGrid->v->get(i,j);
+    });
 }
 
 
@@ -237,7 +219,7 @@ void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
 void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
-
+  
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
 
