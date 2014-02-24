@@ -94,7 +94,7 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 80, h = 80;
+  unsigned int w = 50, h = 50;
   State prevState(w, h);
   State newState(w, h);
 
@@ -147,13 +147,12 @@ int main( void ) {
       else if(j == h - 1){
         bt = BoundaryType::SOLID;
       }
-      else if (j > h/3 && j < 2*h/3 && i > 2 && i < w-2) {
-        bt = BoundaryType::FLUID;
-      } else {
+      else {
         bt = BoundaryType::FLUID;
       }
       return bt;
     });
+
   prevState.setBoundaryGrid(boundaries);
 
   // instantiate ink grid
@@ -161,12 +160,12 @@ int main( void ) {
   ink->setForEach([&](unsigned int i, unsigned int j){
       if(i > 0 && i < w/3){
         if(j > 0 && j < h/3){
-          return glm::vec3(0.5f, 0, 0.5);
+          return glm::vec3(1.0f, 0, 1.0f);
         }
       }
       if( i > 2*w/3 && i < w-1 ){
         if( j > 2*h/3 && j < h-1){
-          return glm::vec3(0, 0.5, 0.5);
+          return glm::vec3(0, 1.0f, 1.0f);
         }
       }
       return glm::vec3(0);
@@ -184,7 +183,7 @@ int main( void ) {
   float deltaT = 0.1; //First time step
 
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);

@@ -30,7 +30,7 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(
   -g
-  -Wall
+  # -Wall
   -DTW_STATIC
   -DTW_NO_LIB_PRAGMA
   -DTW_NO_DIRECT3D
