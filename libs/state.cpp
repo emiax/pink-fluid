@@ -12,6 +12,7 @@
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
   boundaryGrid = new Grid<BoundaryType>(w, h);
+  
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
   resetVelocityGrids();
 }
@@ -100,6 +101,7 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
   }
 }
 
+
 // OrdinalGrid<double>const *const State::getPressureGrid() const{
 //   return pressureGrid;
 // };
@@ -125,5 +127,3 @@ Grid<BoundaryType>const *const State::getBoundaryGrid() const {
 OrdinalGrid<glm::vec3> const *const State::getInkGrid() const {
   return inkGrid;
 }
-
-

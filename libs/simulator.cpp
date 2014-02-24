@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iostream>
 #include <glm/ext.hpp>
+#include <levelSet.h>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
   
@@ -18,9 +19,11 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   }
 
   // init non-state grids
+  
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
+  levelSet = new LevelSet(w,h);
 }
 
 /**
@@ -89,9 +92,11 @@ void Simulator::step(float dt) {
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
-
-  calculateDivergence(stateTo, divergenceOut);
   
+  levelSet->initializeLevelSet( stateTo->boundaryGrid);
+  
+  calculateDivergence(stateTo, divergenceOut);
+  copyBoundaries(stateFrom, stateTo);
   // divergence sum
   float sumDivIn = 0;
   float sumDivOut = 0;
@@ -107,7 +112,7 @@ void Simulator::step(float dt) {
   //  std::cin.get();
 
   // Variable time step calculation
-  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.1));
+  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.01));
   // swap states
   std::swap(stateFrom, stateTo);
 }
@@ -166,6 +171,13 @@ void Simulator::resetBoundaryGrid(State* writeTo) {
   }  
 }
 
+void Simulator::copyBoundaries(State const *readFrom, State *writeTo){
+  for(unsigned int i = 0; i < w; i++){
+    for(unsigned int j = 0; j < h; j++){
+      writeTo->boundaryGrid->set(i,j, readFrom->boundaryGrid->get(i,j));
+    }
+  }
+}
 
 /**
  * Find the previous position of the temporary particle in the grid that travelled to i, j.
@@ -424,4 +436,8 @@ float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
 
 float Simulator::getDeltaT(){
   return deltaT;
+}
+
+LevelSet const* const Simulator::getLevelSet() const{
+  return levelSet;
 }
