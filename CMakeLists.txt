@@ -5,7 +5,7 @@ project(${PROJECT_NAME_STR} C CXX)
 
 #Set up the includes
 include(ExternalProject)
-
+include(CheckCXXCompilerFlag)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
@@ -27,15 +27,36 @@ if( CMAKE_BINARY_DIR MATCHES " " )
   message( "Your Build Directory contains spaces. If you experience problems when compiling, this can be the cause." )
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+
+
 add_definitions(
-  -g
-  # -Wall
   -DTW_STATIC
   -DTW_NO_LIB_PRAGMA
   -DTW_NO_DIRECT3D
   -DGLEW_STATIC
   -D_CRT_SECURE_NO_WARNINGS
+)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+add_definitions(
+  -g
+  -Wall
+  -Wextra
+)
+endif()
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+add_definitions(
+  -g
+  -Wall
+  -Wextra
 )
 endif()
 
@@ -44,7 +65,7 @@ if(MSVC)
     set(MSVC_COMPILER_DEFS "-D_VARIADIC_MAX=10")
 endif() 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 
 find_package(OpenGL REQUIRED)
 find_package(Git REQUIRED)
