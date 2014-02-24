@@ -100,35 +100,40 @@ int main( void ) {
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   //Create new velocity positions
-    for(unsigned int i = 2; i < w/3; i++){
-    for(unsigned int j = 2; j < h/3; j++){
-      velocities->u->set( i, j, 1.0f );
-    }
-  }
-  for(unsigned int i = 2; i < w/3; i++){
-    for(unsigned int j = 2; j < h/3; j++){
-      velocities->v->set( i, j, -1.0f );
-    }
-  }
+  velocities->u->setForEach([&](unsigned int i, unsigned int j){
+      if( i > 2 && i < w/3){
+        if( j > 2 && j < h/3){
+          return 1.0f;
+        }
+      }
+      if( i > 2*w/3 && i < w-2){
+        if( j > 2*w/3 && j < w-2){
+          return -1.0f;
+        }
+      }
+      return 0.0f;
+    });
 
-  for(unsigned int i = 2*w/3; i < w-2; i++){
-    for(unsigned int j = 2*h/3; j < h-2; j++){
-      velocities->u->set( i, j, -1.0f );
-    }
-  }
-  for(unsigned int i = 2*w/3; i < w-2; i++){
-    for(unsigned int j = 2*h/3; j < h-2; j++){
-      velocities->v->set( i, j, 1.0f );
-    }
-    }
+  velocities->v->setForEach([&](unsigned int i, unsigned int j){
+      if( i > 2 && i < w/3){
+        if( j > 2 && j < h/3){
+          return -1.0f;
+        }
+      }
+      if( i > 2*w/3 && i < w-2){
+        if( j > 2*w/3 && j < w-2){
+          return 1.0f;
+        }
+      }
+      return 0.0f;
+    });
 
   prevState.setVelocityGrid(velocities);
 
   
   Grid<BoundaryType> *boundaries = new Grid<BoundaryType>(w, h);
   // init boundary grid
-  for(unsigned int i = 0; i < w; i++){
-    for(unsigned int j = 0; j < h; j++){
+  boundaries->setForEach([=](unsigned int i, unsigned int j){
       BoundaryType bt;
       if(i == 0){
         bt = BoundaryType::SOLID;
@@ -147,28 +152,25 @@ int main( void ) {
       } else {
         bt = BoundaryType::FLUID;
       }
-      boundaries->set(i,j, bt);
-    }
-  }
+      return bt;
+    });
   prevState.setBoundaryGrid(boundaries);
 
   // instantiate ink grid
   OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-      ink->set( i, j, glm::vec3(0.0f) );
-    }
-  }
-  for(unsigned int i = 1; i < w/3; i++){
-    for(unsigned int j = 1; j < h/3; j++){
-      ink->set( i, j, glm::vec3(0.5, 0, 0.5) );
-    }
-  }
-  for(unsigned int i = 2*w/3; i < w-1; i++){
-    for(unsigned int j = 2*h/3; j < h-1; j++){
-      ink->set( i, j, glm::vec3(0, 0.5, 0.5) );
-    }
-  }
+  ink->setForEach([&](unsigned int i, unsigned int j){
+      if(i > 0 && i < w/3){
+        if(j > 0 && j < h/3){
+          return glm::vec3(0.5f, 0, 0.5);
+        }
+      }
+      if( i > 2*w/3 && i < w-1 ){
+        if( j > 2*h/3 && j < h-1){
+          return glm::vec3(0, 0.5, 0.5);
+        }
+      }
+      return glm::vec3(0);
+    });
   prevState.setInkGrid(ink);
   
   // init simulator
