@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 template <class T>
 class Grid {
  public:
@@ -29,6 +30,19 @@ class Grid {
     return w*h;
   };
 
+
+  /**
+   * 
+   * 
+   * 
+   */
+  void setForEach(std::function< T (unsigned int i, unsigned int j)> func){
+    for(unsigned int i =  0; i < w; i++){
+      for(unsigned int j = 0; j < h; j++){
+        set(i,j, func(i,j));
+      }
+    }
+  }
 
   /**
    * Get value of the stored quantity.
