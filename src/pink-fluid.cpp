@@ -94,19 +94,14 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 80, h = 80;
+  unsigned int w = 50, h = 50;
   State prevState(w, h);
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   //Create new velocity positions
-<<<<<<< HEAD
   for(unsigned int i = 3; i < w/3; i++){
     for(unsigned int j = 3; j < h/3; j++){
-=======
-    for(unsigned int i = 2; i < w/3; i++){
-    for(unsigned int j = 2; j < h/3; j++){
->>>>>>> 29ec12c6ac22212cf191cb6ed8217ace97eac02f
       velocities->u->set( i, j, 1.0f );
     }
   }
@@ -135,23 +130,27 @@ int main( void ) {
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
       BoundaryType bt;
-      if(i < 3){
+      if(i == 0){
         bt = BoundaryType::SOLID;
       }
-      else if(j < 3){
+      else if(j == 0){
         bt = BoundaryType::SOLID;
       }
-      else if(i > w - 3){
+      else if(i == w - 1){
         bt = BoundaryType::SOLID;
       }
-      else if(j > h - 3){
+      else if(j == h - 1){
         bt = BoundaryType::SOLID;
       }
-      else if (j > h/3 && j < 2*h/3 && i > 2 && i < w-2) {
+      // else if (j > h/3 && j < 2*h/3 && i > 2 && i < w-2) {
+      //   bt = BoundaryType::FLUID;
+      // } else {
+      //   bt = BoundaryType::FLUID;
+      // }
+      else {
         bt = BoundaryType::FLUID;
-      } else {
-        bt = BoundaryType::FLUID;
       }
+
       boundaries->set(i,j, bt);
     }
   }
@@ -164,25 +163,14 @@ int main( void ) {
       ink->set( i, j, glm::vec3(0.0f) );
     }
   }
-<<<<<<< HEAD
-  for(unsigned int i = 3; i < 25; i++){
-    for(unsigned int j = 3; j < 25; j++){
+  for(unsigned int i = 3; i < w/3; i++){
+    for(unsigned int j = 3; j < w/3; j++){
       ink->set( i, j, glm::vec3(1, 0, 1) );
     }
   }
   for(unsigned int i = 2*w/3; i < w-3; i++){
     for(unsigned int j = 2*h/3; j < h-3; j++){
       ink->set( i, j, glm::vec3(0, 1, 1) );
-=======
-  for(unsigned int i = 1; i < w/3; i++){
-    for(unsigned int j = 1; j < h/3; j++){
-      ink->set( i, j, glm::vec3(0.5, 0, 0.5) );
-    }
-  }
-  for(unsigned int i = 2*w/3; i < w-1; i++){
-    for(unsigned int j = 2*h/3; j < h-1; j++){
-      ink->set( i, j, glm::vec3(0, 0.5, 0.5) );
->>>>>>> 29ec12c6ac22212cf191cb6ed8217ace97eac02f
     }
   }
   prevState.setInkGrid(ink);
@@ -198,7 +186,7 @@ int main( void ) {
   float deltaT = 0.1; //First time step
 
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);

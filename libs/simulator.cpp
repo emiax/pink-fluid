@@ -2,20 +2,19 @@
 #include <state.h>
 #include <ordinalGrid.h>
 #include <velocityGrid.h>
-// #include <exception>
 #include <algorithm>
 #include <iostream>
 #include <glm/ext.hpp>
+#include <cassert>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
+
+  // grid dims must be equal
+  assert( sf->getW() == st->getW() );
+  assert( sf->getH() == st->getH() );
   
   w = sf->getW();
   h = sf->getH();
-
-  // TODO: finish check for size mismatch
-  if( w != st->getW() || h != st->getH() ) {
-    // throw std::exeption();
-  }
 
   // init non-state grids
   divergenceGrid = new OrdinalGrid<float>(w, h);
@@ -26,7 +25,11 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
 /**
  * Destructor.
  */
-Simulator::~Simulator() {}
+Simulator::~Simulator() {
+  delete divergenceGrid;
+  delete pressureGridFrom;
+  delete pressureGridTo;
+}
 
 
 /**
@@ -37,7 +40,6 @@ void Simulator::addAdvectedMarker(glm::vec2 p, float dt) {
   unsigned int i = std::round(glm::clamp(q.x, 0.0f, (float)(w-1)));
   unsigned int j = std::round(glm::clamp(q.y, 0.0f, (float)(h-1)));
   stateTo->boundaryGrid->set(i, j, BoundaryType::FLUID);
-  //  std::cout << "YAO" << i << ", " << j << std::endl;
 }
 
 
@@ -68,21 +70,18 @@ void Simulator::updateMarkers(float dt) {
 
 
 /**
- * Implicit step function, can only be used if
- * Simulator is initialized with State constructor
+ * Simulator step function. Iterates the simulation one time step, dt.
  * @param dt Time step, deltaT
  */
 void Simulator::step(float dt) {
   
   // OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
-  
-  //Currently disabled, 
 
   //  copyBoundaries(stateFrom, stateTo);
   updateMarkers(dt);
   advect(stateFrom, stateTo, dt);
   
-  applyGravity(stateTo, glm::vec2(0,0.01), dt);
+  // applyGravity(stateTo, glm::vec2(0,0.01), dt);
 
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
@@ -125,7 +124,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for(unsigned int j = 0; j < h; j++){
       glm::vec2 position = backTrackU(readFrom, i, j, dt);
       writeTo->velocityGrid->u->set(i,j,
-        readFrom->velocityGrid->u->getLerp(position)
+        readFrom->velocityGrid->u->getCrerp(position)
       );
     }
   }
@@ -134,7 +133,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for(unsigned int j = 0; j <= h; j++){
       glm::vec2 position = backTrackV(readFrom, i, j, dt);
       writeTo->velocityGrid->v->set(i,j,
-        readFrom->velocityGrid->v->getLerp(position)
+        readFrom->velocityGrid->v->getCrerp(position)
       );
     }
   }
@@ -144,7 +143,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     for (unsigned int i = 0; i < w; ++i) {
       glm::vec2 position = backTrackMid(readFrom, i, j, dt);
       writeTo->inkGrid->set(i,j,
-        readFrom->inkGrid->getLerp(position)
+        readFrom->inkGrid->getCrerp(position)
       );
     }
   }
@@ -169,10 +168,10 @@ void Simulator::resetBoundaryGrid(State* writeTo) {
 /**
  * Find the previous position of the temporary particle in the grid that travelled to i, j.
  * @param readFrom State to read from
- * @param i x coordinate
- * @param j y coordinate
- * @param dt the time between the two steps
- * @return          position to copy new value from
+ * @param i   x coordinate
+ * @param j   y coordinate
+ * @param dt  the time between the two steps
+ * @return    position to copy new value from
  */
 glm::vec2 Simulator::backTrackU(State const* readFrom, int i, int j, float dt){
   glm::vec2 position(i,j);
@@ -337,7 +336,6 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
   Grid<BoundaryType> const* const boundaries = state->getBoundaryGrid();
 
-  
   // looping through pressure cells
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
@@ -396,6 +394,11 @@ OrdinalGrid<float>* Simulator::getDivergenceGrid() {
   return divergenceGrid;
 }
 
+/**
+ * Find the maximum velocity present in the grid
+ * @param  velocity velocity grid to sample from
+ * @return maxVec   max velocity vector
+ */
 glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
   glm::vec2 maxVec = velocity->getCell(0,0);
   for(unsigned int i = 0; i < w; i++){
@@ -408,6 +411,13 @@ glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
   return maxVec;
 }
 
+/**
+ * Calculate max deltaT for the current iteration.
+ * This calculation is based on the max velocity in the grid.
+ * @param  maxV     max velocity in the velocity grid
+ * @param  gravity  gravitational force vector
+ * @return dT       maximum time step length
+ */
 float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
   //TODO: glm::length(gravity) should be changed to something else relating to gravity
   float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));

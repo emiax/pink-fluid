@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.8)
 set(PROJECT_NAME_STR pink-fluid)
-project(${PROJECT_NAME_STR})
+project(${PROJECT_NAME_STR} C CXX)
+
 
 #Set up the includes
 include(ExternalProject)
@@ -13,7 +14,6 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(PROJECT_CXX_DIR ${PROJECT_SOURCE_DIR}/src)
 set(PROJECT_LIBS_DIR ${PROJECT_SOURCE_DIR}/libs)
-
 set(PROJECT_EXT_DIR ${PROJECT_SOURCE_DIR}/external)
 
 
@@ -31,12 +31,11 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 add_definitions(
   -g
   # -Wall
-  # -Werror
-	-DTW_STATIC
-	-DTW_NO_LIB_PRAGMA
-	-DTW_NO_DIRECT3D
-	-DGLEW_STATIC
-	-D_CRT_SECURE_NO_WARNINGS
+  -DTW_STATIC
+  -DTW_NO_LIB_PRAGMA
+  -DTW_NO_DIRECT3D
+  -DGLEW_STATIC
+  -D_CRT_SECURE_NO_WARNINGS
 )
 endif()
 
@@ -113,22 +112,14 @@ include_directories(
         ${PROJECT_INCLUDE_DIR}
 )
 
-
-
-
-# This is since common only rolls with header only libraries currently (Might change in the future)
-# TODO: Put this in include/common instead
-include_directories(
-  ${CMAKE_SOURCE_DIR}/common/
-)
-
 set(ALL_LIBS
-	${OPENGL_LIBRARY}
+  ${OPENGL_LIBRARY}
   glfw
   ${GLFW_LIBRARIES}
-	GLEW
+  GLEW
   INT_LIBS        
 )
+
 set(EXT_DEPS
     glm
     glfw
@@ -137,19 +128,18 @@ set(EXT_DEPS
 )
 
 
-
 file(GLOB PROJECT_LIBS_FILES ${PROJECT_LIBS_DIR}/*.cpp)
 add_library(INT_LIBS 
   ${PROJECT_LIBS_FILES}
 )
 
 add_dependencies(INT_LIBS
-        ${EXT_DEPS}
-        )
+    ${EXT_DEPS}
+)
 
 
 file(GLOB PROJECT_CXX_FILES ${PROJECT_CXX_DIR}/*.cpp)
-#Below here is where your executable should be added instead of test
+
 add_executable(${PROJECT_NAME_STR}
   ${PROJECT_CXX_FILES}
 )
@@ -180,8 +170,9 @@ add_executable(${PROJECT_TEST_NAME}
                ${TEST_SRC_FILES}
 )
 target_link_libraries(${PROJECT_TEST_NAME}
-  ${ALL_LIBS}
+    ${ALL_LIBS}
 )
+
 # Create dependency of MainTest on googletest
 add_dependencies(${PROJECT_TEST_NAME} ${EXT_DEPS})
 if(MSVC)

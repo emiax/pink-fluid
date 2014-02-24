@@ -29,8 +29,7 @@ public:
 
 private:
   void resetVelocityGrids();
-
-  //  OrdinalGrid<double> *pressureGrid;
+  
   OrdinalGrid<glm::vec3> *inkGrid;
   Grid<BoundaryType> *boundaryGrid;
   VelocityGrid *velocityGrid;
