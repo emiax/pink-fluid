@@ -23,10 +23,9 @@ public:
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
   OrdinalGrid<float> const *const getSignedDistanceGrid() const;
   
-  // void setCellTypeGrid(Grid<CellType> const* const);
+  void setCellTypeGrid(Grid<CellType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
   void setInkGrid(OrdinalGrid<glm::vec3> const* const);
-  void setSignedDistanceGrid(OrdinalGrid<float> const* const);
   void setLevelSet(LevelSet *ls);
   
   unsigned int getW();
@@ -35,9 +34,7 @@ public:
 private:
   void resetVelocityGrids();
   
-  OrdinalGrid<float> *signedDistanceGrid;
   OrdinalGrid<glm::vec3> *inkGrid;
-  // Grid<CellType> *cellTypeGrid;
   VelocityGrid *velocityGrid;
   unsigned int w, h;
   LevelSet *levelSet;

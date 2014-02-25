@@ -34,32 +34,10 @@ Simulator::~Simulator() {
   delete pressureGridTo;
 }
 
-
-/**
- * 
- */
-void Simulator::addAdvectedMarker(glm::vec2 p, float dt) {
-  glm::vec2 q = p + stateFrom->velocityGrid->getLerp(p)*dt;
-  unsigned int i = std::round(glm::clamp(q.x, 0.0f, (float)(w-1)));
-  unsigned int j = std::round(glm::clamp(q.y, 0.0f, (float)(h-1)));
-  stateTo->cellTypeGrid->set(i, j, CellType::FLUID);
-}
-
-
 void Simulator::updateMarkers(float dt) {
   resetCellTypeGrid(stateTo);
-  /*for (int i = 0; i < w; i++) {
-    for(int j = 0; j < h; j++) {
-      if (stateFrom->setCellTypeGrid->get(i, j) == CellType::FLUID) {
-                addAdvectedMarker(glm::vec2(i - 0.25f, j - 0.25f), dt);
-                addAdvectedMarker(glm::vec2(i - 0.25f, j + 0.25f), dt);
-                addAdvectedMarker(glm::vec2(i + 0.25f, j - 0.25f), dt);
-                addAdvectedMarker(glm::vec2(i + 0.25f, j + 0.25f), dt);
-      }
-    }
-    }*/
-  Grid<CellType> *from = stateFrom->cellTypeGrid;
-  Grid<CellType> *to = stateTo->cellTypeGrid;
+  Grid<CellType> *from = stateFrom->levelSet->cellTypeGrid;
+  Grid<CellType> *to = stateTo->levelSet->cellTypeGrid;
   to->setForEach([&](unsigned int i, unsigned int j){
       if (from->get(i, j) == CellType::SOLID) {
         return CellType::SOLID;
@@ -77,9 +55,6 @@ void Simulator::updateMarkers(float dt) {
  */
 void Simulator::step(float dt) {
   
-  // OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
-
-  //  copycellTypeGrid(stateFrom, stateTo);
   updateMarkers(dt);
   advect(stateFrom, stateTo, dt);
   
@@ -89,26 +64,8 @@ void Simulator::step(float dt) {
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
 
-  copycellTypeGrid(stateFrom, stateTo);  
-  stateTo->levelSet->reinitialize( stateFrom->levelSet );
-  
-  //calculateDivergence(stateTo, divergenceOut);
-
-  // divergence sum
-  // float sumDivIn = 0;
-  // float sumDivOut = 0;
-  //   for (unsigned int j = 1; j < h-1; ++j) {
-  //     for (unsigned int i = 1; i < w-1; ++i) {
-  //       sumDivIn += fabs(divergenceGrid->get(i, j));
-  //       sumDivOut += fabs(divergenceOut->get(i, j));
-  //     }
-  //   }
-  //  std::cout << "avg. div in: " << sumDivIn / (w*h) << std::endl;
-  //  std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
-  //  std::cout << std::endl;
-  //  std::cin.get();
-
-  // Variable time step calculation
+  // copycellTypeGrid(stateFrom, stateTo);  
+  stateTo->levelSet->reinitialize();
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.01));
 
@@ -136,18 +93,11 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     return readFrom->velocityGrid->v->getCrerp(position);
   });
 
-  // ink grid
-  // writeTo->inkGrid->setForEach([&](unsigned int i, unsigned int j){
-  //   glm::vec2 position = backTrackMid(readFrom, i, j, dt);
-  //   return readFrom->inkGrid->getCrerp(position);
-  // });
-
   // signed distance
-  writeTo->signedDistanceGrid->setForEach([&](unsigned int i, unsigned int j){
+  writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j){
     glm::vec2 position = backTrackMid(readFrom, i, j, dt);
-    return readFrom->signedDistanceGrid->getCrerp(position);
-  });  
-
+    return readFrom->levelSet->distanceGrid->getCrerp(position);
+  });
 }
 
 /**
@@ -156,18 +106,18 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
  * @param writeTo State to write to
  */
 void Simulator::resetCellTypeGrid(State* writeTo) {
-  writeTo->cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
-      return CellType::EMPTY;
-    });
+  writeTo->levelSet->cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
+    return CellType::EMPTY;
+  });
 }
 
-void Simulator::copycellTypeGrid(State const *readFrom, State *writeTo){
-  for(unsigned int i = 0; i < w; i++){
-    for(unsigned int j = 0; j < h; j++){
-      writeTo->cellTypeGrid->set(i,j, readFrom->cellTypeGrid->get(i,j));
-    }
-  }
-}
+// void Simulator::copycellTypeGrid(State const *readFrom, State *writeTo){
+//   for(unsigned int i = 0; i < w; i++){
+//     for(unsigned int j = 0; j < h; j++){
+//       writeTo->cellTypeGrid->set(i,j, readFrom->cellTypeGrid->get(i,j));
+//     }
+//   }
+// }
 
 /**
  * Find the previous position of the temporary particle in the grid that travelled to i, j.
@@ -214,7 +164,7 @@ glm::vec2 Simulator::backTrackMid(State const* readFrom, int i, int j, float dt)
 //Apply gravity to fluid cells
 void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
   VelocityGrid *velocityGrid = state->velocityGrid;
-  Grid<CellType> *cellTypeGrid = state->cellTypeGrid;
+  Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
   velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
       if (cellTypeGrid->get(i, j) == CellType::FLUID) {
@@ -239,16 +189,16 @@ void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
 void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
-  
+  Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
+
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
 
-      if (readFrom->cellTypeGrid->get(i, j) == CellType::FLUID) {
+      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float entering = u->get(i, j) + v->get(i, j);
         float leaving = u->get(i + 1, j) + v->get(i, j + 1);
 
         float divergence = leaving - entering;
-
 
         toDivergenceGrid->set(i, j, divergence);
       } else {
@@ -268,7 +218,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
 void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations, float dt) {
 
   const float sqDeltaX = 1.0f;
-  Grid<CellType> const* const cellTypeGrid = readFrom->getCellTypeGrid();
+  Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
   
   resetPressureGrid();
 
@@ -336,7 +286,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
 
   OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
   OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
-  Grid<CellType> const* const cellTypeGrid = state->getCellTypeGrid();
+  Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
   // looping through pressure cells
   for (unsigned int j = 0; j < h; ++j) {

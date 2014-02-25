@@ -11,10 +11,7 @@
  */
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
-  // cellTypeGrid = new Grid<CellType>(w, h);
-  
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
-  signedDistanceGrid = new OrdinalGrid<float>(w, h);
 
   resetVelocityGrids();
 }
@@ -24,7 +21,6 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
  */
 State::~State() {
   delete velocityGrid;
-  delete cellTypeGrid;
   delete inkGrid;
 }
 
@@ -81,14 +77,10 @@ unsigned int State::getH() {
 
 
 /**
- * Set boundary grid
+ * Set cell type grid
  */
-void State::setCellTypeGrid(Grid<CellType>const* const boundary) {
-  for(unsigned int i = 0u; i < w; i++){
-    for(unsigned int j = 0u; j < h; j++){
-      this->cellTypeGrid->set(i, j, boundary->get(i, j));
-    }
-  }
+void State::setCellTypeGrid(Grid<CellType>const* const ctg) {
+  levelSet->setCellTypeGrid(ctg);
 }
 
 /**
@@ -107,20 +99,20 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
  * Set signed distance grid 
  * @param sdg grid to copy signed distance from
  */
-void State::setSignedDistanceGrid(OrdinalGrid<float> const* const sdg) {
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-      this->signedDistanceGrid->set( i, j, sdg->get(i, j) );
-    }
-  }
-}
+// void State::setSignedDistanceGrid(OrdinalGrid<float> const* const sdg) {
+//   for (unsigned int j = 0; j < h; ++j) {
+//     for (unsigned int i = 0; i < w; ++i) {
+//       this->signedDistanceGrid->set( i, j, sdg->get(i, j) );
+//     }
+//   }
+// }
 
 /**
  * Set level set
  * @param levelSet LevelSet object
  */
 void State::setLevelSet(LevelSet *ls) {
-  levelSet = ls;
+  levelSet = new LevelSet( w, h, *(ls->initSDF), ls->getCellTypeGrid() );
 }
 
 /**
@@ -131,10 +123,10 @@ VelocityGrid const *const State::getVelocityGrid() const{
 };
 
 /**
- * Get boundary grid
+ * Get cell type grid
  */
-Grid<CellType>const *const State::getCellTypeGrid() const {
-  return cellTypeGrid;
+Grid<CellType> const *const State::getCellTypeGrid() const {
+  return levelSet->getCellTypeGrid();
 }
 
 /**
@@ -150,6 +142,6 @@ OrdinalGrid<glm::vec3> const *const State::getInkGrid() const {
  * @return const pointer to signed distance grid.
  */
 OrdinalGrid<float> const *const State::getSignedDistanceGrid() const {
-  return signedDistanceGrid;
+  return levelSet->getDistanceGrid();
 }
 

@@ -132,6 +132,10 @@ int main( void ) {
 
   prevState.setVelocityGrid(velocities);
 
+  /**
+   * Init Level set object
+   */
+
   // define initial signed distance
   SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
     // distance function to circle with radius w/3, center in (w/2, h/2)
@@ -139,40 +143,29 @@ int main( void ) {
     const float y = (float)j - (float)h/2;
     return sqrt( x*x + y*y ) - (float)w/3;
   });
-
-  // write initial signed distance to grid
-  OrdinalGrid<float> *signedDist = new OrdinalGrid<float>(w, h);
-  signedDist->setForEach([&](unsigned int i, unsigned int j){
-    return circleSD(i, j);
-  });
-  prevState.setSignedDistanceGrid(signedDist);
   
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
   // init boundary grid
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
-      CellType bt;
-      if(i == 0){
-        bt = CellType::SOLID;
-      }
-      else if(j == 0){
-        bt = CellType::SOLID;
-      }
-      else if(i == w - 1){
-        bt = CellType::SOLID;
-      }
-      else if(j == h - 1){
-        bt = CellType::SOLID;
-      }
-      // convention: fluid/air interface is part of fluid!
-      else if ( circleSD(i, j) > 0 ) {
-        bt = CellType::EMPTY;
-      } else {
-        bt = CellType::FLUID;
-      }
-      return bt;
-    });
+    CellType bt;
+    if(i == 0){
+      bt = CellType::SOLID;
+    }
+    else if(j == 0){
+      bt = CellType::SOLID;
+    }
+    else if(i == w - 1){
+      bt = CellType::SOLID;
+    }
+    else if(j == h - 1){
+      bt = CellType::SOLID;
+    }
+    return bt;
+  });
 
-  prevState.setCellTypeGrid(cellTypeGrid);
+  LevelSet *ls = new LevelSet( w, h, circleSD, cellTypeGrid );
+  prevState.setLevelSet(ls);
+  newState.setLevelSet(ls);
 
   // instantiate ink grid
   // OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
