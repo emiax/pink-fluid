@@ -1,38 +1,40 @@
 #include <levelSet.h>
 
 
-LevelSet::LevelSet(unsigned int w, unsigned int h){
-  distanceGrid = new OrdinalGrid<glm::vec2>(w,h);
-  doneGrid = new OrdinalGrid<bool>(w,h);
+LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf){
   this->w = w;
   this->h = h;
+  doneGrid = new OrdinalGrid<bool>(w,h);
+  distanceGrid = new OrdinalGrid<float>(w,h);
+
+  initializeDistanceGrid(sdf);
 }
 
-/**
- * Intializes a state based on data in BoundaryGrid.
- * This grid can then be advected by advectLevelSet
- * @param state State to create the level set on. 
- */
-void LevelSet::initializeLevelSet(Grid<BoundaryType> const *const boundary){
+void LevelSet::reinitialize(LevelSet *const levelSetFrom) {
+  markClosestAsDone(levelSetFrom);
+  fastSweep(levelSetFrom);
+}
+
+void LevelSet::markClosestAsDone(LevelSet *const levelSetFrom){
   for(auto i = 0u; i < w; i++){
     for(auto j = 0u; j < h; j++){
       //Currently only creates the levelset-based on fluid
-      BoundaryType currentCellType = boundary->get(i,j);
+      BoundaryType currentCellType = levelSetFrom->cellTypeGrid->get(i,j);
       if(currentCellType == BoundaryType::FLUID){
-        if(boundary->safeGet(i+1,j) == BoundaryType::EMPTY){
-          distanceGrid->set(i,j, glm::vec2(i+0.5, j));
+        if(levelSetFrom->cellTypeGrid->safeGet(i+1,j) == BoundaryType::EMPTY){
+          doneGrid->set(i+1,j, true);
           doneGrid->set(i,j, true);
         }
-        else if(boundary->safeGet(i-1,j) == BoundaryType::EMPTY){
-          distanceGrid->set(i,j, glm::vec2(i-0.5, j));
+        else if(levelSetFrom->cellTypeGrid->safeGet(i-1,j) == BoundaryType::EMPTY){
+          doneGrid->set(i-1,j, true);
           doneGrid->set(i,j, true);
         }
-        else if(boundary->safeGet(i,j+1) == BoundaryType::EMPTY){
-          distanceGrid->set(i,j, glm::vec2(0.5, j+0.5));
+        else if(levelSetFrom->cellTypeGrid->safeGet(i,j+1) == BoundaryType::EMPTY){
+          doneGrid->set(i,j+1, true);
           doneGrid->set(i,j, true);
         }
-        else if(boundary->safeGet(i,j-1) == BoundaryType::EMPTY){
-          distanceGrid->set(i,j, glm::vec2(i, j-0.5));
+        else if(levelSetFrom->cellTypeGrid->safeGet(i,j-1) == BoundaryType::EMPTY){
+          doneGrid->set(i,j-1, true);
           doneGrid->set(i,j, true);
         }
         else{
@@ -43,6 +45,19 @@ void LevelSet::initializeLevelSet(Grid<BoundaryType> const *const boundary){
   }
 }
 
+void LevelSet::fastSweep(LevelSet *const levelSetFrom) {
+  
+}
+
+/**
+ * Init Level set from analytic function
+ * @param sdf Anlytic SignedDistanceFunction
+ */
+void LevelSet::initializeDistanceGrid(SignedDistanceFunction sdf) {
+  distanceGrid->setForEach([&](unsigned int i, unsigned int j){
+    return sdf(i, j);
+  });
+}
 
 Grid<bool> const *const LevelSet::getDoneGrid() const{
   return doneGrid;

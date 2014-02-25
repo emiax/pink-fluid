@@ -1,27 +1,27 @@
 #include <gtest/gtest.h>
-#include <signedDistance.h>
+#include <signedDistanceFunction.h>
 #include <cmath>
 #include <glm/glm.hpp>
 
-class SignedDistanceTest : public ::testing::Test{
+class SignedDistanceFunctionTest : public ::testing::Test{
 protected:
-  SignedDistanceTest() {
-    circleSignedDist = new SignedDistance([](const unsigned int &i, const unsigned int &j) {
+  SignedDistanceFunctionTest() {
+    circleSignedDist = new SignedDistanceFunction([](const unsigned int &i, const unsigned int &j) {
       // distance function to circle with radius 3.0, center in (0, 0)
       return sqrt( i*i + j*j ) - 3.0f;
     });
   }
 
-  ~SignedDistanceTest() {
+  ~SignedDistanceFunctionTest() {
     delete circleSignedDist;
   }
 
-  SignedDistance *circleSignedDist;
+  SignedDistanceFunction *circleSignedDist;
 };
 
-TEST_F(SignedDistanceTest, instantiateAndDelete) {}
+TEST_F(SignedDistanceFunctionTest, instantiateAndDelete) {}
 
-TEST_F(SignedDistanceTest, getSignedDistance) {
+TEST_F(SignedDistanceFunctionTest, getSignedDistance) {
   // base case
   ASSERT_EQ( (*circleSignedDist)(0, 0), -3.0 );
   // inside

@@ -23,7 +23,6 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
-  levelSet = new LevelSet(w,h);
 }
 
 /**
@@ -90,8 +89,8 @@ void Simulator::step(float dt) {
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
 
-  copyBoundaries(stateFrom, stateTo);  
-  levelSet->initializeLevelSet( stateTo->boundaryGrid );
+  copyBoundaries(stateFrom, stateTo);
+  // levelSet->initializeLevelSet( stateTo->boundaryGrid );
   
   //calculateDivergence(stateTo, divergenceOut);
 
@@ -430,8 +429,4 @@ float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
 
 float Simulator::getDeltaT(){
   return deltaT;
-}
-
-LevelSet const* const Simulator::getLevelSet() const{
-  return levelSet;
 }

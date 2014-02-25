@@ -5,7 +5,6 @@ template<typename T>
 class Grid;
 class State;
 struct VelocityGrid;
-class LevelSet;
 
 #include <glm/glm.hpp>
 
@@ -34,7 +33,6 @@ public:
   void copyBoundaries(State const *readFrom, State *stateTo);
   void updateMarkers(float dt);
 
-
   void gradientSubtraction(State *state, float dt);
 
   OrdinalGrid<double>* resetPressureGrid();
@@ -43,8 +41,6 @@ public:
   glm::vec2 maxVelocity(VelocityGrid const *const velocity);
   float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
   float getDeltaT();
-  //  void setBoundaries(Grid<bool> *boundaryGrid);
-  LevelSet const *const getLevelSet() const;
 
 private:
   void addAdvectedMarker(glm::vec2 p, float dt);

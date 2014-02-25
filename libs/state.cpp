@@ -15,6 +15,8 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
   signedDistanceGrid = new OrdinalGrid<float>(w, h);
+  
+  levelSet = new LevelSet(w,h);
 
   resetVelocityGrids();
 }

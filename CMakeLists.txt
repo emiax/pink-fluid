@@ -56,9 +56,9 @@ endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 add_definitions(
   -g
-  -Wall
-  -Wextra
-  -pedantic
+  # -Wall
+  # -Wextra
+  # -pedantic
 )
 endif()
 

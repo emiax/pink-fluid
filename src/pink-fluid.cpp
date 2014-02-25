@@ -31,7 +31,7 @@
 #include <state.h>
 #include <simulator.h>
 #include <velocityGrid.h>
-#include <signedDistance.h>
+#include <signedDistanceFunction.h>
 #include <levelSet.h>
 #include <stdlib.h>
 #include <time.h>
@@ -132,10 +132,24 @@ int main( void ) {
 
   prevState.setVelocityGrid(velocities);
 
+  // define initial signed distance
+  SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
+    // distance function to circle with radius w/3, center in (w/2, h/2)
+    const float x = (float)i - (float)w/2;
+    const float y = (float)j - (float)h/2;
+    return sqrt( x*x + y*y ) - (float)w/3;
+  });
+
+  // write initial signed distance to grid
+  OrdinalGrid<float> *signedDist = new OrdinalGrid<float>(w, h);
+  signedDist->setForEach([&](unsigned int i, unsigned int j){
+    return circleSD(i, j);
+  });
+  prevState.setSignedDistanceGrid(signedDist);
   
-  Grid<BoundaryType> *boundaries = new Grid<BoundaryType>(w, h);
   // init boundary grid
-  boundaries->setForEach([=](unsigned int i, unsigned int j){
+  Grid<BoundaryType> *boundaries = new Grid<BoundaryType>(w, h);
+  boundaries->setForEach([&](unsigned int i, unsigned int j){
       BoundaryType bt;
       if(i == 0){
         bt = BoundaryType::SOLID;
@@ -149,30 +163,16 @@ int main( void ) {
       else if(j == h - 1){
         bt = BoundaryType::SOLID;
       }
-      else if (j > h/3 && j < 2*h/3 && i > 2 && i < w-2) {
-        bt = BoundaryType::FLUID;
-      } else {
+      // convention: fluid/air interface is part of fluid!
+      else if ( circleSD(i, j) > 0 ) {
         bt = BoundaryType::EMPTY;
+      } else {
+        bt = BoundaryType::FLUID;
       }
       return bt;
     });
 
   prevState.setBoundaryGrid(boundaries);
-
-  // define initial signed distance
-  SignedDistance circleSD([&](const unsigned int &i, const unsigned int &j) {
-    // distance function to circle with radius w/3, center in (w/2, h/2)
-    const float x = (float)i - (float)w/2;
-    const float y = (float)j - (float)h/2;
-    return sqrt( x*x + y*y ) - (float)w/3;
-  });
-
-  // write initial signed distance to grid
-  OrdinalGrid<float> *signedDist = new OrdinalGrid<float>(w, h);
-  signedDist->setForEach([&](unsigned int i, unsigned int j){
-    return circleSD(i, j);
-  });  
-  prevState.setSignedDistanceGrid(signedDist);
 
   // instantiate ink grid
   // OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
