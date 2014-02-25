@@ -9,22 +9,26 @@ class VelocityGrid;
 
 class LevelSet{
 public:
-  LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf);
+  LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, Grid<CellType> *const const boundaries);
+  LevelSet(unsigned int w, unsigned int h, Grid<CellType> *const const ctg);
 
-  
   OrdinalGrid<CellType> const *const getCellTypeGrid();
   Grid<bool> const *const getDoneGrid() const;
   OrdinalGrid<float> const *const getDistanceGrid() const;
 
-  void reinitialize(LevelSet const *LevelSetFrom);
+  void setCellTypeGrid(Grid<CellType> *const const);
+
+  void reinitialize();
 
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
 
 private:
-  void markClosestAsDone(LevelSet const *LevelSetFrom);
-  void fastSweep(LevelSet const *LevelSetFrom);
+  void markClosestAsDone();
+  void fastSweep();
+  void updateCellTypes();
 
+  void initializeDistanceGrid(Grid<CellType> ctg);
   void initializeDistanceGrid(SignedDistanceFunction sdf);
   Grid<bool> *doneGrid;
   int w,h;

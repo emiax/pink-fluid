@@ -43,13 +43,11 @@ public:
   float getDeltaT();
 
   //  void setCellTypeGrid(Grid<bool> *cellTypeGrid);
-  LevelSet const *const getLevelSet() const;
 
 private:
   void addAdvectedMarker(glm::vec2 p, float dt);
   unsigned int w,h;
   State *stateFrom, *stateTo;
-  LevelSet* levelSet;
   OrdinalGrid<float> *divergenceGrid;
   OrdinalGrid<double> *pressureGridFrom, *pressureGridTo;
   float deltaT;

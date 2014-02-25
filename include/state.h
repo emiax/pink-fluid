@@ -6,6 +6,7 @@ class OrdinalGrid;
 template<typename T>
 class Grid;
 
+class LevelSet;
 class Simulator;
 struct VelocityGrid;
 
@@ -22,11 +23,11 @@ public:
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
   OrdinalGrid<float> const *const getSignedDistanceGrid() const;
   
-
-  void setCellTypeGrid(Grid<CellType> const* const);
+  // void setCellTypeGrid(Grid<CellType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
   void setInkGrid(OrdinalGrid<glm::vec3> const* const);
   void setSignedDistanceGrid(OrdinalGrid<float> const* const);
+  void setLevelSet(LevelSet *ls);
   
   unsigned int getW();
   unsigned int getH();
@@ -36,11 +37,10 @@ private:
   
   OrdinalGrid<float> *signedDistanceGrid;
   OrdinalGrid<glm::vec3> *inkGrid;
-  Grid<CellType> *cellTypeGrid;
+  // Grid<CellType> *cellTypeGrid;
   VelocityGrid *velocityGrid;
   unsigned int w, h;
-  //  LevelSet *levelSet;
-
+  LevelSet *levelSet;
 
   friend class Simulator;
 };

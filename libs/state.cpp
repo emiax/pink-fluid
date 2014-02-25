@@ -2,7 +2,7 @@
 #include <velocityGrid.h>
 #include <ordinalGrid.h>
 #include <iostream>
-
+#include <levelSet.h>
 
 
 
@@ -11,12 +11,10 @@
  */
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
-  cellTypeGrid = new Grid<CellType>(w, h);
+  // cellTypeGrid = new Grid<CellType>(w, h);
   
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
   signedDistanceGrid = new OrdinalGrid<float>(w, h);
-  
-  levelSet = new LevelSet(w,h);
 
   resetVelocityGrids();
 }
@@ -115,6 +113,14 @@ void State::setSignedDistanceGrid(OrdinalGrid<float> const* const sdg) {
       this->signedDistanceGrid->set( i, j, sdg->get(i, j) );
     }
   }
+}
+
+/**
+ * Set level set
+ * @param levelSet LevelSet object
+ */
+void State::setLevelSet(LevelSet *ls) {
+  levelSet = ls;
 }
 
 /**
