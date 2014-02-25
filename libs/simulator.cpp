@@ -119,21 +119,27 @@ void Simulator::step(float dt) {
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   //X
   writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = backTrackU(readFrom, i, j, dt);
-      return readFrom->velocityGrid->u->getCrerp(position);
-    });
+    glm::vec2 position = backTrackU(readFrom, i, j, dt);
+    return readFrom->velocityGrid->u->getCrerp(position);
+  });
 
   //Y
   writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = backTrackV(readFrom, i, j, dt);
-      return readFrom->velocityGrid->v->getCrerp(position);
-    });
+    glm::vec2 position = backTrackV(readFrom, i, j, dt);
+    return readFrom->velocityGrid->v->getCrerp(position);
+  });
 
   // ink grid
-  writeTo->inkGrid->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = backTrackMid(readFrom, i, j, dt);
-      return readFrom->inkGrid->getCrerp(position);
-    });
+  // writeTo->inkGrid->setForEach([&](unsigned int i, unsigned int j){
+  //   glm::vec2 position = backTrackMid(readFrom, i, j, dt);
+  //   return readFrom->inkGrid->getCrerp(position);
+  // });
+
+  // signed distance
+  writeTo->signedDistanceGrid->setForEach([&](unsigned int i, unsigned int j){
+    glm::vec2 position = backTrackMid(readFrom, i, j, dt);
+    return readFrom->signedDistanceGrid->getCrerp(position);
+  });  
 
 }
 

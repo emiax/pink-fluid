@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <vector>
 template<typename T>
 class OrdinalGrid;
 template<typename T>
@@ -19,10 +20,12 @@ public:
   Grid<BoundaryType>const *const getBoundaryGrid() const;
   VelocityGrid const *const getVelocityGrid() const;
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
+  OrdinalGrid<float> const *const getSignedDistanceGrid() const;
   
   void setBoundaryGrid(Grid<BoundaryType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
   void setInkGrid(OrdinalGrid<glm::vec3> const* const);
+  void setSignedDistanceGrid(OrdinalGrid<float> const* const);
   
   unsigned int getW();
   unsigned int getH();
@@ -30,6 +33,7 @@ public:
 private:
   void resetVelocityGrids();
   
+  OrdinalGrid<float> *signedDistanceGrid;
   OrdinalGrid<glm::vec3> *inkGrid;
   Grid<BoundaryType> *boundaryGrid;
   VelocityGrid *velocityGrid;

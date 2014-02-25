@@ -13,6 +13,8 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
   boundaryGrid = new Grid<BoundaryType>(w, h);
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
+  signedDistanceGrid = new OrdinalGrid<float>(w, h);
+
   resetVelocityGrids();
 }
 
@@ -100,9 +102,17 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
   }
 }
 
-// OrdinalGrid<double>const *const State::getPressureGrid() const{
-//   return pressureGrid;
-// };
+/**
+ * Set signed distance grid 
+ * @param sdg grid to copy signed distance from
+ */
+void State::setSignedDistanceGrid(OrdinalGrid<float> const* const sdg) {
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      this->signedDistanceGrid->set( i, j, sdg->get(i, j) );
+    }
+  }
+}
 
 /**
  * Get velocity grid 
@@ -126,4 +136,10 @@ OrdinalGrid<glm::vec3> const *const State::getInkGrid() const {
   return inkGrid;
 }
 
-
+/**
+ * Get signed distance grid
+ * @return const pointer to signed distance grid.
+ */
+OrdinalGrid<float> const *const State::getSignedDistanceGrid() const {
+  return signedDistanceGrid;
+}

@@ -5,6 +5,7 @@
 
 //Include for a small timer
 #include <ctime>
+#include <cmath>
 
 // Include GLEW
 #ifdef __APPLE_CC__
@@ -30,6 +31,8 @@
 #include <state.h>
 #include <simulator.h>
 #include <velocityGrid.h>
+#include <signedDistance.h>
+
 #include <stdlib.h>
 #include <time.h>
 
@@ -50,7 +53,6 @@ int main( void ) {
   //Make opened window current context
   glfwMakeContextCurrent(window);
 
-  
   init.glew();
 
   // Dark blue background
@@ -155,22 +157,37 @@ int main( void ) {
 
   prevState.setBoundaryGrid(boundaries);
 
+  // define initial signed distance
+  SignedDistance circleSD([&](const unsigned int &i, const unsigned int &j) {
+    // distance function to circle with radius w/3, center in (w/2, h/2)
+    const float x = (float)i - (float)w/2;
+    const float y = (float)j - (float)h/2;
+    return sqrt( x*x + y*y ) - (float)w/3;
+  });
+
+  // write initial signed distance to grid
+  OrdinalGrid<float> *signedDist = new OrdinalGrid<float>(w, h);
+  signedDist->setForEach([&](unsigned int i, unsigned int j){
+    return circleSD(i, j);
+  });  
+  prevState.setSignedDistanceGrid(signedDist);
+
   // instantiate ink grid
-  OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
-  ink->setForEach([&](unsigned int i, unsigned int j){
-      if(i > 0 && i < w/3){
-        if(j > 0 && j < h/3){
-          return glm::vec3(1.0f, 0, 1.0f);
-        }
-      }
-      if( i > 2*w/3 && i < w-1 ){
-        if( j > 2*h/3 && j < h-1){
-          return glm::vec3(0, 1.0f, 1.0f);
-        }
-      }
-      return glm::vec3(0);
-    });
-  prevState.setInkGrid(ink);
+  // OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
+  // ink->setForEach([&](unsigned int i, unsigned int j){
+  //     if(i > 0 && i < w/3){
+  //       if(j > 0 && j < h/3){
+  //         return glm::vec3(1.0f, 0, 1.0f);
+  //       }
+  //     }
+  //     if( i > 2*w/3 && i < w-1 ){
+  //       if( j > 2*h/3 && j < h-1){
+  //         return glm::vec3(0, 1.0f, 1.0f);
+  //       }
+  //     }
+  //     return glm::vec3(0);
+  //   });
+  // prevState.setInkGrid(ink);
   
   // init simulator
   Simulator sim(&prevState, &newState,0.1f);
@@ -182,8 +199,7 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
@@ -206,35 +222,33 @@ int main( void ) {
     // corresponding cell-value instead of the edge velocities.
     for(unsigned int j = 0; j < h; ++j){
         for(unsigned int i=0;i<w;++i) {
-          
 
-          /*       tex2D.set(i,j,0, newState.getVelocityGrid()->u->get(i,j));
-          tex2D.set(i,j,1, newState.getVelocityGrid()->v->get(i,j));
-          tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i, j));
-          tex2D.set(i,j,3, 1.0f);*/
+          // ink
+          // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
+          // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
+          // tex2D.set(i,j,0, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
+          // tex2D.set(i,j,1, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
+          // tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i,j) == BoundaryType::SOLID ? 1.0 : 0.0);
+          // tex2D.set(i,j,3, 1.0f);
 
-          //tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-          //          tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-          tex2D.set(i,j,0, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
-          tex2D.set(i,j,1, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
-          tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i,j) == BoundaryType::SOLID ? 1.0 : 0.0);
-          tex2D.set(i,j,3, 1.0f);
+          // velocity
+          // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+          // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+          // tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j))
+          // tex2D.set(i,j,2, 0.5);
+          // tex2D.set(i,j,3, 1.0f);
 
-          tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
-          tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-          //          tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j))
-          tex2D.set(i,j,2, 0.5);
-          tex2D.set(i,j,3, 1.0f);
-
-          tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-          tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-          tex2D.set(i,j,2, newState.getInkGrid()->get(i,j).z);
-          tex2D.set(i,j,3, 1.0f);
-
+          // divergence
           //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
           //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
           //tex2D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
           //tex2D.set(i,j,3, 1.0f);
+          
+          // signed dist
+          tex2D.set(i,j,0, newState.getSignedDistanceGrid()->get(i,j));
+          tex2D.set(i,j,1, newState.getSignedDistanceGrid()->get(i,j));
+          tex2D.set(i,j,2, newState.getSignedDistanceGrid()->get(i,j));
+          tex2D.set(i,j,3, 1.0f);
 
       }
     }
