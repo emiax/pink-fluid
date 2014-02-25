@@ -12,6 +12,7 @@
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
   boundaryGrid = new Grid<BoundaryType>(w, h);
+  
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
   signedDistanceGrid = new OrdinalGrid<float>(w, h);
 
@@ -143,3 +144,4 @@ OrdinalGrid<glm::vec3> const *const State::getInkGrid() const {
 OrdinalGrid<float> const *const State::getSignedDistanceGrid() const {
   return signedDistanceGrid;
 }
+

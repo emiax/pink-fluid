@@ -6,6 +6,8 @@
 #include <iostream>
 #include <glm/ext.hpp>
 #include <cassert>
+#include <levelSet.h>
+
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
 
@@ -17,9 +19,11 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   h = sf->getH();
 
   // init non-state grids
+  
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
+  levelSet = new LevelSet(w,h);
 }
 
 /**
@@ -86,9 +90,12 @@ void Simulator::step(float dt) {
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
 
-  // calculateDivergence(stateTo, divergenceOut);
+  copyBoundaries(stateFrom, stateTo);  
+  levelSet->initializeLevelSet( stateTo->boundaryGrid );
   
-  // // divergence sum
+  //calculateDivergence(stateTo, divergenceOut);
+
+  // divergence sum
   // float sumDivIn = 0;
   // float sumDivOut = 0;
   //   for (unsigned int j = 1; j < h-1; ++j) {
@@ -97,13 +104,14 @@ void Simulator::step(float dt) {
   //       sumDivOut += fabs(divergenceOut->get(i, j));
   //     }
   //   }
-    //  std::cout << "avg. div in: " << sumDivIn / (w*h) << std::endl;
-    //  std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
-    //  std::cout << std::endl;
+  //  std::cout << "avg. div in: " << sumDivIn / (w*h) << std::endl;
+  //  std::cout << "avg. div out: " << sumDivOut / (w*h) << std::endl;
+  //  std::cout << std::endl;
   //  std::cin.get();
 
   // Variable time step calculation
-  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.1));
+
+  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.01));
 
   // swap states
   std::swap(stateFrom, stateTo);
@@ -154,6 +162,13 @@ void Simulator::resetBoundaryGrid(State* writeTo) {
     });
 }
 
+void Simulator::copyBoundaries(State const *readFrom, State *writeTo){
+  for(unsigned int i = 0; i < w; i++){
+    for(unsigned int j = 0; j < h; j++){
+      writeTo->boundaryGrid->set(i,j, readFrom->boundaryGrid->get(i,j));
+    }
+  }
+}
 
 /**
  * Find the previous position of the temporary particle in the grid that travelled to i, j.
@@ -415,4 +430,8 @@ float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
 
 float Simulator::getDeltaT(){
   return deltaT;
+}
+
+LevelSet const* const Simulator::getLevelSet() const{
+  return levelSet;
 }

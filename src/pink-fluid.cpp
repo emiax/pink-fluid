@@ -32,7 +32,7 @@
 #include <simulator.h>
 #include <velocityGrid.h>
 #include <signedDistance.h>
-
+#include <levelSet.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -149,8 +149,10 @@ int main( void ) {
       else if(j == h - 1){
         bt = BoundaryType::SOLID;
       }
-      else {
+      else if (j > h/3 && j < 2*h/3 && i > 2 && i < w-2) {
         bt = BoundaryType::FLUID;
+      } else {
+        bt = BoundaryType::EMPTY;
       }
       return bt;
     });
@@ -222,7 +224,6 @@ int main( void ) {
     // corresponding cell-value instead of the edge velocities.
     for(unsigned int j = 0; j < h; ++j){
         for(unsigned int i=0;i<w;++i) {
-
           // ink
           // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
           // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);

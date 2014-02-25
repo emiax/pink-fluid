@@ -22,6 +22,7 @@ public:
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
   OrdinalGrid<float> const *const getSignedDistanceGrid() const;
   
+
   void setBoundaryGrid(Grid<BoundaryType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
   void setInkGrid(OrdinalGrid<glm::vec3> const* const);
@@ -38,6 +39,8 @@ private:
   Grid<BoundaryType> *boundaryGrid;
   VelocityGrid *velocityGrid;
   unsigned int w, h;
+  //  LevelSet *levelSet;
+
 
   friend class Simulator;
 };
