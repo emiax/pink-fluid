@@ -147,32 +147,32 @@ int main( void ) {
   });
   prevState.setSignedDistanceGrid(signedDist);
   
+  Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
   // init boundary grid
-  Grid<BoundaryType> *boundaries = new Grid<BoundaryType>(w, h);
-  boundaries->setForEach([&](unsigned int i, unsigned int j){
-      BoundaryType bt;
+  cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
+      CellType bt;
       if(i == 0){
-        bt = BoundaryType::SOLID;
+        bt = CellType::SOLID;
       }
       else if(j == 0){
-        bt = BoundaryType::SOLID;
+        bt = CellType::SOLID;
       }
       else if(i == w - 1){
-        bt = BoundaryType::SOLID;
+        bt = CellType::SOLID;
       }
       else if(j == h - 1){
-        bt = BoundaryType::SOLID;
+        bt = CellType::SOLID;
       }
       // convention: fluid/air interface is part of fluid!
       else if ( circleSD(i, j) > 0 ) {
-        bt = BoundaryType::EMPTY;
+        bt = CellType::EMPTY;
       } else {
-        bt = BoundaryType::FLUID;
+        bt = CellType::FLUID;
       }
       return bt;
     });
 
-  prevState.setBoundaryGrid(boundaries);
+  prevState.setCellTypeGrid(cellTypeGrid);
 
   // instantiate ink grid
   // OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
@@ -227,15 +227,15 @@ int main( void ) {
           // ink
           // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
           // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-          // tex2D.set(i,j,0, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
-          // tex2D.set(i,j,1, newState.getBoundaryGrid()->get(i,j) == BoundaryType::FLUID ? 1.0 : 0.0);
-          // tex2D.set(i,j,2, newState.getBoundaryGrid()->get(i,j) == BoundaryType::SOLID ? 1.0 : 0.0);
+          // tex2D.set(i,j,0, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+          // tex2D.set(i,j,1, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+          // tex2D.set(i,j,2, newState.getsetCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
           // tex2D.set(i,j,3, 1.0f);
 
           // velocity
           // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
           // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-          // tex2D.set(i,j,2, 0.5 + newState.getBoundaryGrid()->get(i, j))
+          // tex2D.set(i,j,2, 0.5 + newState.getsetCellTypeGrid()->get(i, j))
           // tex2D.set(i,j,2, 0.5);
           // tex2D.set(i,j,3, 1.0f);
 

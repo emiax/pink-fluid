@@ -12,14 +12,14 @@ public:
   LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf);
 
   
-  OrdinalGrid<BoundaryType> const *const getBoundaryGrid();
+  OrdinalGrid<CellType> const *const getCellTypeGrid();
   Grid<bool> const *const getDoneGrid() const;
   OrdinalGrid<float> const *const getDistanceGrid() const;
 
   void reinitialize(LevelSet const *LevelSetFrom);
 
   OrdinalGrid<float> *distanceGrid;
-  Grid<BoundaryType> *cellTypeGrid;
+  Grid<CellType> *cellTypeGrid;
 
 private:
   void markClosestAsDone(LevelSet const *LevelSetFrom);

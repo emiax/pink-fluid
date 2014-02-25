@@ -42,15 +42,15 @@ void Simulator::addAdvectedMarker(glm::vec2 p, float dt) {
   glm::vec2 q = p + stateFrom->velocityGrid->getLerp(p)*dt;
   unsigned int i = std::round(glm::clamp(q.x, 0.0f, (float)(w-1)));
   unsigned int j = std::round(glm::clamp(q.y, 0.0f, (float)(h-1)));
-  stateTo->boundaryGrid->set(i, j, BoundaryType::FLUID);
+  stateTo->cellTypeGrid->set(i, j, CellType::FLUID);
 }
 
 
 void Simulator::updateMarkers(float dt) {
-  resetBoundaryGrid(stateTo);
+  resetCellTypeGrid(stateTo);
   /*for (int i = 0; i < w; i++) {
     for(int j = 0; j < h; j++) {
-      if (stateFrom->boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+      if (stateFrom->setCellTypeGrid->get(i, j) == CellType::FLUID) {
                 addAdvectedMarker(glm::vec2(i - 0.25f, j - 0.25f), dt);
                 addAdvectedMarker(glm::vec2(i - 0.25f, j + 0.25f), dt);
                 addAdvectedMarker(glm::vec2(i + 0.25f, j - 0.25f), dt);
@@ -58,14 +58,14 @@ void Simulator::updateMarkers(float dt) {
       }
     }
     }*/
-  Grid<BoundaryType> *from = stateFrom->boundaryGrid;
-  Grid<BoundaryType> *to = stateTo->boundaryGrid;
+  Grid<CellType> *from = stateFrom->cellTypeGrid;
+  Grid<CellType> *to = stateTo->cellTypeGrid;
   to->setForEach([&](unsigned int i, unsigned int j){
-      if (from->get(i, j) == BoundaryType::SOLID) {
-        return BoundaryType::SOLID;
+      if (from->get(i, j) == CellType::SOLID) {
+        return CellType::SOLID;
       } 
       else{
-        return BoundaryType::FLUID;
+        return CellType::FLUID;
       }
     });
 }
@@ -79,7 +79,7 @@ void Simulator::step(float dt) {
   
   // OrdinalGrid<float> *divergenceOut = new OrdinalGrid<float>(w, h);
 
-  //  copyBoundaries(stateFrom, stateTo);
+  //  copycellTypeGrid(stateFrom, stateTo);
   updateMarkers(dt);
   advect(stateFrom, stateTo, dt);
   
@@ -89,8 +89,8 @@ void Simulator::step(float dt) {
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
 
-  copyBoundaries(stateFrom, stateTo);
-  // levelSet->initializeLevelSet( stateTo->boundaryGrid );
+  copycellTypeGrid(stateFrom, stateTo);  
+  stateTo->levelSet->reinitialize( stateFrom->levelSet );
   
   //calculateDivergence(stateTo, divergenceOut);
 
@@ -151,20 +151,20 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
 }
 
 /**
- * Copy boundaries
+ * Copy cellTypeGrid
  * @param readFrom State to read from
  * @param writeTo State to write to
  */
-void Simulator::resetBoundaryGrid(State* writeTo) {
-  writeTo->boundaryGrid->setForEach([&](unsigned int i, unsigned int j){
-      return BoundaryType::EMPTY;
+void Simulator::resetCellTypeGrid(State* writeTo) {
+  writeTo->cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
+      return CellType::EMPTY;
     });
 }
 
-void Simulator::copyBoundaries(State const *readFrom, State *writeTo){
+void Simulator::copycellTypeGrid(State const *readFrom, State *writeTo){
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
-      writeTo->boundaryGrid->set(i,j, readFrom->boundaryGrid->get(i,j));
+      writeTo->cellTypeGrid->set(i,j, readFrom->cellTypeGrid->get(i,j));
     }
   }
 }
@@ -214,16 +214,16 @@ glm::vec2 Simulator::backTrackMid(State const* readFrom, int i, int j, float dt)
 //Apply gravity to fluid cells
 void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
   VelocityGrid *velocityGrid = state->velocityGrid;
-  Grid<BoundaryType> *boundaryGrid = state->boundaryGrid;
+  Grid<CellType> *cellTypeGrid = state->cellTypeGrid;
 
   velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-      if (boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         return velocityGrid->u->get(i,j)+g.x*deltaT;
       }
       return velocityGrid->u->get(i,j);
     });
   velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-      if (boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         return velocityGrid->v->get(i,j)+g.y*deltaT;
       }
       return velocityGrid->v->get(i,j);
@@ -243,7 +243,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
   for(unsigned int i = 0; i < w; i++){
     for(unsigned int j = 0; j < h; j++){
 
-      if (readFrom->boundaryGrid->get(i, j) == BoundaryType::FLUID) {
+      if (readFrom->cellTypeGrid->get(i, j) == CellType::FLUID) {
         float entering = u->get(i, j) + v->get(i, j);
         float leaving = u->get(i + 1, j) + v->get(i, j + 1);
 
@@ -268,7 +268,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
 void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations, float dt) {
 
   const float sqDeltaX = 1.0f;
-  Grid<BoundaryType> const* const boundaryGrid = readFrom->getBoundaryGrid();
+  Grid<CellType> const* const cellTypeGrid = readFrom->getCellTypeGrid();
   
   resetPressureGrid();
 
@@ -285,27 +285,27 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations,
         int neighbouringFluidCells = 0;
 
         // is current cell solid?
-        if (boundaryGrid->get(i, j) != BoundaryType::FLUID) {
+        if (cellTypeGrid->get(i, j) != CellType::FLUID) {
           continue;
         }
 
         double pL = 0;
-        if (boundaryGrid->get(i - 1, j) != BoundaryType::SOLID) {
+        if (cellTypeGrid->get(i - 1, j) != CellType::SOLID) {
           pL = pressureGridFrom->get(i - 1, j);
           neighbouringFluidCells++;
         } 
         double pR = 0;
-        if (boundaryGrid->get(i + 1, j) != BoundaryType::SOLID) {
+        if (cellTypeGrid->get(i + 1, j) != CellType::SOLID) {
           pR = pressureGridFrom->get(i + 1, j);
           neighbouringFluidCells++;
         } 
         double pU = 0;
-        if (boundaryGrid->get(i, j - 1) != BoundaryType::SOLID) {
+        if (cellTypeGrid->get(i, j - 1) != CellType::SOLID) {
           pU = pressureGridFrom->get(i, j - 1);
           neighbouringFluidCells++;
         } 
         double pD = 0;
-        if (boundaryGrid->get(i, j + 1) != BoundaryType::SOLID) {
+        if (cellTypeGrid->get(i, j + 1) != CellType::SOLID) {
           pD = pressureGridFrom->get(i, j + 1);
           neighbouringFluidCells++;
         }
@@ -336,13 +336,13 @@ void Simulator::gradientSubtraction(State *state, float dt) {
 
   OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
   OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
-  Grid<BoundaryType> const* const boundaries = state->getBoundaryGrid();
+  Grid<CellType> const* const cellTypeGrid = state->getCellTypeGrid();
 
   // looping through pressure cells
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
-      if (boundaries->get(i, j) == BoundaryType::FLUID) {
+      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float uL = uVelocityGrid->get(i, j);
         float uR = uVelocityGrid->get(i+1, j);
 
@@ -367,7 +367,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
-      if (boundaries->get(i, j) == BoundaryType::SOLID) {
+      if (cellTypeGrid->get(i, j) == CellType::SOLID) {
 
         uVelocityGrid->set(i, j, 0.0f);
         uVelocityGrid->set(i+1, j, 0.0f);

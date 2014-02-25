@@ -19,21 +19,21 @@ void LevelSet::markClosestAsDone(LevelSet *const levelSetFrom){
   for(auto i = 0u; i < w; i++){
     for(auto j = 0u; j < h; j++){
       //Currently only creates the levelset-based on fluid
-      BoundaryType currentCellType = levelSetFrom->cellTypeGrid->get(i,j);
-      if(currentCellType == BoundaryType::FLUID){
-        if(levelSetFrom->cellTypeGrid->safeGet(i+1,j) == BoundaryType::EMPTY){
+      CellType currentCellType = levelSetFrom->cellTypeGrid->get(i,j);
+      if(currentCellType == CellType::FLUID){
+        if(levelSetFrom->cellTypeGrid->safeGet(i+1,j) == CellType::EMPTY){
           doneGrid->set(i+1,j, true);
           doneGrid->set(i,j, true);
         }
-        else if(levelSetFrom->cellTypeGrid->safeGet(i-1,j) == BoundaryType::EMPTY){
+        else if(levelSetFrom->cellTypeGrid->safeGet(i-1,j) == CellType::EMPTY){
           doneGrid->set(i-1,j, true);
           doneGrid->set(i,j, true);
         }
-        else if(levelSetFrom->cellTypeGrid->safeGet(i,j+1) == BoundaryType::EMPTY){
+        else if(levelSetFrom->cellTypeGrid->safeGet(i,j+1) == CellType::EMPTY){
           doneGrid->set(i,j+1, true);
           doneGrid->set(i,j, true);
         }
-        else if(levelSetFrom->cellTypeGrid->safeGet(i,j-1) == BoundaryType::EMPTY){
+        else if(levelSetFrom->cellTypeGrid->safeGet(i,j-1) == CellType::EMPTY){
           doneGrid->set(i,j-1, true);
           doneGrid->set(i,j, true);
         }
