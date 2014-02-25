@@ -36,7 +36,7 @@ void LevelSet::initializeLevelSet(Grid<BoundaryType> const *const boundary){
           doneGrid->set(i,j, true);
         }
         else{
-          doneGrid->set(i,j, Grid);
+          doneGrid->set(i,j, false);
         }
       }
     }
@@ -44,6 +44,6 @@ void LevelSet::initializeLevelSet(Grid<BoundaryType> const *const boundary){
 }
 
 
-falsetr<bool> const *const LevelSet::getDoneGrid() const{
+Grid<bool> const *const LevelSet::getDoneGrid() const{
   return doneGrid;
 }
