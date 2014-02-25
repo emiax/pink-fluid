@@ -8,9 +8,9 @@ class VelocityGrid;
 class LevelSet{
 public:
   LevelSet(unsigned int w, unsigned int h);
-  void initializeLevelSet(Grid<BoundaryType> const *const);
-  OrdinalGrid<BoundaryType> const *const advectLevelSet(VelocityGrid const* const);
-  OrdinalGrid<BoundaryType> const *const getBoundaryGrid();
+  void initializeLevelSet(Grid<CellType> const *const);
+  OrdinalGrid<CellType> const *const advectLevelSet(VelocityGrid const* const);
+  OrdinalGrid<CellType> const *const getsetCellTypeGrid();
   Grid<bool> const *const getDoneGrid() const;
 private:
   OrdinalGrid<glm::vec2> *distanceGrid;

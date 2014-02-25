@@ -11,7 +11,7 @@
  */
 State::State(unsigned int width, unsigned int height) : w(width), h(height) {
   velocityGrid = new VelocityGrid(w,h);
-  boundaryGrid = new Grid<BoundaryType>(w, h);
+  cellTypeGrid = new Grid<CellType>(w, h);
   
   inkGrid = new OrdinalGrid<glm::vec3>(w, h);
   signedDistanceGrid = new OrdinalGrid<float>(w, h);
@@ -24,7 +24,7 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
  */
 State::~State() {
   delete velocityGrid;
-  delete boundaryGrid;
+  delete cellTypeGrid;
   delete inkGrid;
 }
 
@@ -83,10 +83,10 @@ unsigned int State::getH() {
 /**
  * Set boundary grid
  */
-void State::setBoundaryGrid(Grid<BoundaryType>const* const boundary) {
+void State::setCellTypeGrid(Grid<CellType>const* const boundary) {
   for(unsigned int i = 0u; i < w; i++){
     for(unsigned int j = 0u; j < h; j++){
-      this->boundaryGrid->set(i, j, boundary->get(i, j));
+      this->cellTypeGrid->set(i, j, boundary->get(i, j));
     }
   }
 }
@@ -125,8 +125,8 @@ VelocityGrid const *const State::getVelocityGrid() const{
 /**
  * Get boundary grid
  */
-Grid<BoundaryType>const *const State::getBoundaryGrid() const {
-  return boundaryGrid;
+Grid<CellType>const *const State::getCellTypeGrid() const {
+  return cellTypeGrid;
 }
 
 /**

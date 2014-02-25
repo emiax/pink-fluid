@@ -9,7 +9,7 @@ class Grid;
 class Simulator;
 struct VelocityGrid;
 
-enum BoundaryType{
+enum CellType{
   SOLID = -1, EMPTY = 0, FLUID = 1
 };
 
@@ -17,13 +17,13 @@ class State {
 public:
   State(unsigned int width, unsigned int height);
   ~State();
-  Grid<BoundaryType>const *const getBoundaryGrid() const;
+  Grid<CellType>const *const getCellTypeGrid() const;
   VelocityGrid const *const getVelocityGrid() const;
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
   OrdinalGrid<float> const *const getSignedDistanceGrid() const;
   
 
-  void setBoundaryGrid(Grid<BoundaryType> const* const);
+  void setCellTypeGrid(Grid<CellType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
   void setInkGrid(OrdinalGrid<glm::vec3> const* const);
   void setSignedDistanceGrid(OrdinalGrid<float> const* const);
@@ -36,7 +36,7 @@ private:
   
   OrdinalGrid<float> *signedDistanceGrid;
   OrdinalGrid<glm::vec3> *inkGrid;
-  Grid<BoundaryType> *boundaryGrid;
+  Grid<CellType> *cellTypeGrid;
   VelocityGrid *velocityGrid;
   unsigned int w, h;
   //  LevelSet *levelSet;

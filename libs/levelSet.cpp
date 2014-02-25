@@ -9,29 +9,29 @@ LevelSet::LevelSet(unsigned int w, unsigned int h){
 }
 
 /**
- * Intializes a state based on data in BoundaryGrid.
+ * Intializes a state based on data in setCellTypeGrid.
  * This grid can then be advected by advectLevelSet
  * @param state State to create the level set on. 
  */
-void LevelSet::initializeLevelSet(Grid<BoundaryType> const *const boundary){
+void LevelSet::initializeLevelSet(Grid<CellType> const *const boundary){
   for(auto i = 0u; i < w; i++){
     for(auto j = 0u; j < h; j++){
       //Currently only creates the levelset-based on fluid
-      BoundaryType currentCellType = boundary->get(i,j);
-      if(currentCellType == BoundaryType::FLUID){
-        if(boundary->safeGet(i+1,j) == BoundaryType::EMPTY){
+      CellType currentCellType = boundary->get(i,j);
+      if(currentCellType == CellType::FLUID){
+        if(boundary->safeGet(i+1,j) == CellType::EMPTY){
           distanceGrid->set(i,j, glm::vec2(i+0.5, j));
           doneGrid->set(i,j, true);
         }
-        else if(boundary->safeGet(i-1,j) == BoundaryType::EMPTY){
+        else if(boundary->safeGet(i-1,j) == CellType::EMPTY){
           distanceGrid->set(i,j, glm::vec2(i-0.5, j));
           doneGrid->set(i,j, true);
         }
-        else if(boundary->safeGet(i,j+1) == BoundaryType::EMPTY){
+        else if(boundary->safeGet(i,j+1) == CellType::EMPTY){
           distanceGrid->set(i,j, glm::vec2(0.5, j+0.5));
           doneGrid->set(i,j, true);
         }
-        else if(boundary->safeGet(i,j-1) == BoundaryType::EMPTY){
+        else if(boundary->safeGet(i,j-1) == CellType::EMPTY){
           distanceGrid->set(i,j, glm::vec2(i, j-0.5));
           doneGrid->set(i,j, true);
         }
