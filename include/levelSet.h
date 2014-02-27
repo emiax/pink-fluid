@@ -5,7 +5,9 @@
 #include <ordinalGrid.h>
 #include <grid.h>
 #include <signedDistanceFunction.h>
+#include <limits>
 class VelocityGrid;
+class GridHeap;
 
 class LevelSet{
 public:
@@ -25,11 +27,26 @@ public:
   SignedDistanceFunction *initSDF;
 
 private:
-  void markClosestAsDone();
-  void fastSweep();
+  void updateInterfaceNeighbors();
+  void updateInterfaceNeighborCell(unsigned int i, unsigned int j);
+  void updateNeighborsFrom(unsigned int i, unsigned int j);
+
+  void updateFromCell(unsigned int xTo, unsigned int yTo, unsigned int xFrom, unsigned int yFrom);
   void updateCellTypes();
 
+  void fastMarch();
+
+  static bool heapCompare(GridCoordinate &a, GridCoordinate &b);
+
+  static int sgn(float &val);
+
   void initializeDistanceGrid(SignedDistanceFunction sdf);
+
+  static constexpr float INF = 9999999.0f;
+  
   Grid<bool> *doneGrid;
-  int w,h;
+  Grid<glm::vec2> *closestPointGrid;
+  GridHeap *gridHeap;
+  unsigned int heapEnd;
+  int w, h;
 };

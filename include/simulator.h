@@ -30,7 +30,7 @@ public:
   void jacobiIteration(State const* readFrom, unsigned int nIterations, float dt);
   //  void copyCellTypeGrid(State const* readFrom, State* writeTo);
   void resetCellTypeGrid(State *state);
-  void copycellTypeGrid(State const *readFrom, State *stateTo);
+  void copyCellTypeGrid(State const *readFrom, State *stateTo);
   void updateMarkers(float dt);
 
   void gradientSubtraction(State *state, float dt);

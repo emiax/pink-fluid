@@ -102,33 +102,33 @@ int main( void ) {
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
   //Create new velocity positions
-  velocities->u->setForEach([&](unsigned int i, unsigned int j){
-      if( i > 2 && i < w/3){
-        if( j > 2 && j < h/3){
-          return 1.0f;
-        }
-      }
-      if( i > 2*w/3 && i < w-2){
-        if( j > 2*w/3 && j < w-2){
-          return -1.0f;
-        }
-      }
-      return 0.0f;
-    });
+  // velocities->u->setForEach([&](unsigned int i, unsigned int j){
+  //   if( i > 2 && i < w/3){
+  //     if( j > 2 && j < h/3){
+  //       return 1.0f;
+  //     }
+  //   }
+  //   if( i > 2*w/3 && i < w-2){
+  //     if( j > 2*w/3 && j < w-2){
+  //       return -1.0f;
+  //     }
+  //   }
+  //   return 0.0f;
+  // });
 
-  velocities->v->setForEach([&](unsigned int i, unsigned int j){
-      if( i > 2 && i < w/3){
-        if( j > 2 && j < h/3){
-          return -1.0f;
-        }
-      }
-      if( i > 2*w/3 && i < w-2){
-        if( j > 2*w/3 && j < w-2){
-          return 1.0f;
-        }
-      }
-      return 0.0f;
-    });
+  // velocities->v->setForEach([&](unsigned int i, unsigned int j){
+  //   if( i > 2 && i < w/3){
+  //     if( j > 2 && j < h/3){
+  //       return -1.0f;
+  //     }
+  //   }
+  //   if( i > 2*w/3 && i < w-2){
+  //     if( j > 2*w/3 && j < w-2){
+  //       return 1.0f;
+  //     }
+  //   }
+  //   return 0.0f;
+  // });
 
   prevState.setVelocityGrid(velocities);
 
@@ -148,16 +148,16 @@ int main( void ) {
   // init boundary grid
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
     CellType bt;
-    if(i == 0){
+    if(i >= 0 && i < 3){
       bt = CellType::SOLID;
     }
-    else if(j == 0){
+    else if(j >= 0 && j < 3){
       bt = CellType::SOLID;
     }
-    else if(i == w - 1){
+    else if(i > w - 3){
       bt = CellType::SOLID;
     }
-    else if(j == h - 1){
+    else if(j > h - 3){
       bt = CellType::SOLID;
     }
     return bt;
@@ -196,11 +196,9 @@ int main( void ) {
 
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  // float lastRun = glfwGetTime();
   glfwSwapInterval(1);
   do{
-    // lastRun = glfwGetTime();
-    // float deltaT = glfwGetTime()-lastRun;
+
     sim.step(deltaT);
     deltaT = sim.getDeltaT();
     int width, height;
@@ -239,14 +237,13 @@ int main( void ) {
           //tex2D.set(i,j,3, 1.0f);
           
           // signed dist
-          tex2D.set(i,j,0, newState.getSignedDistanceGrid()->get(i,j));
-          tex2D.set(i,j,1, newState.getSignedDistanceGrid()->get(i,j));
-          tex2D.set(i,j,2, newState.getSignedDistanceGrid()->get(i,j));
+          tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
+          tex2D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
+          tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
           tex2D.set(i,j,3, 1.0f);
 
       }
     }
-
 
     //Get the uniformlocation of the texture from the shader.
     GLuint textureLocation = glGetUniformLocation(prog, "myFloatTex");
@@ -298,6 +295,7 @@ int main( void ) {
       lastTime += 1.0;
     }
     
+    // std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
   std::cout << "Cleaning up!" << std::endl;

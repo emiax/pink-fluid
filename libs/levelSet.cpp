@@ -1,13 +1,19 @@
 #include <levelSet.h>
 #include <glm/ext.hpp>
+#include <gridHeap.h>
 
 LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, Grid<CellType> const* const ctg){
   this->w = w;
   this->h = h;
+  
+
   doneGrid = new OrdinalGrid<bool>(w,h);
   distanceGrid = new OrdinalGrid<float>(w,h);
   cellTypeGrid = new Grid<CellType>(w, h);
   this->initSDF = new SignedDistanceFunction(sdf.getFunction());
+
+  gridHeap = new GridHeap(w, h, distanceGrid);
+  closestPointGrid = new Grid<glm::vec2>(w, h);
 
   setCellTypeGrid(ctg);
   initializeDistanceGrid(sdf);
@@ -32,110 +38,158 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, G
 }*/
 
 void LevelSet::reinitialize() {
-  markClosestAsDone();
-  fastSweep();
+  updateInterfaceNeighbors();
+  fastMarch();
   updateCellTypes();
 }
 
-void LevelSet::markClosestAsDone(){
+void LevelSet::updateInterfaceNeighbors(){
   for(auto i = 0u; i < w; i++){
     for(auto j = 0u; j < h; j++){
       //Currently only creates the levelset-based on fluid
       CellType currentCellType = cellTypeGrid->get(i,j);
-      if(currentCellType != CellType::SOLID){
-        float currentCellSign = glm::sign(distanceGrid->get(i,j));
-        if(glm::sign(distanceGrid->safeGet(i+1,j)) != currentCellSign){
-          doneGrid->set(i,j, true);
-        }
-        else if(glm::sign(distanceGrid->safeGet(i-1,j)) != currentCellSign){
-          doneGrid->set(i,j, true);
-        }
-        else if(glm::sign(distanceGrid->safeGet(i,j+1)) != currentCellSign){
-          doneGrid->set(i,j, true);
-        }
-        else if(glm::sign(distanceGrid->safeGet(i,j-1)) != currentCellSign){
-          doneGrid->set(i,j, true);
-        }
-        else{
-          doneGrid->set(i,j, false);
-        }
+      if (currentCellType != CellType::SOLID) {
+        updateInterfaceNeighborCell(i, j);
+      }
+    }
+  }
+
+  for(auto i = 0u; i < w; i++){
+    for(auto j = 0u; j < h; j++){
+      if (glm::abs(distanceGrid->get(i, j)) < INF) {
+        updateNeighborsFrom(i, j);
       }
     }
   }
 }
 
-void LevelSet::fastSweep() {
-  const float deltaX = 1.0;
+void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j) {
 
-  // columns
-  bool foundDone;
-  for(unsigned i = 0; i < w; i++) {
-    
-    // sweep down
-    foundDone = false;
-    for(unsigned j = 0; j < h; j++) {
-      if(!foundDone) continue; // early out until first done cell
+  float current = distanceGrid->get(i,j);
+  float right = distanceGrid->safeGet(i+1,j);
+  float left = distanceGrid->safeGet(i-1,j);
+  float down = distanceGrid->safeGet(i,j+1);
+  float up = distanceGrid->safeGet(i,j-1);
+  int currentCellSign = sgn(current);
+  
+  float d = INF;
+  glm::vec2 closestPoint(i, j);
 
-      if(doneGrid->get(i, j) != true) {
-        float predecessor = distanceGrid->get(i, j-1);
-        int distanceStep = glm::sign(predecessor) ? glm::sign(predecessor) : -1.0;
-        distanceStep *= deltaX;
-        distanceGrid->set( i, j, predecessor + distanceStep );
-      } else {
-        foundDone = true;
-      }
+  if (sgn(right) != currentCellSign) {
+    float dCandidate = - current / (right - current);
+    if (dCandidate < d) {
+      d = dCandidate;
+      closestPoint.x += d;
     }
-
-    // sweep up 
-    foundDone = false;
-    for(unsigned j = h-1; j >= 0; j--) {
-      if(!foundDone) continue; // early out until first done cell
-
-      if(doneGrid->get(i, j) != true) {
-        float predecessor = distanceGrid->get(i, j+1);
-        int distanceStep = glm::sign(predecessor) ? glm::sign(predecessor) : -1.0;
-        distanceStep *= deltaX;
-        distanceGrid->set( i, j, predecessor + distanceStep );
-      } else {
-        foundDone = true;
-      }
+  }
+  if (sgn(left) != currentCellSign) {
+    float dCandidate = - current / (left - current);
+    if (dCandidate < d) {
+      d = dCandidate;
+      closestPoint.x -= d;
+    }
+  }
+  if (sgn(down) != currentCellSign) {
+    float dCandidate = - current / (down - current);
+    if (dCandidate < d) {
+      d = dCandidate;
+      closestPoint.y += d;
+    }
+  }
+  if (sgn(up) != currentCellSign) {
+    float dCandidate = - current / (up - current);
+    if (dCandidate < d) {
+      d = dCandidate;
+      closestPoint.y -= d;
     }
   }
 
-  // rows
-  for(unsigned j = 0; j < h; j++) {
-    
-    // sweep right
-    foundDone = false;
-    for(unsigned i = 0; i < w; i++) {
-      if(!foundDone) continue; // early out until first done cell
+  if (d != INF) {
+    closestPointGrid->set(i, j, closestPoint);
+  }
 
-      if(doneGrid->get(i, j) != true) {
-        float predecessor = distanceGrid->get(i-1, j);
-        int distanceStep = glm::sign(predecessor) ? glm::sign(predecessor) : -1.0;
-        distanceStep *= deltaX;
-        distanceGrid->set( i, j, predecessor + distanceStep );
-      } else {
-        foundDone = true;
-      }      
-    }
-    
-    // sweep left
-    foundDone = false;
-    for(unsigned i = w-1; i >= 0; i--) {
-      if(!foundDone) continue; // early out until first done cell
+  distanceGrid->set(i, j, d*currentCellSign);
+}
 
-      if(doneGrid->get(i, j) != true) {
-        float predecessor = distanceGrid->get(i+1, j);
-        int distanceStep = glm::sign(predecessor) ? glm::sign(predecessor) : -1.0;
-        distanceStep *= deltaX;
-        distanceGrid->set( i, j, predecessor + distanceStep );
-      } else {
-        foundDone = true;
-      }
-    }
+void LevelSet::updateNeighborsFrom(unsigned int i, unsigned int j) {
+
+  float current = distanceGrid->get(i,j);
+
+  if (i + 1 < w) updateFromCell(i, j, i+1, j); // right
+  if (i > 0) updateFromCell(i, j, i-1, j); // left
+  if (j + 1 < h) updateFromCell(i, j, i, j+1); // down
+  if (j > 0) updateFromCell(i, j, i, j-1); // up
+}
+
+void LevelSet::updateFromCell(unsigned int xFrom,
+                              unsigned int yFrom,
+                              unsigned int xTo,
+                              unsigned int yTo) {
+
+  float d = distanceGrid->clampGet(xTo, yTo);
+  glm::vec2 pointCandidate = closestPointGrid->clampGet(xFrom, yFrom);
+  float dCandidate = glm::distance(pointCandidate, glm::vec2(xTo, yTo));
+
+  if (dCandidate < d) {
+    distanceGrid->set(xTo, yTo, dCandidate);
+    closestPointGrid->set(xTo, yTo, pointCandidate);
+    
+    gridHeap->insert(GridCoordinate(xTo, yTo));
   }
 }
+
+void LevelSet::fastMarch() {
+  while (!(gridHeap->empty())) {
+    GridCoordinate c = gridHeap->pop();
+    updateNeighborsFrom(c.x, c.y);
+  }
+}
+
+// void LevelSet::fastSweep() {
+//   const float deltaX = 1.0;
+
+//   // columns
+//   for(unsigned i = 0; i < w; i++) {
+    
+//     // sweep down
+//     for(unsigned j = 0; j < h; j++) {
+//       propagateDistance(0, 1);
+//     }
+
+//     // sweep up
+//     for(unsigned j = h-1; j >= 0; j--) {
+//       propagateDistance(0, -1);
+//     }
+//   }
+
+//   // rows
+//   for(unsigned j = 0; j < h; j++) {
+    
+//     // sweep right
+//     for(unsigned i = 0; i < w; i++) {
+//       propagateDistance(1, 0);
+//     }
+    
+//     // sweep left
+//     for(unsigned i = w-1; i >= 0; i--) {
+//       propagateDistance(-1, 0);
+//     }
+//   }
+// }
+
+// void LevelSet::propagateDistance(int &dx, int &dy) {
+//   float deltaX = 1.0*(glm::abs(a) + glm::abs(b));
+
+//   float current = distanceGrid->get(i, j);
+//   float predecessor = distanceGrid->safeGet(i + dx, j + dy);
+  
+//   precedingSign = sgn(predecessor);
+//   float candidate = predecessor + deltaX*precedingSign;
+  
+//   if(glm::abs(candidate) < glm::abs(current)) {
+//     distanceGrid->set(i, j, candidate);
+//   }
+// }
 
 /**
  * Init Level set from analytic function
@@ -154,6 +208,8 @@ void LevelSet::updateCellTypes() {
         return CellType::EMPTY;
       }
       return CellType::FLUID;
+    } else {
+      return CellType::SOLID;
     }
   });
 }
@@ -174,4 +230,13 @@ Grid<CellType> const *const LevelSet::getCellTypeGrid() const {
 
 Grid<bool> const *const LevelSet::getDoneGrid() const{
   return doneGrid;
+}
+
+/**
+ * Custom sgn function. Convention (0, INF) outside, (-INF, 0] inside
+ * @param  val value
+ * @return     inside(-1)/outside(1) fluid
+ */
+int LevelSet::sgn(float &val) {
+  return (0.0f < val) - (0.0f >= val);
 }

@@ -34,19 +34,19 @@ Simulator::~Simulator() {
   delete pressureGridTo;
 }
 
-void Simulator::updateMarkers(float dt) {
-  resetCellTypeGrid(stateTo);
-  Grid<CellType> *from = stateFrom->levelSet->cellTypeGrid;
-  Grid<CellType> *to = stateTo->levelSet->cellTypeGrid;
-  to->setForEach([&](unsigned int i, unsigned int j){
-      if (from->get(i, j) == CellType::SOLID) {
-        return CellType::SOLID;
-      } 
-      else{
-        return CellType::FLUID;
-      }
-    });
-}
+// void Simulator::updateMarkers(float dt) {
+//   resetCellTypeGrid(stateTo);
+//   Grid<CellType> *from = stateFrom->levelSet->cellTypeGrid;
+//   Grid<CellType> *to = stateTo->levelSet->cellTypeGrid;
+//   to->setForEach([&](unsigned int i, unsigned int j){
+//       if (from->get(i, j) == CellType::SOLID) {
+//         return CellType::SOLID;
+//       } 
+//       else{
+//         return CellType::FLUID;
+//       }
+//     });
+// }
 
 
 /**
@@ -55,16 +55,17 @@ void Simulator::updateMarkers(float dt) {
  */
 void Simulator::step(float dt) {
   
-  updateMarkers(dt);
   advect(stateFrom, stateTo, dt);
   
-  // applyGravity(stateTo, glm::vec2(0,0.01), dt);
+  applyGravity(stateTo, glm::vec2(0,0.01), dt);
 
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
+
   gradientSubtraction(stateTo, dt);
 
-  // copycellTypeGrid(stateFrom, stateTo);  
+  copyCellTypeGrid(stateFrom, stateTo);
+  
   stateTo->levelSet->reinitialize();
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.01));
@@ -93,7 +94,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     return readFrom->velocityGrid->v->getCrerp(position);
   });
 
-  // signed distance
+  // level set distance grid
   writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j){
     glm::vec2 position = backTrackMid(readFrom, i, j, dt);
     return readFrom->levelSet->distanceGrid->getCrerp(position);
@@ -105,19 +106,19 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
  * @param readFrom State to read from
  * @param writeTo State to write to
  */
-void Simulator::resetCellTypeGrid(State* writeTo) {
-  writeTo->levelSet->cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
-    return CellType::EMPTY;
-  });
-}
-
-// void Simulator::copycellTypeGrid(State const *readFrom, State *writeTo){
-//   for(unsigned int i = 0; i < w; i++){
-//     for(unsigned int j = 0; j < h; j++){
-//       writeTo->cellTypeGrid->set(i,j, readFrom->cellTypeGrid->get(i,j));
-//     }
-//   }
+// void Simulator::resetCellTypeGrid(State* writeTo) {
+//   writeTo->levelSet->cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
+//     return CellType::EMPTY;
+//   });
 // }
+
+void Simulator::copyCellTypeGrid(State const *readFrom, State *writeTo){
+  for(unsigned int i = 0; i < w; i++){
+    for(unsigned int j = 0; j < h; j++){
+      writeTo->levelSet->cellTypeGrid->set(i,j, readFrom->levelSet->cellTypeGrid->get(i,j));
+    }
+  }
+}
 
 /**
  * Find the previous position of the temporary particle in the grid that travelled to i, j.
