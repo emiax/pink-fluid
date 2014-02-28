@@ -34,7 +34,7 @@ if(COMPILER_SUPPORTS_CXX11)
 elseif(COMPILER_SUPPORTS_CXX0X)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
-        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
 
@@ -46,20 +46,14 @@ add_definitions(
   -D_CRT_SECURE_NO_WARNINGS
 )
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-add_definitions(
-  -g
-  -Wall
-  -Wextra
-  -pedantic
-)
+  set(PROJECT_EXEC_FLAGS
+    "-g -Wall -Wextra -pedantic"
+  )
 endif()
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-add_definitions(
-  -g
-  # -Wall
-  # -Wextra
-  # -pedantic
-)
+  set(PROJECT_EXEC_FLAGS
+    "-g -Wall -Wextra -pedantic"
+  )
 endif()
 
 if(MSVC)
@@ -124,10 +118,17 @@ add_subdirectory(
   ${PROJECT_EXT_DIR}/glm
 )
 
+
 set(ext_libs 
   ${CMAKE_SOURCE_DIR}/external/glfw/include/
   ${CMAKE_SOURCE_DIR}/external/glew/include/
   ${GLM_INCLUDE_DIR}
+)
+
+# Disables warnings under gcc and clang for GLM.
+# GLM Emits a lot of warnings under higher compiler warnings
+add_definitions(
+  "-isystem ${GLM_INCLUDE_DIR}"
 )
 
 include_directories(
@@ -166,7 +167,10 @@ file(GLOB PROJECT_CXX_FILES ${PROJECT_CXX_DIR}/*.cpp)
 add_executable(${PROJECT_NAME_STR}
   ${PROJECT_CXX_FILES}
 )
-
+  
+set_target_properties(${PROJECT_NAME_STR}
+  PROPERTIES COMPILE_FLAGS ${PROJECT_EXEC_FLAGS})  
+  
 add_dependencies(${PROJECT_NAME_STR} ${EXT_DEPS})
 
 target_link_libraries(${PROJECT_NAME_STR}
@@ -192,6 +196,8 @@ file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(${PROJECT_TEST_NAME} 
                ${TEST_SRC_FILES}
 )
+set_target_properties(${PROJECT_TEST_NAME}
+  PROPERTIES COMPILE_FLAGS ${PROJECT_EXEC_FLAGS})
 target_link_libraries(${PROJECT_TEST_NAME}
     ${ALL_LIBS}
 )
