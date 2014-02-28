@@ -28,10 +28,6 @@ public:
   // pressure
   void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
   void jacobiIteration(State const* readFrom, unsigned int nIterations, float dt);
-  //  void copyCellTypeGrid(State const* readFrom, State* writeTo);
-  void resetCellTypeGrid(State *state);
-  void copyCellTypeGrid(State const *readFrom, State *stateTo);
-  void updateMarkers(float dt);
 
   void gradientSubtraction(State *state, float dt);
 
@@ -42,10 +38,7 @@ public:
   float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
   float getDeltaT();
 
-  //  void setCellTypeGrid(Grid<bool> *cellTypeGrid);
-
 private:
-  void addAdvectedMarker(glm::vec2 p, float dt);
   unsigned int w,h;
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
