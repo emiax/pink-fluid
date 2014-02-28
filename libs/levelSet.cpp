@@ -1,6 +1,7 @@
 #include <levelSet.h>
 #include <glm/ext.hpp>
 #include <gridHeap.h>
+#include <iostream>
 
 LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, Grid<CellType> const* const ctg){
   this->w = w;
@@ -48,9 +49,7 @@ void LevelSet::updateInterfaceNeighbors(){
     for(auto j = 0u; j < h; j++){
       //Currently only creates the levelset-based on fluid
       CellType currentCellType = cellTypeGrid->get(i,j);
-      if (currentCellType != CellType::SOLID) {
-        updateInterfaceNeighborCell(i, j);
-      }
+      updateInterfaceNeighborCell(i, j);
     }
   }
 
@@ -64,43 +63,43 @@ void LevelSet::updateInterfaceNeighbors(){
 }
 
 void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j) {
-
   float current = distanceGrid->get(i,j);
-  float right = distanceGrid->safeGet(i+1,j);
-  float left = distanceGrid->safeGet(i-1,j);
-  float down = distanceGrid->safeGet(i,j+1);
-  float up = distanceGrid->safeGet(i,j-1);
+  float right = distanceGrid->clampGet(i+1,j);
+  float left = distanceGrid->clampGet(i-1,j);
+  float down = distanceGrid->clampGet(i,j+1);
+  float up = distanceGrid->clampGet(i,j-1);
   int currentCellSign = sgn(current);
   
   float d = INF;
   glm::vec2 closestPoint(i, j);
 
+  
   if (sgn(right) != currentCellSign) {
     float dCandidate = - current / (right - current);
     if (dCandidate < d) {
       d = dCandidate;
-      closestPoint.x += d;
+      closestPoint = glm::vec2(i + d, j);
     }
   }
   if (sgn(left) != currentCellSign) {
     float dCandidate = - current / (left - current);
     if (dCandidate < d) {
       d = dCandidate;
-      closestPoint.x -= d;
+      closestPoint = glm::vec2(i - d, j);
     }
   }
   if (sgn(down) != currentCellSign) {
     float dCandidate = - current / (down - current);
     if (dCandidate < d) {
       d = dCandidate;
-      closestPoint.y += d;
+      closestPoint = glm::vec2(i, j + d);
     }
   }
   if (sgn(up) != currentCellSign) {
     float dCandidate = - current / (up - current);
     if (dCandidate < d) {
       d = dCandidate;
-      closestPoint.y -= d;
+      closestPoint = glm::vec2(i, j - d);
     }
   }
 
@@ -126,14 +125,13 @@ void LevelSet::updateFromCell(unsigned int xFrom,
                               unsigned int xTo,
                               unsigned int yTo) {
 
-  float d = distanceGrid->clampGet(xTo, yTo);
-  glm::vec2 pointCandidate = closestPointGrid->clampGet(xFrom, yFrom);
+  float d = distanceGrid->get(xTo, yTo);
+  glm::vec2 pointCandidate = closestPointGrid->get(xFrom, yFrom);
   float dCandidate = glm::distance(pointCandidate, glm::vec2(xTo, yTo));
-
-  if (dCandidate < d) {
-    distanceGrid->set(xTo, yTo, dCandidate);
+  
+  if (dCandidate < glm::abs(d)) {
+    distanceGrid->set(xTo, yTo, dCandidate*sgn(d));
     closestPointGrid->set(xTo, yTo, pointCandidate);
-    
     gridHeap->insert(GridCoordinate(xTo, yTo));
   }
 }
@@ -230,6 +228,10 @@ Grid<CellType> const *const LevelSet::getCellTypeGrid() const {
 
 Grid<bool> const *const LevelSet::getDoneGrid() const{
   return doneGrid;
+}
+
+Grid<glm::vec2> const *const LevelSet::getClosestPointGrid() const{
+  return closestPointGrid;
 }
 
 /**

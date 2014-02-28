@@ -30,6 +30,7 @@ public:
   void jacobiIteration(State const* readFrom, unsigned int nIterations, float dt);
 
   void gradientSubtraction(State *state, float dt);
+  void extrapolateVelocity(State *stateFrom, State *stateTo);
 
   OrdinalGrid<double>* resetPressureGrid();
   OrdinalGrid<float>* getDivergenceGrid();  

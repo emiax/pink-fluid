@@ -17,6 +17,7 @@ public:
   Grid<CellType> const *const getCellTypeGrid() const;
   Grid<bool> const *const getDoneGrid() const;
   OrdinalGrid<float> const *const getDistanceGrid() const;
+  Grid<glm::vec2> const *const getClosestPointGrid() const;
 
   void setCellTypeGrid(Grid<CellType> const* const);
 

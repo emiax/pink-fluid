@@ -14,7 +14,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   // grid dims must be equal
   assert( sf->getW() == st->getW() );
   assert( sf->getH() == st->getH() );
-  
+
   w = sf->getW();
   h = sf->getH();
 
@@ -38,17 +38,25 @@ Simulator::~Simulator() {
  * @param dt Time step, deltaT
  */
 void Simulator::step(float dt) {
-  
+
+  glm::vec2 gravity = glm::vec2(0, 0.10);
+
   // simulation stack
   advect(stateFrom, stateTo, dt);
-  applyGravity(stateTo, glm::vec2(0,0.01), dt);
+  applyGravity(stateTo, gravity, dt);
+
+  // utility/clean-uppers
+  stateTo->levelSet->reinitialize();
+
+  //std::swap(stateFrom, stateTo);
+  extrapolateVelocity(stateTo, stateTo);
+
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
-  
-  // utility/clean-uppers
-  stateTo->levelSet->reinitialize();
-  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), glm::vec2(0,0.01));
+
+
+  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
   std::swap(stateFrom, stateTo);
 }
 
@@ -62,21 +70,21 @@ void Simulator::step(float dt) {
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   //X
   writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-    glm::vec2 position = backTrackU(readFrom, i, j, dt);
-    return readFrom->velocityGrid->u->getCrerp(position);
-  });
+      glm::vec2 position = backTrackU(readFrom, i, j, dt);
+      return readFrom->velocityGrid->u->getCrerp(position);
+    });
 
   //Y
   writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-    glm::vec2 position = backTrackV(readFrom, i, j, dt);
-    return readFrom->velocityGrid->v->getCrerp(position);
-  });
+      glm::vec2 position = backTrackV(readFrom, i, j, dt);
+      return readFrom->velocityGrid->v->getCrerp(position);
+    });
 
   // level set distance grid
   writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j){
-    glm::vec2 position = backTrackMid(readFrom, i, j, dt);
-    return readFrom->levelSet->distanceGrid->getCrerp(position);
-  });
+      glm::vec2 position = backTrackMid(readFrom, i, j, dt);
+      return readFrom->levelSet->distanceGrid->getCrerp(position);
+    });
 }
 
 /**
@@ -126,18 +134,18 @@ void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
   velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-    if (cellTypeGrid->get(i, j) == CellType::FLUID) {
-      return velocityGrid->u->get(i,j)+g.x*deltaT;
-    }
-    return velocityGrid->u->get(i,j);
-  });
+      if (cellTypeGrid->get(i, j) != CellType::SOLID) {
+        return velocityGrid->u->get(i,j)+g.x*deltaT;
+      }
+      return velocityGrid->u->get(i,j);
+    });
 
   velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-    if (cellTypeGrid->get(i, j) == CellType::FLUID) {
-      return velocityGrid->v->get(i,j)+g.y*deltaT;
-    }
-    return velocityGrid->v->get(i,j);
-  });
+      if (cellTypeGrid->get(i, j) != CellType::SOLID) {
+        return velocityGrid->v->get(i,j)+g.y*deltaT;
+      }
+      return velocityGrid->v->get(i,j);
+    });
 }
 
 
@@ -178,7 +186,7 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations,
 
   const float sqDeltaX = 1.0f;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
-  
+
   resetPressureGrid();
 
   for(unsigned int k = 0; k < nIterations; ++k) {
@@ -202,17 +210,17 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations,
         if (cellTypeGrid->get(i - 1, j) != CellType::SOLID) {
           pL = pressureGridFrom->get(i - 1, j);
           neighbouringFluidCells++;
-        } 
+        }
         double pR = 0;
         if (cellTypeGrid->get(i + 1, j) != CellType::SOLID) {
           pR = pressureGridFrom->get(i + 1, j);
           neighbouringFluidCells++;
-        } 
+        }
         double pU = 0;
         if (cellTypeGrid->get(i, j - 1) != CellType::SOLID) {
           pU = pressureGridFrom->get(i, j - 1);
           neighbouringFluidCells++;
-        } 
+        }
         double pD = 0;
         if (cellTypeGrid->get(i, j + 1) != CellType::SOLID) {
           pD = pressureGridFrom->get(i, j + 1);
@@ -282,60 +290,120 @@ void Simulator::gradientSubtraction(State *state, float dt) {
         uVelocityGrid->set(i+1, j, 0.0f);
         vVelocityGrid->set(i, j, 0.0f);
         vVelocityGrid->set(i, j+1, 0.0f);
-      } 
-    }
-  }
-
-}
-
-/**
- * Reset pressure grid
- */
-OrdinalGrid<double>* Simulator::resetPressureGrid() {
-  for (unsigned int j = 0; j < h; ++j) {
-        for (unsigned int i = 0; i < w; ++i) {
-      pressureGridFrom->set(i, j, 0.0);
-      pressureGridTo->set(i, j, 0.0);
-    }
-  }
-  return pressureGridFrom;
-}
-
-OrdinalGrid<float>* Simulator::getDivergenceGrid() {
-  return divergenceGrid;
-}
-
-/**
- * Find the maximum velocity present in the grid
- * @param  velocity velocity grid to sample from
- * @return maxVec   max velocity vector
- */
-glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
-  glm::vec2 maxVec = velocity->getCell(0,0);
-  for(unsigned int i = 0; i < w; i++){
-    for(unsigned int j = 0; j < h; j++){
-      if(glm::length(maxVec) < glm::length(velocity->getCell(i,j))){
-        maxVec = velocity->getCell(i,j);
       }
     }
   }
-  return maxVec;
 }
 
-/**
- * Calculate max deltaT for the current iteration.
- * This calculation is based on the max velocity in the grid.
- * @param  maxV     max velocity in the velocity grid
- * @param  gravity  gravitational force vector
- * @return dT       maximum time step length
- */
-float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
-  //TODO: glm::length(gravity) should be changed to something else relating to gravity
-  float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
-  float dT = 5*gridSize/max;
-  return dT;
+
+void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
+  const Grid<glm::vec2> *closestPointGrid = stateFrom->levelSet->getClosestPointGrid();
+
+  VelocityGrid *fromVelocityGrid = stateFrom->velocityGrid;
+  VelocityGrid *toVelocityGrid = stateTo->velocityGrid;
+  const Grid<CellType> *cellTypeGrid = stateFrom->getCellTypeGrid();
+  
+  unsigned int w = stateFrom->w;
+  unsigned int h = stateFrom->h;
+
+  toVelocityGrid->u->setForEach([&](int i, int j) {
+      glm::vec2 currentPoint = glm::vec2(i - 0.5, j);
+      GridCoordinate leftCell = GridCoordinate(i - 1, j);
+      GridCoordinate rightCell = GridCoordinate(i, j);
+
+      if (cellTypeGrid->clampGet(leftCell) == CellType::FLUID || 
+          cellTypeGrid->clampGet(rightCell) == CellType::FLUID) {
+        return fromVelocityGrid->u->get(i, j);
+      }
+
+      glm::vec2 leftClosestPoint = closestPointGrid->clampGet(leftCell);
+      glm::vec2 rightClosestPoint = closestPointGrid->clampGet(rightCell);
+
+      float dLeft = glm::distance(currentPoint, leftClosestPoint);
+      float dRight = glm::distance(currentPoint, rightClosestPoint);
+
+      float uLeft = fromVelocityGrid->u->getLerp(leftClosestPoint.x + 0.5, leftClosestPoint.y);
+      float uRight = fromVelocityGrid->u->getLerp(rightClosestPoint.x + 0.5, rightClosestPoint.y);
+
+      float t = dLeft/(dLeft + dRight);
+      return t*uRight + (1.0f - t)*uLeft;
+      
+    });
+
+
+  toVelocityGrid->v->setForEach([&](int i, int j) {
+      glm::vec2 currentPoint = glm::vec2(i, j - 0.5);
+      GridCoordinate upCell = GridCoordinate(i, j - 1);
+      GridCoordinate downCell = GridCoordinate(i, j);
+
+      if (cellTypeGrid->clampGet(upCell) == CellType::FLUID || 
+          cellTypeGrid->clampGet(downCell) == CellType::FLUID) {
+        return fromVelocityGrid->v->get(i, j);
+      }
+
+      glm::vec2 upClosestPoint = closestPointGrid->clampGet(upCell);
+      glm::vec2 downClosestPoint = closestPointGrid->clampGet(downCell);
+
+      float dUp = glm::distance(currentPoint, upClosestPoint);
+      float dDown = glm::distance(currentPoint, downClosestPoint);
+
+      float vUp = fromVelocityGrid->v->getLerp(upClosestPoint.x, upClosestPoint.y + 0.5);
+      float vDown = fromVelocityGrid->v->getLerp(downClosestPoint.x, downClosestPoint.y + 0.5);
+
+      float t = dUp/(dUp + dDown);
+      return t*vDown + (1.0f - t)*vUp;
+    });
 }
 
-float Simulator::getDeltaT(){
-  return deltaT;
-}
+
+  /**
+   * Reset pressure grid
+   */
+  OrdinalGrid<double>* Simulator::resetPressureGrid() {
+    for (unsigned int j = 0; j < h; ++j) {
+      for (unsigned int i = 0; i < w; ++i) {
+        pressureGridFrom->set(i, j, 0.0);
+        pressureGridTo->set(i, j, 0.0);
+      }
+    }
+    return pressureGridFrom;
+  }
+
+  OrdinalGrid<float>* Simulator::getDivergenceGrid() {
+    return divergenceGrid;
+  }
+
+  /**
+   * Find the maximum velocity present in the grid
+   * @param  velocity velocity grid to sample from
+   * @return maxVec   max velocity vector
+   */
+  glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
+    glm::vec2 maxVec = velocity->getCell(0,0);
+    for(unsigned int i = 0; i < w; i++){
+      for(unsigned int j = 0; j < h; j++){
+        if(glm::length(maxVec) < glm::length(velocity->getCell(i,j))){
+          maxVec = velocity->getCell(i,j);
+        }
+      }
+    }
+    return maxVec;
+  }
+
+  /**
+   * Calculate max deltaT for the current iteration.
+   * This calculation is based on the max velocity in the grid.
+   * @param  maxV     max velocity in the velocity grid
+   * @param  gravity  gravitational force vector
+   * @return dT       maximum time step length
+   */
+  float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
+    //TODO: glm::length(gravity) should be changed to something else relating to gravity
+    float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
+    float dT = glm::min(5*gridSize/max, 1.0f);
+    return dT;
+  }
+
+  float Simulator::getDeltaT(){
+    return deltaT;
+  }

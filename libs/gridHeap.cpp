@@ -8,14 +8,18 @@ GridHeap::GridHeap(unsigned int w, unsigned int h, OrdinalGrid<float> *cg) {
 
   coordinates = new GridCoordinate[capacity];
   heapIndices = new Grid<int>(w, h);
+  heapIndices->setForEach([&](unsigned int i, unsigned int j) {
+      return NOT_IN_HEAP;
+    });
+  
   comparisonGrid = cg;
 }
 
 void GridHeap::insert(GridCoordinate coord) {
   int heapIndex = heapIndices->get(coord);
 
-  if (heapIndex != NOT_IN_HEAP) {
-    assert(size < capacity);
+  if (heapIndex == NOT_IN_HEAP) {
+    assert(size <= capacity);
     coordinates[size] = coord;
     heapIndices->set(coord, size);
     percolateUp(size);

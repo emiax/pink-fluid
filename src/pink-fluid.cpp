@@ -96,7 +96,7 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 50, h = 50;
+  unsigned int w = 80, h = 80;
   State prevState(w, h);
   State newState(w, h);
 
@@ -139,9 +139,9 @@ int main( void ) {
   // define initial signed distance
   SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
       // distance function to circle with radius w/3, center in (w/2, h/2)
-      const float x = (float)i - (float)w/2;
+      const float x = (float)i - (float)w/3;
       const float y = (float)j - (float)h/2;
-      return sqrt( x*x + y*y ) - (float)w/3;
+      return sqrt( x*x + y*y ) - (float)w/4;
     });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
@@ -224,11 +224,13 @@ int main( void ) {
         // tex2D.set(i,j,3, 1.0f);
 
         // velocity
-        // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
-        // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-        // tex2D.set(i,j,2, 0.5 + newState.getsetCellTypeGrid()->get(i, j))
-        // tex2D.set(i,j,2, 0.5);
-        // tex2D.set(i,j,3, 1.0f);
+        //tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+        //tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+        //tex2D.set(i,j,2, 0.5 + newState.getCellTypeGrid()->get(i, j));
+        //tex2D.set(i,j,2, 0.5);
+        //tex2D.set(i,j,3, 1.0f);
+
+
 
         // divergence
         //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
@@ -236,11 +238,26 @@ int main( void ) {
         //tex2D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
         //tex2D.set(i,j,3, 1.0f);
 
-        // signed dist
-        tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
+        // type
+        /*        tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
         tex2D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
         tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+        tex2D.set(i,j,3, 1.0f);*/
+
+
+        //signed dist
+        tex2D.set(i,j,0, newState.getSignedDistanceGrid()->get(i,j) / 1.0);
+        tex2D.set(i,j,1, 0.0f);
+        tex2D.set(i,j,2, 0.0f);
         tex2D.set(i,j,3, 1.0f);
+
+
+        //closest point
+        /*tex2D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
+        tex2D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
+        tex2D.set(i,j,2, 0.0f);
+        tex2D.set(i,j,3, 1.0f);*/
+
 
       }
     }
@@ -287,6 +304,7 @@ int main( void ) {
     glfwSwapBuffers(window);
     double currentTime = glfwGetTime();
     nbFrames++;
+
     if ( currentTime - lastTime >= 1.0 ){ // If last prinf() was more than 1 sec ago
       // printf and reset timer
       std::string title = std::to_string(1000.0/double(nbFrames)) + "ms/frame        " + std::to_string(deltaT) + "  dt";
@@ -298,7 +316,7 @@ int main( void ) {
     // std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
-  std::cout << "Cleaning up!" << std::endl;
+    std::cout << "Cleaning up!" << std::endl;
   // Close OpenGL window and terminate GLFW
   glfwDestroyWindow(window);
   glfwTerminate();

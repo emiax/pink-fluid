@@ -145,3 +145,12 @@ OrdinalGrid<float> const *const State::getSignedDistanceGrid() const {
   return levelSet->getDistanceGrid();
 }
 
+
+/**
+ * Get closest point grid
+ * @return const pointer to closest point grid.
+ */
+Grid<glm::vec2> const *const State::getClosestPointGrid() const {
+  return levelSet->getClosestPointGrid();
+}
+

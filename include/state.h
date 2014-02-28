@@ -22,6 +22,7 @@ public:
   VelocityGrid const *const getVelocityGrid() const;
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
   OrdinalGrid<float> const *const getSignedDistanceGrid() const;
+  Grid<glm::vec2> const *const getClosestPointGrid() const;
   
   void setCellTypeGrid(Grid<CellType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
