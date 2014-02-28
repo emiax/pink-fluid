@@ -33,8 +33,8 @@ class OrdinalGrid : public Grid<T> {
     unsigned int lowerJ = floor(j);
     unsigned int upperJ = ceil(j);
     
-    float ti = fmod(i, 1.0);
-    float tj = fmod(j, 1.0);
+    float ti = i - (int)i;
+    float tj = j - (int)j;
     
     T v00 = this->get(lowerI, lowerJ);
     T v01 = this->get(lowerI, upperJ);

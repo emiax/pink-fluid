@@ -96,7 +96,7 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 80, h = 80;
+  unsigned int w = 500, h = 500;
   State prevState(w, h);
   State newState(w, h);
 
