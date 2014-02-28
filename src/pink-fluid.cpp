@@ -11,7 +11,7 @@
 #ifdef __APPLE_CC__
 #include <OpenGL/gl3.h>
 #define GLFW_INCLUDE_GLCOREARB
-#else 
+#else
 #include <GL/glew.h>
 #endif
 
@@ -38,7 +38,7 @@
 
 int main( void ) {
   srand(time(NULL));
-  
+
   //Create init object
   Init init = Init();
 
@@ -65,9 +65,9 @@ int main( void ) {
   glGenVertexArrays(1, &VertexArrayID);
   glBindVertexArray(VertexArrayID);
 
-  static const GLfloat g_vertex_buffer_data[] = { 
-    -1.0f, 1.0f, 0.0f, 
-    1.0f, 1.0f, 0.0f, 
+  static const GLfloat g_vertex_buffer_data[] = {
+    -1.0f, 1.0f, 0.0f,
+    1.0f, 1.0f, 0.0f,
     1.0f, -1.0f, 0.0f,
 
     1.0f, -1.0f, 0.0f,
@@ -138,30 +138,30 @@ int main( void ) {
 
   // define initial signed distance
   SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
-    // distance function to circle with radius w/3, center in (w/2, h/2)
-    const float x = (float)i - (float)w/2;
-    const float y = (float)j - (float)h/2;
-    return sqrt( x*x + y*y ) - (float)w/3;
-  });
-  
+      // distance function to circle with radius w/3, center in (w/2, h/2)
+      const float x = (float)i - (float)w/2;
+      const float y = (float)j - (float)h/2;
+      return sqrt( x*x + y*y ) - (float)w/3;
+    });
+
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
   // init boundary grid
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
-    CellType bt;
-    if(i == 0){
-      bt = CellType::SOLID;
-    }
-    else if(j == 0){
-      bt = CellType::SOLID;
-    }
-    else if(i == w - 1){
-      bt = CellType::SOLID;
-    }
-    else if(j == h - 1){
-      bt = CellType::SOLID;
-    }
-    return bt;
-  });
+      CellType bt = CellType::EMPTY;
+      if(i == 0){
+        bt = CellType::SOLID;
+      }
+      else if(j == 0){
+        bt = CellType::SOLID;
+      }
+      else if(i == w - 1){
+        bt = CellType::SOLID;
+      }
+      else if(j == h - 1){
+        bt = CellType::SOLID;
+      }
+      return bt;
+    });
 
   LevelSet *ls = new LevelSet( w, h, circleSD, cellTypeGrid );
   prevState.setLevelSet(ls);
@@ -183,7 +183,7 @@ int main( void ) {
   //     return glm::vec3(0);
   //   });
   // prevState.setInkGrid(ink);
-  
+
   // init simulator
   Simulator sim(&prevState, &newState,0.1f);
 
@@ -211,36 +211,36 @@ int main( void ) {
     glUniform1f(location, glfwGetTime());
 
     // Set the x,y positions in the texture, in order to visualize the velocity field.
-    // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the 
+    // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
     // corresponding cell-value instead of the edge velocities.
     for(unsigned int j = 0; j < h; ++j){
-        for(unsigned int i=0;i<w;++i) {
-          // ink
-          // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-          // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-          // tex2D.set(i,j,0, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-          // tex2D.set(i,j,1, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-          // tex2D.set(i,j,2, newState.getsetCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
-          // tex2D.set(i,j,3, 1.0f);
+      for(unsigned int i=0;i<w;++i) {
+        // ink
+        // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
+        // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
+        // tex2D.set(i,j,0, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+        // tex2D.set(i,j,1, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+        // tex2D.set(i,j,2, newState.getsetCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
+        // tex2D.set(i,j,3, 1.0f);
 
-          // velocity
-          // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
-          // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-          // tex2D.set(i,j,2, 0.5 + newState.getsetCellTypeGrid()->get(i, j))
-          // tex2D.set(i,j,2, 0.5);
-          // tex2D.set(i,j,3, 1.0f);
+        // velocity
+        // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+        // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+        // tex2D.set(i,j,2, 0.5 + newState.getsetCellTypeGrid()->get(i, j))
+        // tex2D.set(i,j,2, 0.5);
+        // tex2D.set(i,j,3, 1.0f);
 
-          // divergence
-          //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
-          //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
-          //tex2D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
-          //tex2D.set(i,j,3, 1.0f);
-          
-          // signed dist
-          tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
-          tex2D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
-          tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-          tex2D.set(i,j,3, 1.0f);
+        // divergence
+        //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
+        //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
+        //tex2D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
+        //tex2D.set(i,j,3, 1.0f);
+
+        // signed dist
+        tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
+        tex2D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
+        tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+        tex2D.set(i,j,3, 1.0f);
 
       }
     }
@@ -264,7 +264,7 @@ int main( void ) {
                           0,                  // stride
                           (void*)0            // array buffer offset
                           );
-    
+
     //UV Texture coordinates
     glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
     glVertexAttribPointer(
@@ -294,7 +294,7 @@ int main( void ) {
       nbFrames = 0;
       lastTime += 1.0;
     }
-    
+
     // std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
