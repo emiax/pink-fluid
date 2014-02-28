@@ -148,16 +148,16 @@ int main( void ) {
   // init boundary grid
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
     CellType bt;
-    if(i >= 0 && i < 3){
+    if(i == 0){
       bt = CellType::SOLID;
     }
-    else if(j >= 0 && j < 3){
+    else if(j == 0){
       bt = CellType::SOLID;
     }
-    else if(i > w - 3){
+    else if(i == w - 1){
       bt = CellType::SOLID;
     }
-    else if(j > h - 3){
+    else if(j == h - 1){
       bt = CellType::SOLID;
     }
     return bt;
