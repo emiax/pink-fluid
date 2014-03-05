@@ -28,6 +28,9 @@ public:
   GLfloat get(GLuint i, GLuint j, GLuint k){
     return data[indexTranslation(i,j,k)];
   }
+  GLuint getId() {
+    return textureID;
+  };
   void set(GLuint i, GLuint j, GLuint k, GLfloat v){
     data[indexTranslation(i,j,k)] = v;
   }

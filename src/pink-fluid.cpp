@@ -260,10 +260,12 @@ int main( void ) {
   while( !glfwWindowShouldClose(window) );
     std::cout << "Cleaning up!" << std::endl;
   // Close OpenGL window and terminate GLFW
+
   glfwDestroyWindow(window);
   glfwTerminate();
   glDeleteBuffers(1, &vertexbuffer);
   glDeleteBuffers(1, &uvbuffer);
   glDeleteVertexArrays(1, &VertexArrayID);
+
   exit(EXIT_SUCCESS);
 }

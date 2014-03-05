@@ -7,6 +7,7 @@ class State;
 struct VelocityGrid;
 
 #include <glm/glm.hpp>
+#include <pressureSolver.h>
 
 class Simulator {
 public:
