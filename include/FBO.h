@@ -3,9 +3,10 @@
 
 class FBO {
 public:
-  FBO(GLuint w, GLuint h) {
+  FBO(GLuint w, GLuint h, GLenum tb) {
     this->w = w;
     this->h = h;
+    this->texBucket = tb;
 
     // create new framebuffer
     glGenFramebuffers(1, &framebufferId);
@@ -42,10 +43,6 @@ public:
     glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
   };
 
-  void activateRead() {
-    glActiveTexture(texture->getId());
-  };
-
   static void deactivateFramebuffers() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   };
@@ -58,8 +55,13 @@ public:
     return texture;
   };
 
+  GLenum getTextureBucket() {
+    return texBucket;
+  }
+
 private:
   GLuint w, h;
   GLuint framebufferId;
   Texture2D *texture;
+  GLenum texBucket;
 };

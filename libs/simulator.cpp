@@ -8,7 +8,6 @@
 #include <cassert>
 #include <levelSet.h>
 
-
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
 
   // grid dims must be equal
@@ -22,6 +21,8 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
+
+  pressureSolver = new PressureSolver(w, h);
 }
 
 /**
@@ -50,6 +51,7 @@ void Simulator::step(float dt) {
 
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
+  pressureSolver->solve(40, divergenceGrid);
   gradientSubtraction(stateTo, dt);
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
