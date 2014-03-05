@@ -155,22 +155,19 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
 
-  for(unsigned int i = 0; i < w; i++){
-    for(unsigned int j = 0; j < h; j++){
-
-      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
+  toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
+    if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float entering = u->get(i, j) + v->get(i, j);
         float leaving = u->get(i + 1, j) + v->get(i, j + 1);
 
         float divergence = leaving - entering;
 
-        toDivergenceGrid->set(i, j, divergence);
+        return divergence;
       } else {
-        toDivergenceGrid->set(i, j, 0);
+        return 0.0f;
 
       }
-    }
-  }
+    });
 }
 
 /**
@@ -178,7 +175,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
  * @param readFrom The state to read from
  * @param nIterations number of iterations
  */
-void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations, float dt) {
+void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations, const float dt) {
 
   const float sqDeltaX = 1.0f;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
@@ -190,7 +187,7 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations,
     OrdinalGrid<double> *tmp = pressureGridFrom;
     pressureGridFrom = pressureGridTo;
     pressureGridTo = tmp;
-
+    #pragma omp parallel for default(none) 
     for (unsigned int j = 0; j < h; ++j) {
       for (unsigned int i = 0; i < w; ++i) {
 
@@ -252,6 +249,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
   // looping through pressure cells
+  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid)
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
@@ -276,7 +274,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
       }
     }
   }
-
+  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid)
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
