@@ -21,23 +21,6 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, G
   updateCellTypes();
 }
 
-
-// TODO: This needs to be implemented when LevelSet functionality is completed
-/*LevelSet::LevelSet(unsigned int w, unsigned int h, Grid<CellType> const* const ctg) {
-  this->LevelSet(w,h [&](unsigned int i, unsigned int j){
-    if()
-  })
-  this->w = w;
-  this->h = h;
-  doneGrid = new OrdinalGrid<bool>(w,h);
-  distanceGrid = new OrdinalGrid<float>(w,h);
-  cellTypeGrid = new Grid<CellType>(w, h);
-
-
-  setCellTypeGrid(ctg);
-  markClosestAsDone();
-}*/
-
 void LevelSet::reinitialize() {
   updateInterfaceNeighbors();
   fastMarch();
@@ -45,16 +28,17 @@ void LevelSet::reinitialize() {
 }
 
 void LevelSet::updateInterfaceNeighbors(){
-  for(auto i = 0u; i < w; i++){
-    for(auto j = 0u; j < h; j++){
+
+  for(unsigned j = 0; j < h; ++j) {
+    for(unsigned i = 0; i < w; ++i) {
       //Currently only creates the levelset-based on fluid
       CellType currentCellType = cellTypeGrid->get(i,j);
       updateInterfaceNeighborCell(i, j);
     }
   }
 
-  for(auto i = 0u; i < w; i++){
-    for(auto j = 0u; j < h; j++){
+  for(unsigned j = 0; j < h; ++j) {
+    for(unsigned i = 0; i < w; ++i) {
       if (glm::abs(distanceGrid->get(i, j)) < INF) {
         updateNeighborsFrom(i, j);
       }

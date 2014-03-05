@@ -45,16 +45,12 @@ void Simulator::step(float dt) {
   advect(stateFrom, stateTo, dt);
   applyGravity(stateTo, gravity, dt);
 
-  // utility/clean-uppers
   stateTo->levelSet->reinitialize();
-
-  //std::swap(stateFrom, stateTo);
   extrapolateVelocity(stateTo, stateTo);
 
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
-
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
   std::swap(stateFrom, stateTo);
@@ -307,52 +303,52 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
   unsigned int h = stateFrom->h;
 
   toVelocityGrid->u->setForEach([&](int i, int j) {
-      glm::vec2 currentPoint = glm::vec2(i - 0.5, j);
-      GridCoordinate leftCell = GridCoordinate(i - 1, j);
-      GridCoordinate rightCell = GridCoordinate(i, j);
+    glm::vec2 currentPoint = glm::vec2(i - 0.5, j);
+    GridCoordinate leftCell = GridCoordinate(i - 1, j);
+    GridCoordinate rightCell = GridCoordinate(i, j);
 
-      if (cellTypeGrid->clampGet(leftCell) == CellType::FLUID || 
-          cellTypeGrid->clampGet(rightCell) == CellType::FLUID) {
-        return fromVelocityGrid->u->get(i, j);
-      }
+    if (cellTypeGrid->clampGet(leftCell) == CellType::FLUID || 
+        cellTypeGrid->clampGet(rightCell) == CellType::FLUID) {
+      return fromVelocityGrid->u->get(i, j);
+    }
 
-      glm::vec2 leftClosestPoint = closestPointGrid->clampGet(leftCell);
-      glm::vec2 rightClosestPoint = closestPointGrid->clampGet(rightCell);
+    glm::vec2 leftClosestPoint = closestPointGrid->clampGet(leftCell);
+    glm::vec2 rightClosestPoint = closestPointGrid->clampGet(rightCell);
 
-      float dLeft = glm::distance(currentPoint, leftClosestPoint);
-      float dRight = glm::distance(currentPoint, rightClosestPoint);
+    float dLeft = glm::distance(currentPoint, leftClosestPoint);
+    float dRight = glm::distance(currentPoint, rightClosestPoint);
 
-      float uLeft = fromVelocityGrid->u->getLerp(leftClosestPoint.x + 0.5, leftClosestPoint.y);
-      float uRight = fromVelocityGrid->u->getLerp(rightClosestPoint.x + 0.5, rightClosestPoint.y);
+    float uLeft = fromVelocityGrid->u->getLerp(leftClosestPoint.x + 0.5, leftClosestPoint.y);
+    float uRight = fromVelocityGrid->u->getLerp(rightClosestPoint.x + 0.5, rightClosestPoint.y);
 
-      float t = dLeft/(dLeft + dRight);
-      return t*uRight + (1.0f - t)*uLeft;
-      
-    });
+    float t = dLeft/(dLeft + dRight);
+    return t*uRight + (1.0f - t)*uLeft;
+    
+  });
 
 
   toVelocityGrid->v->setForEach([&](int i, int j) {
-      glm::vec2 currentPoint = glm::vec2(i, j - 0.5);
-      GridCoordinate upCell = GridCoordinate(i, j - 1);
-      GridCoordinate downCell = GridCoordinate(i, j);
+    glm::vec2 currentPoint = glm::vec2(i, j - 0.5);
+    GridCoordinate upCell = GridCoordinate(i, j - 1);
+    GridCoordinate downCell = GridCoordinate(i, j);
 
-      if (cellTypeGrid->clampGet(upCell) == CellType::FLUID || 
-          cellTypeGrid->clampGet(downCell) == CellType::FLUID) {
-        return fromVelocityGrid->v->get(i, j);
-      }
+    if (cellTypeGrid->clampGet(upCell) == CellType::FLUID || 
+        cellTypeGrid->clampGet(downCell) == CellType::FLUID) {
+      return fromVelocityGrid->v->get(i, j);
+    }
 
-      glm::vec2 upClosestPoint = closestPointGrid->clampGet(upCell);
-      glm::vec2 downClosestPoint = closestPointGrid->clampGet(downCell);
+    glm::vec2 upClosestPoint = closestPointGrid->clampGet(upCell);
+    glm::vec2 downClosestPoint = closestPointGrid->clampGet(downCell);
 
-      float dUp = glm::distance(currentPoint, upClosestPoint);
-      float dDown = glm::distance(currentPoint, downClosestPoint);
+    float dUp = glm::distance(currentPoint, upClosestPoint);
+    float dDown = glm::distance(currentPoint, downClosestPoint);
 
-      float vUp = fromVelocityGrid->v->getLerp(upClosestPoint.x, upClosestPoint.y + 0.5);
-      float vDown = fromVelocityGrid->v->getLerp(downClosestPoint.x, downClosestPoint.y + 0.5);
+    float vUp = fromVelocityGrid->v->getLerp(upClosestPoint.x, upClosestPoint.y + 0.5);
+    float vDown = fromVelocityGrid->v->getLerp(downClosestPoint.x, downClosestPoint.y + 0.5);
 
-      float t = dUp/(dUp + dDown);
-      return t*vDown + (1.0f - t)*vUp;
-    });
+    float t = dUp/(dUp + dDown);
+    return t*vDown + (1.0f - t)*vUp;
+  });
 }
 
 
