@@ -150,10 +150,11 @@ int main( void ) {
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glfwSwapInterval(1);
+  int i = 0;
   do{
 
     sim.step(deltaT);
-    deltaT = sim.getDeltaT();
+    //deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -254,7 +255,7 @@ int main( void ) {
       nbFrames = 0;
       lastTime += 1.0;
     }
-
+    i++;
     // std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );

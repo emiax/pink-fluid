@@ -18,9 +18,9 @@ class Grid {
     this->h = h;
     // int size = this->size();
     quantities = new T[w*h];
-    for(auto i = 0u; i < size(); i++){
-      quantities[i] = T(0);
-    }
+    setForEach([](unsigned int, unsigned int){
+      return T(0);
+    });
   };
   
   ~Grid(){
@@ -37,11 +37,11 @@ class Grid {
 
 
   /**
-   * 
-   * 
-   * 
+   * Function in order to set each cell in a grid using a lambda.
+   * @param func Function to apply for each cell
    */
-  void setForEach(std::function< T (unsigned int i, unsigned int j)> func){
+  void setForEach(const std::function< T (unsigned int i, unsigned int j)> func){
+    #pragma omp parallel for collapse(2)
     for(auto j = 0u; j < h; j++){
       for(auto i = 0u; i < w; i++){
         set(i,j, func(i,j));

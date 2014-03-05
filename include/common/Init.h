@@ -65,7 +65,7 @@ public:
     int minor = glfwGetWindowAttrib(window, GLFW_CONTEXT_VERSION_MINOR);
     int rev = glfwGetWindowAttrib(window, GLFW_CONTEXT_REVISION);
 
-    fprintf(stderr, "Opened window has recieved OpenGL version: %d.%d.%d\n", major, minor, rev);
+    fprintf(stdout, "Opened window has recieved OpenGL version: %d.%d.%d\n", major, minor, rev);
   } 
   
 };
