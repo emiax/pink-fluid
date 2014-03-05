@@ -42,7 +42,8 @@ private:
   static int sgn(float &val);
 
   void initializeDistanceGrid(SignedDistanceFunction sdf);
-
+  void clampInfiniteCells();
+  
   static constexpr float INF = 9999999.0f;
   
   Grid<bool> *doneGrid;

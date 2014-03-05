@@ -7,7 +7,6 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, G
   this->w = w;
   this->h = h;
   
-
   doneGrid = new OrdinalGrid<bool>(w,h);
   distanceGrid = new OrdinalGrid<float>(w,h);
   cellTypeGrid = new Grid<CellType>(w, h);
@@ -22,9 +21,11 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, G
 }
 
 void LevelSet::reinitialize() {
+  gridHeap->clear();
   updateInterfaceNeighbors();
   fastMarch();
   updateCellTypes();
+  clampInfiniteCells();
 }
 
 void LevelSet::updateInterfaceNeighbors(){
@@ -45,6 +46,21 @@ void LevelSet::updateInterfaceNeighbors(){
     }
   }
 }
+
+
+void LevelSet::clampInfiniteCells() {
+  for(auto j = 0u; j < h; j++) {
+    for(auto i = 0u; i < w; i++) {
+      if (distanceGrid->get(i, j) > 5.0) {
+        distanceGrid->set(i, j, 5.0);
+      }
+      if (distanceGrid->get(i, j) < -5.0) {
+        distanceGrid->set(i, j, -5.0);
+      }
+    }
+  }
+}
+
 
 void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j) {
   float current = distanceGrid->get(i,j);
@@ -123,7 +139,9 @@ void LevelSet::updateFromCell(unsigned int xFrom,
 void LevelSet::fastMarch() {
   while (!(gridHeap->empty())) {
     GridCoordinate c = gridHeap->pop();
-    updateNeighborsFrom(c.x, c.y);
+    if (distanceGrid->get(c) < 5.0) {
+      updateNeighborsFrom(c.x, c.y);
+    }
   }
 }
 
