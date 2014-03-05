@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 //Include for a small timer
 #include <ctime>
 #include <cmath>
@@ -101,41 +100,12 @@ int main( void ) {
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
-  //Create new velocity positions
-  // velocities->u->setForEach([&](unsigned int i, unsigned int j){
-  //   if( i > 2 && i < w/3){
-  //     if( j > 2 && j < h/3){
-  //       return 1.0f;
-  //     }
-  //   }
-  //   if( i > 2*w/3 && i < w-2){
-  //     if( j > 2*w/3 && j < w-2){
-  //       return -1.0f;
-  //     }
-  //   }
-  //   return 0.0f;
-  // });
-
-  // velocities->v->setForEach([&](unsigned int i, unsigned int j){
-  //   if( i > 2 && i < w/3){
-  //     if( j > 2 && j < h/3){
-  //       return -1.0f;
-  //     }
-  //   }
-  //   if( i > 2*w/3 && i < w-2){
-  //     if( j > 2*w/3 && j < w-2){
-  //       return 1.0f;
-  //     }
-  //   }
-  //   return 0.0f;
-  // });
-
   prevState.setVelocityGrid(velocities);
 
   /**
    * Init Level set object
    */
-
+  
   // define initial signed distance
   SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
       // distance function to circle with radius w/3, center in (w/2, h/2)
@@ -147,42 +117,25 @@ int main( void ) {
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
   // init boundary grid
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j){
-      CellType bt = CellType::EMPTY;
-      if(i == 0){
-        bt = CellType::SOLID;
-      }
-      else if(j == 0){
-        bt = CellType::SOLID;
-      }
-      else if(i == w - 1){
-        bt = CellType::SOLID;
-      }
-      else if(j == h - 1){
-        bt = CellType::SOLID;
-      }
-      return bt;
-    });
+    CellType bt = CellType::EMPTY;
+    if(i == 0){
+      bt = CellType::SOLID;
+    }
+    else if(j == 0){
+      bt = CellType::SOLID;
+    }
+    else if(i == w - 1){
+      bt = CellType::SOLID;
+    }
+    else if(j == h - 1){
+      bt = CellType::SOLID;
+    }
+    return bt;
+  });
 
   LevelSet *ls = new LevelSet( w, h, circleSD, cellTypeGrid );
   prevState.setLevelSet(ls);
   newState.setLevelSet(ls);
-
-  // instantiate ink grid
-  // OrdinalGrid<glm::vec3> *ink = new OrdinalGrid<glm::vec3>(w, h);
-  // ink->setForEach([&](unsigned int i, unsigned int j){
-  //     if(i > 0 && i < w/3){
-  //       if(j > 0 && j < h/3){
-  //         return glm::vec3(1.0f, 0, 1.0f);
-  //       }
-  //     }
-  //     if( i > 2*w/3 && i < w-1 ){
-  //       if( j > 2*h/3 && j < h-1){
-  //         return glm::vec3(0, 1.0f, 1.0f);
-  //       }
-  //     }
-  //     return glm::vec3(0);
-  //   });
-  // prevState.setInkGrid(ink);
 
   // init simulator
   Simulator sim(&prevState, &newState,0.1f);
@@ -215,13 +168,6 @@ int main( void ) {
     // corresponding cell-value instead of the edge velocities.
     for(unsigned int j = 0; j < h; ++j){
       for(unsigned int i=0;i<w;++i) {
-        // ink
-        // tex2D.set(i,j,0, newState.getInkGrid()->get(i,j).x);
-        // tex2D.set(i,j,1, newState.getInkGrid()->get(i,j).y);
-        // tex2D.set(i,j,0, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-        // tex2D.set(i,j,1, newState.getsetCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-        // tex2D.set(i,j,2, newState.getsetCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
-        // tex2D.set(i,j,3, 1.0f);
 
         // velocity
         //tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
@@ -230,8 +176,6 @@ int main( void ) {
         //tex2D.set(i,j,2, 0.5);
         //tex2D.set(i,j,3, 1.0f);
 
-
-
         // divergence
         //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
         //tex2D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
@@ -239,25 +183,23 @@ int main( void ) {
         //tex2D.set(i,j,3, 1.0f);
 
         // type
-        /*        tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
-        tex2D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
-        tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-        tex2D.set(i,j,3, 1.0f);*/
+        // tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
+        // tex2D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
+        // tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+        // tex2D.set(i,j,3, 1.0f);
 
 
         //signed dist
-        tex2D.set(i,j,0, newState.getSignedDistanceGrid()->get(i,j) / 1.0);
-        tex2D.set(i,j,1, 0.0f);
-        tex2D.set(i,j,2, 0.0f);
+        tex2D.set(i,j,0, newState.getSignedDistanceGrid()->get(i,j));
+        tex2D.set(i,j,1, newState.getSignedDistanceGrid()->get(i,j));
+        tex2D.set(i,j,2, 1.0f);
         tex2D.set(i,j,3, 1.0f);
-
 
         //closest point
         /*tex2D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
         tex2D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
         tex2D.set(i,j,2, 0.0f);
         tex2D.set(i,j,3, 1.0f);*/
-
 
       }
     }

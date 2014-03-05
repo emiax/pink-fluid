@@ -42,8 +42,8 @@ class Grid {
    * 
    */
   void setForEach(std::function< T (unsigned int i, unsigned int j)> func){
-    for(auto i = 0u; i < w; i++){
-      for(auto j = 0u; j < h; j++){
+    for(auto j = 0u; j < h; j++){
+      for(auto i = 0u; i < w; i++){
         set(i,j, func(i,j));
       }
     }
