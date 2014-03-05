@@ -24,6 +24,7 @@ public:
   }
   ~Texture2D(){
     glDeleteTextures(1, &textureID);
+    delete[] data;
   }
   GLfloat get(GLuint i, GLuint j, GLuint k){
     return data[indexTranslation(i,j,k)];
@@ -33,7 +34,6 @@ public:
   }
   operator GLuint(){
     return textureID;
-    delete[] data;
   }
   void operator()(GLenum texture) { 
     glActiveTexture(texture);
@@ -42,7 +42,7 @@ public:
   }
   
 private:
-  GLuint w, h,d;
+  GLuint w, h, d;
   GLuint textureID; 
   GLfloat *data;
   GLuint indexTranslation(GLuint i, GLuint j, GLuint k){
