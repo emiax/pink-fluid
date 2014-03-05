@@ -15,6 +15,7 @@ public:
   GridCoordinate pop();
 
   bool empty();
+  void clear();
 
 private:
   void percolateUp(int);

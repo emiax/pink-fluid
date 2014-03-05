@@ -107,3 +107,7 @@ bool GridHeap::comp(GridCoordinate &a, GridCoordinate &b) {
 bool GridHeap::empty() {
   return size == 0;
 }
+
+void GridHeap::clear() {
+  size = 0;
+}
