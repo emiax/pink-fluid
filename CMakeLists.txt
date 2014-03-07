@@ -68,6 +68,10 @@ if (OPENMP_FOUND)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 else()
   message("Your compiler does not support OpenMP, performance will suffer.")
+  message("Set your compiler via the CC and CXX environment variable to a compatible compiler.")
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    message("Options if you're using Clang is: http://clang-omp.github.io/ or use GCC")
+  endif()
 endif()
 
 
@@ -130,6 +134,7 @@ add_subdirectory(
 set(ext_libs 
   ${CMAKE_SOURCE_DIR}/external/glfw/include/
   ${CMAKE_SOURCE_DIR}/external/glew/include/
+  ${PROJECT_EXT_DIR}/pcgsolver/
   ${GLM_INCLUDE_DIR}
 )
 
