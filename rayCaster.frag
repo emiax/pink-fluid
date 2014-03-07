@@ -1,0 +1,36 @@
+#version 400 core
+
+uniform sampler2D backfaceTexture;
+in vec3 position;
+uniform vec2 windowSize;
+uniform sampler3D volume;
+
+out vec4 color;
+
+void main()
+{
+  vec3 frontCoord = 0.5*position+vec3(0.5, 0.5, 0.5);
+  vec2 texCoords = vec2(gl_FragCoord.x / windowSize.x, gl_FragCoord.y / windowSize.y);
+  vec3 backCoord = texture(backfaceTexture, texCoords).xyz;
+  
+  //  color = vec4(length(frontCoord - backCoord), 0.0, 0.0, 1.0);
+
+  int gridSize = 80;
+  vec4 step = normalize(frontCoord - backCoord)/(float(gridSize));
+
+  int maxIter = gridSize * 2;
+  
+  float depth = length(frontCoord - backCoord);
+  
+  float accumulated = 0.0;
+  for (int i = 0; i++; i < maxIter) {
+    // break if we are outside the volume.
+    vec3 displacement = step*i;
+    if (length(displacement) > depth) break;
+
+    vec4 sampleCoord = backCoord + step*i;
+    accumulated += texture(volume, sampleCoord)/float(gridSize);
+  }
+
+  color = accumulated;
+}

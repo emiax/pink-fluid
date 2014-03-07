@@ -17,9 +17,10 @@ public:
   void step(float dt);
 
   // advection
-  glm::vec2 backTrackU(State const * readFrom, int i,int j, float dt);
-  glm::vec2 backTrackV(State const * readFrom, int i,int j, float dt);
-  glm::vec2 backTrackMid(State const * readFrom, int i,int j, float dt);
+  glm::vec2 backTrackU(State const * readFrom, GridCoordinate x, float dt);
+  glm::vec2 backTrackV(State const * readFrom, GridCoordinate x, float dt);
+  glm::vec2 backTrackW(State const * readFrom, GridCoordinate x, float dt);
+  glm::vec2 backTrackMid(State const * readFrom, GridCoordinate x, float dt);
   void advect(State const * readFrom, State * writeTo, float dt);
 
   // ext. forces
@@ -36,11 +37,11 @@ public:
   OrdinalGrid<float>* getDivergenceGrid();  
 
   glm::vec2 maxVelocity(VelocityGrid const *const velocity);
-  float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
+  float calculateDeltaT(glm::vec3 maxV, glm::vec3 gravity);
   float getDeltaT();
 
 private:
-  unsigned int w,h;
+  unsigned int w,h,d;
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
   OrdinalGrid<double> *pressureGridFrom, *pressureGridTo;

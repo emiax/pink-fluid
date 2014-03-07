@@ -2,7 +2,7 @@
 #include <functional>
 #include <glm/glm.hpp>
 
-typedef glm::i32vec2 GridCoordinate;
+typedef glm::i32vec3 GridCoordinate;
 
 template <class T>
 class Grid {
@@ -13,11 +13,12 @@ class Grid {
    * @param w width
    * @param h height
    */
-  Grid(unsigned int w, unsigned int h) {
+  Grid(unsigned int w, unsigned int h, unsigned int d) {
     this->w = w;
     this->h = h;
+    this->d = d;
     // int size = this->size();
-    quantities = new T[w*h];
+    quantities = new T[w*h*d];
     for(auto i = 0u; i < size(); i++){
       quantities[i] = T(0);
     }
@@ -32,7 +33,7 @@ class Grid {
    * @returns the total number of cells
    */
   unsigned int size() const{
-    return w*h;
+    return w*h*d;
   };
 
 
@@ -42,38 +43,42 @@ class Grid {
    * 
    */
   void setForEach(std::function< T (unsigned int i, unsigned int j)> func){
-    for(auto j = 0u; j < h; j++){
-      for(auto i = 0u; i < w; i++){
-        set(i,j, func(i,j));
+    for(auto k = 0u; k < d; k++){
+      for(auto j = 0u; j < h; j++){
+        for(auto i = 0u; i < w; i++){
+          set(i,j, func(i,j));
+        }
       }
     }
   }
+
 
   /**
    * Get value of the stored quantity.
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T get(unsigned int i, unsigned int j) const{
-    return quantities[j*w + i];
+  T get(unsigned int i, unsigned int j, unsigned int k) const{
+    return quantities[k*w*h + j*w + i];
   };
 
   inline T get(GridCoordinate c) const{
-    return get(c.x, c.y);
+    return get(c.x, c.y, c.z);
   };
 
   inline T safeGet(GridCoordinate c) const {
-    return safeGet(c.x, c.y);
+    return safeGet(c.x, c.y, c.z);
   };
 
   inline T clampGet(GridCoordinate c) const {
-    return clampGet(c.x, c.y);
+    return clampGet(c.x, c.y, c.z);
   };
 
   T clampGet(int i, int j) const {
     i = (i < 0) ? 0 : (i >= w) ? w-1 : i;
     j = (j < 0) ? 0 : (j >= h) ? h-1 : j;
-    return get(i, j);
+    k = (k < 0) ? 0 : (k >= d) ? d-1 : j;
+    return get(i, j, k);
   };
 
   /**
@@ -82,21 +87,21 @@ class Grid {
    * @param j, the position along the y axis (h)
    */
   T safeGet(int i, int j) const{
-    if(i < 0 || j < 0 || i > int(w - 1) || j > int(h - 1) ){
+    if(i < 0 || j < 0 || k < 0 || i > int(w - 1) || j > int(h - 1) || k > int(d - 1)){
       return T(0);
     }
-    return get(i,j);
+    return get(i, j, k);
   };
 
   /**
    * Set value of the stored quantity.
    */
-  void set(unsigned int i, unsigned int j, T value) {
-    quantities[j*w + i] = value;
+  void set(unsigned int i, unsigned int j, unsigned int k, T value) {
+    quantities[k*w*h + j*w + i] = value;
   };
 
   inline void set(GridCoordinate c, T value) {
-    set(c.x, c.y, value);
+    set(c.x, c.y, c.z, value);
   };
 
 
