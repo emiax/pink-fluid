@@ -10,7 +10,7 @@
 
 template <class T>
 class OrdinalGrid : public Grid<T> {
- public:
+public:
   /**
    * Constructor.
    * @param w width
@@ -22,8 +22,9 @@ class OrdinalGrid : public Grid<T> {
    * Get the linearly interpolated value of the stored quantity.
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
+   * @param k, the position along the y axis (d)
    */
-  T getLerp(float i, float j) const{
+  T getLerp(float i, float j, float k) const{
     if (i > this->w - 1) i = this->w - 1;
     if (j > this->h - 1) j = this->h - 1;
     if (k > this->d - 1) k = this->d - 1;
@@ -65,8 +66,9 @@ class OrdinalGrid : public Grid<T> {
    * Get the Catmull-Rom interpolated value of the stored quantity.
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
+   * @param k, the position along the z axis (d)
    */
-  T getCrerp(float i, float j) const{
+  T getCrerp(float i, float j, float k) const{
     unsigned int i0 = floor(i)-1;
     unsigned int i1 = floor(i);
     unsigned int i2 = ceil(i);
@@ -94,7 +96,7 @@ class OrdinalGrid : public Grid<T> {
     T v010 = this->safeGet(i0, j1, k0);
     T v011 = this->safeGet(i0, j1, k1);
     T v012 = this->safeGet(i0, j1, k2);
-    T v033 = this->safeGet(i0, j1, k3);
+    T v013 = this->safeGet(i0, j1, k3);
 
     T v020 = this->safeGet(i0, j2, k0);
     T v021 = this->safeGet(i0, j2, k1);
@@ -109,22 +111,22 @@ class OrdinalGrid : public Grid<T> {
     T v100 = this->safeGet(i1, j0, k0);
     T v101 = this->safeGet(i1, j0, k1);
     T v102 = this->safeGet(i1, j0, k2);
-    T v303 = this->safeGet(i1, j0, k3);
+    T v103 = this->safeGet(i1, j0, k3);
 
     T v110 = this->safeGet(i1, j1, k0);
     T v111 = this->safeGet(i1, j1, k1);
     T v112 = this->safeGet(i1, j1, k2);
-    T v313 = this->safeGet(i1, j1, k3);
+    T v113 = this->safeGet(i1, j1, k3);
 
     T v120 = this->safeGet(i1, j2, k0);
     T v121 = this->safeGet(i1, j2, k1);
     T v122 = this->safeGet(i1, j2, k2);
-    T v323 = this->safeGet(i1, j2, k3);
+    T v123 = this->safeGet(i1, j2, k3);
 
     T v130 = this->safeGet(i1, j3, k0);
     T v131 = this->safeGet(i1, j3, k1);
     T v132 = this->safeGet(i1, j3, k2);
-    T v333 = this->safeGet(i1, j3, k3);
+    T v133 = this->safeGet(i1, j3, k3);
     
     T v200 = this->safeGet(i2, j0, k0);
     T v201 = this->safeGet(i2, j0, k1);
@@ -134,7 +136,7 @@ class OrdinalGrid : public Grid<T> {
     T v210 = this->safeGet(i2, j1, k0);
     T v211 = this->safeGet(i2, j1, k1);
     T v212 = this->safeGet(i2, j1, k2);
-    T v233 = this->safeGet(i2, j1, k3);
+    T v213 = this->safeGet(i2, j1, k3);
 
     T v220 = this->safeGet(i2, j2, k0);
     T v221 = this->safeGet(i2, j2, k1);
@@ -154,7 +156,7 @@ class OrdinalGrid : public Grid<T> {
     T v310 = this->safeGet(i3, j1, k0);
     T v311 = this->safeGet(i3, j1, k1);
     T v312 = this->safeGet(i3, j1, k2);
-    T v333 = this->safeGet(i3, j1, k3);
+    T v313 = this->safeGet(i3, j1, k3);
 
     T v320 = this->safeGet(i3, j2, k0);
     T v321 = this->safeGet(i3, j2, k1);
@@ -199,11 +201,11 @@ class OrdinalGrid : public Grid<T> {
    * A thin frontend for T getInterpolated(float i, float j)
    * @param p, A vector to interpolate from
    */
-  T getLerp(glm::vec2 p) const{
+  T getLerp(glm::vec3 p) const{
     return getLerp(p.x, p.y, p.z);
   }
 
-  T getCrerp(glm::vec2 p) const{
+  T getCrerp(glm::vec3 p) const{
     return getCrerp(p.x, p.y, p.z);
   }
 

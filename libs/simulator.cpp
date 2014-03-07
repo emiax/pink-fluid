@@ -12,16 +12,18 @@
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
 
   // grid dims must be equal
-  assert( sf->getW() == st->getW() );
-  assert( sf->getH() == st->getH() );
+  assert(sf->getW() == st->getW());
+  assert(sf->getH() == st->getH());
+  assert(sf->getD() == st->getD());
 
   w = sf->getW();
   h = sf->getH();
+  d = sf->getD();
 
   // init non-state grids
-  divergenceGrid = new OrdinalGrid<float>(w, h);
-  pressureGridFrom = new OrdinalGrid<double>(w, h);
-  pressureGridTo = new OrdinalGrid<double>(w, h);
+  divergenceGrid = new OrdinalGrid<float>(w, h, d);
+  pressureGridFrom = new OrdinalGrid<double>(w, h, d);
+  pressureGridTo = new OrdinalGrid<double>(w, h, d);
 }
 
 /**
@@ -39,7 +41,7 @@ Simulator::~Simulator() {
  */
 void Simulator::step(float dt) {
 
-  glm::vec2 gravity = glm::vec2(0, 1);
+  glm::vec3 gravity = glm::vec3(0, 1, 0);
 
   // simulation stack
   advect(stateFrom, stateTo, dt);
@@ -66,50 +68,64 @@ void Simulator::step(float dt) {
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   #pragma omp parallel sections
   {
-  //X
+    //X
     #pragma omp section
-  writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, dt);
+    writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+      glm::vec3 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->velocityGrid->u->getCrerp(position);
     });
 
-  //Y
-      #pragma omp section
-  writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, dt);
+    //Y
+    #pragma omp section
+    writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+      glm::vec3 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->velocityGrid->v->getCrerp(position);
     });
 
-  // level set distance grid
-      #pragma omp section
-  writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j){
-    
-      glm::vec2 position = util::advect::backTrack(readFrom->velocityGrid, i, j, dt);
+    //Z
+    #pragma omp section
+    writeTo->velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+      glm::vec3 position = util::advect::mac::backTrackW(readFrom->velocityGrid, i, j, k, dt);
+      return readFrom->velocityGrid->w->getCrerp(position);
+    });
+
+    // level set distance grid
+    #pragma omp section
+    writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+      glm::vec3 position = util::advect::backTrack(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->levelSet->distanceGrid->getCrerp(position);
     });
+  }
 }
-}
-
-
 
 //Apply gravity to fluid cells
-void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
+void Simulator::applyGravity(State *state, glm::vec3 g, float deltaT){
   VelocityGrid *velocityGrid = state->velocityGrid;
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
-  velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-      if (cellTypeGrid->get(i, j) != CellType::SOLID) {
-        return velocityGrid->u->get(i,j)+g.x*deltaT;
-      }
-      return velocityGrid->u->get(i,j);
-    });
+  // u velocities
+  velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (cellTypeGrid->get(i, j, k) != CellType::SOLID) {
+      return velocityGrid->u->get(i, j, k)+g.x*deltaT;
+    }
+    return velocityGrid->u->get(i, j, k);
+  });
 
-  velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-      if (cellTypeGrid->get(i, j) != CellType::SOLID) {
-        return velocityGrid->v->get(i,j)+g.y*deltaT;
-      }
-      return velocityGrid->v->get(i,j);
-    });
+  // v velocities
+  velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (cellTypeGrid->get(i, j, k) != CellType::SOLID) {
+      return velocityGrid->v->get(i, j, k)+g.y*deltaT;
+    }
+    return velocityGrid->v->get(i, j, k);
+  });
+
+  // w velocities
+  velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (cellTypeGrid->get(i, j, k) != CellType::SOLID) {
+      return velocityGrid->w->get(i, j, k)+g.z*deltaT;
+    }
+    return velocityGrid->w->get(i, j, k);
+  });
 }
 
 
@@ -121,21 +137,21 @@ void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
 void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
+  OrdinalGrid<float> *w = readFrom->velocityGrid->w;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
 
-  toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
-    if (cellTypeGrid->get(i, j) == CellType::FLUID) {
-        float entering = u->get(i, j) + v->get(i, j);
-        float leaving = u->get(i + 1, j) + v->get(i, j + 1);
+  toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+      float entering = u->get(i, j, k) + v->get(i, j, k) + w->get(i, j, k);
+      float leaving = u->get(i + 1, j, k) + v->get(i, j + 1, k) + w->get(i, j, k + 1);
 
-        float divergence = leaving - entering;
+      float divergence = leaving - entering;
 
-        return divergence;
-      } else {
-        return 0.0f;
-
-      }
-    });
+      return divergence;
+    } else {
+      return 0.0f;
+    }
+  });
 }
 
 /**
@@ -150,51 +166,70 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations,
 
   resetPressureGrid();
 
-  for(unsigned int k = 0; k < nIterations; ++k) {
+  for(unsigned int iter = 0; iter < nIterations; ++iter) {
 
     OrdinalGrid<double> *tmp = pressureGridFrom;
     pressureGridFrom = pressureGridTo;
     pressureGridTo = tmp;
+
     #pragma omp parallel for default(none) 
-    for (unsigned int j = 0; j < h; ++j) {
-      for (unsigned int i = 0; i < w; ++i) {
+    for(unsigned k = 0; k < d; ++k) {
+      for (unsigned j = 0; j < h; ++j) {
+        for (unsigned i = 0; i < w; ++i) {
 
-        float divergence;
-        int neighbouringFluidCells = 0;
+          float divergence;
+          int neighboringNonSolidCells = 0;
 
-        // is current cell solid?
-        if (cellTypeGrid->get(i, j) != CellType::FLUID) {
-          continue;
+          // is current cell solid?
+          if (cellTypeGrid->get(i, j, k) != CellType::FLUID) {
+            continue;
+          }
+
+          // left
+          double pL = 0;
+          if (cellTypeGrid->get(i - 1, j, k) != CellType::SOLID) {
+            pL = pressureGridFrom->get(i - 1, j, k);
+            neighboringNonSolidCells++;
+          }
+          // right
+          double pR = 0;
+          if (cellTypeGrid->get(i + 1, j, k) != CellType::SOLID) {
+            pR = pressureGridFrom->get(i + 1, j, k);
+            neighboringNonSolidCells++;
+          }
+          // up
+          double pU = 0;
+          if (cellTypeGrid->get(i, j - 1, k) != CellType::SOLID) {
+            pU = pressureGridFrom->get(i, j - 1, k);
+            neighboringNonSolidCells++;
+          }
+          // down
+          double pD = 0;
+          if (cellTypeGrid->get(i, j + 1, k) != CellType::SOLID) {
+            pD = pressureGridFrom->get(i, j + 1, k);
+            neighboringNonSolidCells++;
+          }
+          // front
+          double pF = 0;
+          if (cellTypeGrid->get(i, j, k - 1) != CellType::SOLID) {
+            pF = pressureGridFrom->get(i, j, k - 1);
+            neighboringNonSolidCells++;
+          }
+          // back
+          double pB = 0;
+          if (cellTypeGrid->get(i, j, k + 1) != CellType::SOLID) {
+            pB = pressureGridFrom->get(i, j, k + 1);
+            neighboringNonSolidCells++;
+          }
+
+          divergence = divergenceGrid->get(i, j, k);
+
+          // discretized poisson equation
+          double p = pL + pR + pU + pD + pF + pB - sqDeltaX * divergence/dt;
+          p /= ((double) neighboringNonSolidCells);
+
+          pressureGridTo->set(i, j, k, p);
         }
-
-        double pL = 0;
-        if (cellTypeGrid->get(i - 1, j) != CellType::SOLID) {
-          pL = pressureGridFrom->get(i - 1, j);
-          neighbouringFluidCells++;
-        }
-        double pR = 0;
-        if (cellTypeGrid->get(i + 1, j) != CellType::SOLID) {
-          pR = pressureGridFrom->get(i + 1, j);
-          neighbouringFluidCells++;
-        }
-        double pU = 0;
-        if (cellTypeGrid->get(i, j - 1) != CellType::SOLID) {
-          pU = pressureGridFrom->get(i, j - 1);
-          neighbouringFluidCells++;
-        }
-        double pD = 0;
-        if (cellTypeGrid->get(i, j + 1) != CellType::SOLID) {
-          pD = pressureGridFrom->get(i, j + 1);
-          neighbouringFluidCells++;
-        }
-
-        divergence = divergenceGrid->get(i, j);
-
-        // discretized poisson equation
-        double p = pL + pR + pU + pD - sqDeltaX * divergence/dt;
-        p /= ((double) neighbouringFluidCells);
-
-        pressureGridTo->set(i, j, p);
       }
     }
 
@@ -214,52 +249,71 @@ void Simulator::gradientSubtraction(State *state, float dt) {
 
   OrdinalGrid<float> *uVelocityGrid = state->velocityGrid->u;
   OrdinalGrid<float> *vVelocityGrid = state->velocityGrid->v;
+  OrdinalGrid<float> *wVelocityGrid = state->velocityGrid->w;
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
   // looping through pressure cells
-  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid)
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-      // is current cell solid?
-      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
-        float uL = uVelocityGrid->get(i, j);
-        float uR = uVelocityGrid->get(i+1, j);
+  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid, wVelocityGrid)
+  for(unsigned k = 0; k < d; ++k) {
+    for (unsigned int j = 0; j < h; ++j) {
+      for (unsigned int i = 0; i < w; ++i) {
+        // is current cell solid?
+        if (cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+          float uL = uVelocityGrid->get(i, j, k);
+          float uR = uVelocityGrid->get(i+1, j, k);
 
-        float vU = vVelocityGrid->get(i, j);
-        float vD = vVelocityGrid->get(i, j+1);
+          float vU = vVelocityGrid->get(i, j, k);
+          float vD = vVelocityGrid->get(i, j+1, k);
 
-        float p = pressureGridTo->get(i, j);
+          float wF = wVelocityGrid->get(i, j, k);
+          float wB = wVelocityGrid->get(i, j, k + 1);
 
-        uL -= scale * p;
-        uR += scale * p;
-        vU -= scale * p;
-        vD += scale * p;
+          float p = pressureGridTo->get(i, j, k);
 
-        uVelocityGrid->set(i, j, uL);
-        uVelocityGrid->set(i+1, j, uR);
-        vVelocityGrid->set(i, j, vU);
-        vVelocityGrid->set(i, j+1, vD);
+          uL -= scale * p;
+          uR += scale * p;
+          vU -= scale * p;
+          vD += scale * p;
+          wF -= scale * p;
+          wB += scale * p;
+
+          uVelocityGrid->set(i, j, k, uL);
+          uVelocityGrid->set(i + 1, j, k, uR);
+          vVelocityGrid->set(i, j, k, vU);
+          vVelocityGrid->set(i, j + 1, k, vD);
+          wVelocityGrid->set(i, j, k, wF);
+          wVelocityGrid->set(i, j, k + 1, wB);
+        }
       }
     }
   }
-  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid)
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-      // is current cell solid?
-      if (cellTypeGrid->get(i, j) == CellType::SOLID) {
 
-        uVelocityGrid->set(i, j, 0.0f);
-        uVelocityGrid->set(i+1, j, 0.0f);
-        vVelocityGrid->set(i, j, 0.0f);
-        vVelocityGrid->set(i, j+1, 0.0f);
+  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid, wVelocityGrid)
+  for(unsigned k = 0; k < d; ++k) {
+    for (unsigned int j = 0; j < h; ++j) {
+      for (unsigned int i = 0; i < w; ++i) {
+        // is current cell solid?
+        if (cellTypeGrid->get(i, j, k) == CellType::SOLID) {
+
+          uVelocityGrid->set(i, j, k, 0.0f);
+          uVelocityGrid->set(i + 1, j, k, 0.0f);
+          vVelocityGrid->set(i, j, k, 0.0f);
+          vVelocityGrid->set(i, j + 1, k, 0.0f);
+          wVelocityGrid->set(i, j, k, 0.0f);
+          wVelocityGrid->set(i, j, k + 1, 0.0f);
+        }
       }
     }
   }
 }
 
-
+/**
+ * Method to extrapolate velocity values from the water region to the air/empty region.
+ * @param stateFrom
+ * @param stateTo
+ */
 void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
-  const Grid<glm::vec2> *closestPointGrid = stateFrom->levelSet->getClosestPointGrid();
+  const Grid<glm::vec3> *closestPointGrid = stateFrom->levelSet->getClosestPointGrid();
 
   VelocityGrid *fromVelocityGrid = stateFrom->velocityGrid;
   VelocityGrid *toVelocityGrid = stateTo->velocityGrid;
@@ -267,105 +321,159 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
   
   unsigned int w = stateFrom->w;
   unsigned int h = stateFrom->h;
+  unsigned int d = stateFrom->d;
 
-  toVelocityGrid->u->setForEach([&](int i, int j) {
-    glm::vec2 currentPoint = glm::vec2(i - 0.5, j);
-    GridCoordinate leftCell = GridCoordinate(i - 1, j);
-    GridCoordinate rightCell = GridCoordinate(i, j);
+  // u velocities
+  toVelocityGrid->u->setForEach([&](int i, int j, int k) {
+    glm::vec3 currentPoint = glm::vec3(i - 0.5, j, k);
+    GridCoordinate leftCell = GridCoordinate(i - 1, j, k);
+    GridCoordinate rightCell = GridCoordinate(i, j, k);
 
     if (cellTypeGrid->clampGet(leftCell) == CellType::FLUID || 
         cellTypeGrid->clampGet(rightCell) == CellType::FLUID) {
-      return fromVelocityGrid->u->get(i, j);
+      return fromVelocityGrid->u->get(i, j, k);
     }
 
-    glm::vec2 leftClosestPoint = closestPointGrid->clampGet(leftCell);
-    glm::vec2 rightClosestPoint = closestPointGrid->clampGet(rightCell);
+    glm::vec3 leftClosestPoint = closestPointGrid->clampGet(leftCell);
+    glm::vec3 rightClosestPoint = closestPointGrid->clampGet(rightCell);
 
     float dLeft = glm::distance(currentPoint, leftClosestPoint);
     float dRight = glm::distance(currentPoint, rightClosestPoint);
 
-    float uLeft = fromVelocityGrid->u->getLerp(leftClosestPoint.x + 0.5, leftClosestPoint.y);
-    float uRight = fromVelocityGrid->u->getLerp(rightClosestPoint.x + 0.5, rightClosestPoint.y);
+    float uLeft = fromVelocityGrid->u->getLerp(
+      leftClosestPoint.x + 0.5,
+      leftClosestPoint.y,
+      leftClosestPoint.z
+    );
+    float uRight = fromVelocityGrid->u->getLerp(
+      rightClosestPoint.x + 0.5,
+      rightClosestPoint.y,
+      rightClosestPoint.z
+    );
 
     float t = dLeft/(dLeft + dRight);
     return t*uRight + (1.0f - t)*uLeft;
     
   });
 
-
-  toVelocityGrid->v->setForEach([&](int i, int j) {
-    glm::vec2 currentPoint = glm::vec2(i, j - 0.5);
-    GridCoordinate upCell = GridCoordinate(i, j - 1);
-    GridCoordinate downCell = GridCoordinate(i, j);
+  // v velocities
+  toVelocityGrid->v->setForEach([&](int i, int j, int k) {
+    glm::vec3 currentPoint = glm::vec3(i, j - 0.5, k);
+    GridCoordinate upCell = GridCoordinate(i, j - 1, k);
+    GridCoordinate downCell = GridCoordinate(i, j, k);
 
     if (cellTypeGrid->clampGet(upCell) == CellType::FLUID || 
         cellTypeGrid->clampGet(downCell) == CellType::FLUID) {
-      return fromVelocityGrid->v->get(i, j);
+      return fromVelocityGrid->v->get(i, j, k);
     }
 
-    glm::vec2 upClosestPoint = closestPointGrid->clampGet(upCell);
-    glm::vec2 downClosestPoint = closestPointGrid->clampGet(downCell);
+    glm::vec3 upClosestPoint = closestPointGrid->clampGet(upCell);
+    glm::vec3 downClosestPoint = closestPointGrid->clampGet(downCell);
 
     float dUp = glm::distance(currentPoint, upClosestPoint);
     float dDown = glm::distance(currentPoint, downClosestPoint);
 
-    float vUp = fromVelocityGrid->v->getLerp(upClosestPoint.x, upClosestPoint.y + 0.5);
-    float vDown = fromVelocityGrid->v->getLerp(downClosestPoint.x, downClosestPoint.y + 0.5);
+    float vUp = fromVelocityGrid->v->getLerp(
+      upClosestPoint.x,
+      upClosestPoint.y + 0.5,
+      upClosestPoint.z
+    );
+    float vDown = fromVelocityGrid->v->getLerp(
+      downClosestPoint.x,
+      downClosestPoint.y + 0.5,
+      downClosestPoint.z
+    );
 
     float t = dUp/(dUp + dDown);
     return t*vDown + (1.0f - t)*vUp;
   });
+
+  // w velocities
+  toVelocityGrid->w->setForEach([&](int i, int j, int k) {
+    glm::vec3 currentPoint = glm::vec3(i, j, k - 0.5);
+    GridCoordinate frontCell = GridCoordinate(i, j, k - 1);
+    GridCoordinate backCell = GridCoordinate(i, j, k);
+
+    if (cellTypeGrid->clampGet(frontCell) == CellType::FLUID || 
+        cellTypeGrid->clampGet(backCell) == CellType::FLUID) {
+      return fromVelocityGrid->w->get(i, j, k);
+    }
+
+    glm::vec3 frontClosestPoint = closestPointGrid->clampGet(frontCell);
+    glm::vec3 backClosestPoint = closestPointGrid->clampGet(backCell);
+
+    float dFront = glm::distance(currentPoint, frontClosestPoint);
+    float dBack = glm::distance(currentPoint, backClosestPoint);
+
+    float wFront = fromVelocityGrid->w->getLerp(
+      frontClosestPoint.x,
+      frontClosestPoint.y,
+      frontClosestPoint.z + 0.5);
+    float wBack = fromVelocityGrid->w->getLerp(
+      backClosestPoint.x,
+      backClosestPoint.y,
+      backClosestPoint.z + 0.5);
+
+    float t = dFront/(dFront + dBack);
+    return t*wBack + (1.0f - t)*wFront;
+  });
 }
 
 
-  /**
-   * Reset pressure grid
-   */
-  OrdinalGrid<double>* Simulator::resetPressureGrid() {
-    for (unsigned int j = 0; j < h; ++j) {
-      for (unsigned int i = 0; i < w; ++i) {
-        pressureGridFrom->set(i, j, 0.0);
-        pressureGridTo->set(i, j, 0.0);
+/**
+ * Reset pressure grid
+ */
+OrdinalGrid<double>* Simulator::resetPressureGrid() {
+  for (unsigned k = 0; k < d; ++k) {
+    for (unsigned j = 0; j < h; ++j) {
+      for (unsigned i = 0; i < w; ++i) {
+        pressureGridFrom->set(i, j, k, 0.0);
+        pressureGridTo->set(i, j, k, 0.0);
       }
     }
-    return pressureGridFrom;
   }
+  return pressureGridFrom;
+}
 
-  OrdinalGrid<float>* Simulator::getDivergenceGrid() {
-    return divergenceGrid;
-  }
+OrdinalGrid<float>* Simulator::getDivergenceGrid() {
+  return divergenceGrid;
+}
 
-  /**
-   * Find the maximum velocity present in the grid
-   * @param  velocity velocity grid to sample from
-   * @return maxVec   max velocity vector
-   */
-  glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
-    glm::vec2 maxVec = velocity->getCell(0,0);
-    for(unsigned int i = 0; i < w; i++){
-      for(unsigned int j = 0; j < h; j++){
-        if(glm::length(maxVec) < glm::length(velocity->getCell(i,j))){
-          maxVec = velocity->getCell(i,j);
+/**
+ * Find the maximum velocity present in the grid
+ * @param  velocity velocity grid to sample from
+ * @return maxVec   max velocity vector
+ */
+glm::vec3 Simulator::maxVelocity(VelocityGrid const *const velocity){
+  
+  glm::vec3 maxVec = velocity->getCell(0, 0, 0);
+
+  for (unsigned k = 0; k < d; ++k) {
+    for (unsigned j = 0; j < h; j++) {
+      for (unsigned i = 0; i < w; i++) {
+        if (glm::length(maxVec) < glm::length(velocity->getCell(i, j, k))) {
+          maxVec = velocity->getCell(i, j, k);
         }
       }
     }
-    return maxVec;
   }
+  return maxVec;
+}
 
-  /**
-   * Calculate max deltaT for the current iteration.
-   * This calculation is based on the max velocity in the grid.
-   * @param  maxV     max velocity in the velocity grid
-   * @param  gravity  gravitational force vector
-   * @return dT       maximum time step length
-   */
-  float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
-    //TODO: glm::length(gravity) should be changed to something else relating to gravity
-    float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
-    float dT = glm::min(5*gridSize/max, 1.0f);
-    return dT;
-  }
+/**
+ * Calculate max deltaT for the current iteration.
+ * This calculation is based on the max velocity in the grid.
+ * @param  maxV     max velocity in the velocity grid
+ * @param  gravity  gravitational force vector
+ * @return dT       maximum time step length
+ */
+float Simulator::calculateDeltaT(glm::vec3 maxV, glm::vec3 gravity){
+  //TODO: glm::length(gravity) should be changed to something else relating to gravity
+  float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
+  float dT = glm::min(5*gridSize/max, 1.0f);
+  return dT;
+}
 
-  float Simulator::getDeltaT(){
-    return deltaT;
-  }
+float Simulator::getDeltaT(){
+  return deltaT;
+}

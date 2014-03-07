@@ -41,11 +41,11 @@ class Grid {
    * Function in order to set each cell in a grid using a lambda.
    * @param func Function to apply for each cell
    */
-  void setForEach(std::function< T (unsigned int i, unsigned int j)> func){
+  void setForEach(std::function< T (unsigned int i, unsigned int j, unsigned int k)> func){
     for(auto k = 0u; k < d; k++){
       for(auto j = 0u; j < h; j++){
         for(auto i = 0u; i < w; i++){
-          set(i,j, func(i,j));
+          set(i, j, k, func(i, j, k));
         }
       }
     }
@@ -73,7 +73,7 @@ class Grid {
     return clampGet(c.x, c.y, c.z);
   };
 
-  T clampGet(int i, int j) const {
+  T clampGet(int i, int j, int k) const {
     i = (i < 0) ? 0 : (i >= w) ? w-1 : i;
     j = (j < 0) ? 0 : (j >= h) ? h-1 : j;
     k = (k < 0) ? 0 : (k >= d) ? d-1 : j;
@@ -85,7 +85,7 @@ class Grid {
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T safeGet(int i, int j) const{
+  T safeGet(int i, int j, int k) const{
     if(i < 0 || j < 0 || k < 0 || i > int(w - 1) || j > int(h - 1) || k > int(d - 1)){
       return T(0);
     }
@@ -105,7 +105,7 @@ class Grid {
 
 
  protected:
-  unsigned int w, h;
+  unsigned int w, h, d;
   T *quantities;
   
 };

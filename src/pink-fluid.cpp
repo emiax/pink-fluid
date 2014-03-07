@@ -30,6 +30,7 @@
 #include <common/Init.h>
 #include <common/Shader.h>
 #include <common/Texture2D.h>
+#include <common/Texture3D.h>
 #include <ordinalGrid.h>
 #include <state.h>
 #include <simulator.h>
@@ -77,16 +78,15 @@ int main( void ) {
   State prevState(w, h, d);
   State newState(w, h, d);
 
-  VelocityGrid* velocities = new VelocityGrid(w,h,d);
+  VelocityGrid* velocities = new VelocityGrid(w, h, d);
   prevState.setVelocityGrid(velocities);
 
   /**
    * Init Level set object
    */
-  
   // define initial signed distance
   SignedDistanceFunction ballSD([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
-      // distance function to circle with radius w/3, center in (w/2, h/2)
+      // distance function to circle with radius w/3, center in (w/2, h/2, d/2)
       const float x = (float)i - (float)w/3;
       const float y = (float)j - (float)h/2;
       const float z = (float)k - (float)d/2;
@@ -95,7 +95,7 @@ int main( void ) {
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h, d);
   // init boundary grid
-  cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int d){
+  cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
     CellType bt = CellType::EMPTY;
     if(i == 0){
       bt = CellType::SOLID;
@@ -103,10 +103,16 @@ int main( void ) {
     else if(j == 0){
       bt = CellType::SOLID;
     }
+    else if(k == 0){
+      bt = CellType::SOLID;
+    }
     else if(i == w - 1){
       bt = CellType::SOLID;
     }
     else if(j == h - 1){
+      bt = CellType::SOLID;
+    }
+    else if(k == d - 1){
       bt = CellType::SOLID;
     }
     return bt;
@@ -117,10 +123,9 @@ int main( void ) {
   newState.setLevelSet(ls);
 
   // init simulator
-  Simulator sim(&prevState, &newState,0.1f);
+  Simulator sim(&prevState, &newState, 0.1f);
 
-
-  // Dark blue background
+  // Dark black background
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
   //Load in shaders
@@ -181,12 +186,10 @@ int main( void ) {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleBuffer);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
   
-
   // Create framebuffer
   GLuint framebuffer;
   glGenFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-  
   
   GLuint backfaceTextureId;
   glGenTextures(1, &backfaceTextureId);
@@ -223,12 +226,7 @@ int main( void ) {
     //glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     // common for both render passes.
     sim.step(deltaT);
-<<<<<<< HEAD
-    //deltaT = sim.getDeltaT();
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-=======
+
     deltaT = sim.getDeltaT();
 
     glm::mat4 matrix = glm::mat4(1.0f);
@@ -237,8 +235,6 @@ int main( void ) {
 
 
     // Render back face of the cube.
-    
-    
     colorCubeProg();
     glCullFace(GL_FRONT);
 
@@ -250,9 +246,6 @@ int main( void ) {
       glUniformMatrix4fv(mvLocation, 1, false, glm::value_ptr(matrix));
     }
 
-    
-
->>>>>>> ed802aec4409c3666f5a96f003c19fe49f86891e
     glClear(GL_COLOR_BUFFER_BIT);
     glEnableVertexAttribArray(0);
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
@@ -260,12 +253,11 @@ int main( void ) {
      
      
     // Do the ray casting.
-     
-     glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
-     glCullFace(GL_BACK);
-     rayCasterProg();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
+    glCullFace(GL_BACK);
+    rayCasterProg();
 
-     std::cout << "ERROR: " << glGetError() << std::endl;
+    std::cout << "ERROR: " << glGetError() << std::endl;
 
     {
       GLuint tLocation = glGetUniformLocation(rayCasterProg, "time");
@@ -291,47 +283,44 @@ int main( void ) {
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(0);
 
-
-     
-    
     // Set the x,y positions in the texture, in order to visualize the velocity field.
     // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
     // corresponding cell-value instead of the edge velocities.
-    for(unsigned int j = 0; j < h; ++j){
-      for(unsigned int i=0;i<w;++i) {
-        for(unsigned int k=0;k<d;++k) {
+    for(unsigned int k=0;k<d;++k) {
+      for(unsigned int j = 0; j < h; ++j){
+        for(unsigned int i=0;i<w;++i) {
 
-        // velocity
-        //tex3D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
-        //tex3D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-        //tex3D.set(i,j,2, 0.5 + newState.getCellTypeGrid()->get(i, j));
-        //tex3D.set(i,j,2, 0.5);
-        //tex3D.set(i,j,3, 1.0f);
+          // velocity
+          //tex3D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+          //tex3D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+          //tex3D.set(i,j,2, 0.5 + newState.getCellTypeGrid()->get(i, j));
+          //tex3D.set(i,j,2, 0.5);
+          //tex3D.set(i,j,3, 1.0f);
 
-        // divergence
-        //tex3D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
-        //tex3D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
-        //tex3D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
-        //tex3D.set(i,j,3, 1.0f);
+          // divergence
+          //tex3D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
+          //tex3D.set(i,j,1, fabs(sim.getDivergenceGrid()->get(i,j)));
+          //tex3D.set(i,j,2, fabs(sim.getDivergenceGrid()->get(i,j)));
+          //tex3D.set(i,j,3, 1.0f);
 
-        // type
-        // tex3D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
-        // tex3D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
-        // tex3D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-        // tex3D.set(i,j,3, 1.0f);
+          // type
+          // tex3D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
+          // tex3D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
+          // tex3D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+          // tex3D.set(i,j,3, 1.0f);
 
 
-        //signed dist
+          //signed dist
           tex3D.set(i, j, k, 0, newState.getSignedDistanceGrid()->get(i,j));
           tex3D.set(i, j, k, 1, newState.getSignedDistanceGrid()->get(i,j));
           tex3D.set(i, j, k, 2, 1.0f);
           tex3D.set(i, j, k, 3, 1.0f);
 
-        //closest point
-        /*tex3D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
-        tex3D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
-        tex3D.set(i,j,2, 0.0f);
-        tex3D.set(i,j,3, 1.0f);*/
+          //closest point
+          // tex3D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
+          // tex3D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
+          // tex3D.set(i,j,2, 0.0f);
+          // tex3D.set(i,j,3, 1.0f);
         }
       }
     }

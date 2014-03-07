@@ -16,7 +16,7 @@ enum CellType{
 
 class State {
 public:
-  State(unsigned int width, unsigned int height);
+  State(unsigned int width, unsigned int height, unsigned int depth);
   ~State();
   Grid<CellType>const *const getCellTypeGrid() const;
   VelocityGrid const *const getVelocityGrid() const;
