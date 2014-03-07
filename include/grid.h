@@ -88,6 +88,13 @@ class Grid {
     return get(i,j);
   };
 
+
+  inline bool isValid(int i, int j) const{
+    return (
+      i >= 0 && i < w &&
+      j >= 0 && j < h);
+  }
+
   /**
    * Set value of the stored quantity.
    */
@@ -98,6 +105,7 @@ class Grid {
   inline void set(GridCoordinate c, T value) {
     set(c.x, c.y, value);
   };
+
 
 
  protected:

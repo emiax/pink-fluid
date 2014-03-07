@@ -7,7 +7,7 @@
 #include <glm/ext.hpp>
 #include <cassert>
 #include <levelSet.h>
-
+#include <jacobiIteration.h>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
 
@@ -22,6 +22,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
+  pressureSolver = new JacobiIteration(100);
 }
 
 /**
@@ -49,7 +50,8 @@ void Simulator::step(float dt) {
   extrapolateVelocity(stateTo, stateTo);
 
   calculateDivergence(stateTo, divergenceGrid);
-  jacobiIteration(stateTo, 100, dt);
+  pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
+//  jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
@@ -138,68 +140,6 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
     });
 }
 
-/**
- * Perform nIterantions Jacobi iterations in order to calculate pressures.
- * @param readFrom The state to read from
- * @param nIterations number of iterations
- */
-void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations, const float dt) {
-
-  const float sqDeltaX = 1.0f;
-  Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
-
-  resetPressureGrid();
-
-  for(unsigned int k = 0; k < nIterations; ++k) {
-
-    OrdinalGrid<double> *tmp = pressureGridFrom;
-    pressureGridFrom = pressureGridTo;
-    pressureGridTo = tmp;
-    #pragma omp parallel for default(none) 
-    for (unsigned int j = 0; j < h; ++j) {
-      for (unsigned int i = 0; i < w; ++i) {
-
-        float divergence;
-        int neighbouringFluidCells = 0;
-
-        // is current cell solid?
-        if (cellTypeGrid->get(i, j) != CellType::FLUID) {
-          continue;
-        }
-
-        double pL = 0;
-        if (cellTypeGrid->get(i - 1, j) != CellType::SOLID) {
-          pL = pressureGridFrom->get(i - 1, j);
-          neighbouringFluidCells++;
-        }
-        double pR = 0;
-        if (cellTypeGrid->get(i + 1, j) != CellType::SOLID) {
-          pR = pressureGridFrom->get(i + 1, j);
-          neighbouringFluidCells++;
-        }
-        double pU = 0;
-        if (cellTypeGrid->get(i, j - 1) != CellType::SOLID) {
-          pU = pressureGridFrom->get(i, j - 1);
-          neighbouringFluidCells++;
-        }
-        double pD = 0;
-        if (cellTypeGrid->get(i, j + 1) != CellType::SOLID) {
-          pD = pressureGridFrom->get(i, j + 1);
-          neighbouringFluidCells++;
-        }
-
-        divergence = divergenceGrid->get(i, j);
-
-        // discretized poisson equation
-        double p = pL + pR + pU + pD - sqDeltaX * divergence/dt;
-        p /= ((double) neighbouringFluidCells);
-
-        pressureGridTo->set(i, j, p);
-      }
-    }
-
-  }
-}
 
 /**
  * Subtract pressure gradients from velocity grid

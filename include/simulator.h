@@ -4,6 +4,7 @@ class OrdinalGrid;
 template<typename T>
 class Grid;
 class State;
+struct PressureSolver;
 struct VelocityGrid;
 #include <glm/glm.hpp>
 #include <util.h>
@@ -23,8 +24,7 @@ public:
 
   // pressure
   void calculateDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
-  void jacobiIteration(State const* readFrom, unsigned int nIterations, const float dt);
-
+  
   void gradientSubtraction(State *state, float dt);
   void extrapolateVelocity(State *stateFrom, State *stateTo);
 
@@ -40,6 +40,7 @@ private:
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
   OrdinalGrid<double> *pressureGridFrom, *pressureGridTo;
+  PressureSolver* pressureSolver;
   float deltaT;
   float gridSize;
 };

@@ -2,7 +2,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 #include <glm/glm.hpp>
-#include <velocityGrid.h>
+struct VelocityGrid;
+
 namespace util {
 	namespace advect{
   	/**
