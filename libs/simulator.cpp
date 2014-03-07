@@ -39,7 +39,7 @@ Simulator::~Simulator() {
  */
 void Simulator::step(float dt) {
 
-  glm::vec2 gravity = glm::vec2(0, 0.10);
+  glm::vec2 gravity = glm::vec2(0, 1);
 
   // simulation stack
   advect(stateFrom, stateTo, dt);
@@ -64,65 +64,33 @@ void Simulator::step(float dt) {
  * @param dt time step length
  */
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
+  #pragma omp parallel sections
+  {
   //X
+    #pragma omp section
   writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = backTrackU(readFrom, i, j, dt);
+      glm::vec2 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, dt);
       return readFrom->velocityGrid->u->getCrerp(position);
     });
 
   //Y
+      #pragma omp section
   writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = backTrackV(readFrom, i, j, dt);
+      glm::vec2 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, dt);
       return readFrom->velocityGrid->v->getCrerp(position);
     });
 
   // level set distance grid
+      #pragma omp section
   writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = backTrackMid(readFrom, i, j, dt);
+    
+      glm::vec2 position = util::advect::backTrack(readFrom->velocityGrid, i, j, dt);
       return readFrom->levelSet->distanceGrid->getCrerp(position);
     });
 }
-
-/**
- * Find the previous position of the temporary particle in the grid that travelled to i, j.
- * @param readFrom State to read from
- * @param i   x coordinate
- * @param j   y coordinate
- * @param dt  the time between the two steps
- * @return    position to copy new value from
- */
-glm::vec2 Simulator::backTrackU(State const* readFrom, int i, int j, float dt){
-  glm::vec2 position(i,j);
-  glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->get(i,j),
-                          readFrom->velocityGrid->v->getLerp(i-0.5,j+0.5));
-  glm::vec2 midPos = position - (dt/2) * v;
-
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getLerp(midPos),
-                             readFrom->velocityGrid->v->getLerp(midPos.x-0.5, midPos.y+0.5));
-  return position-dt*midV;
 }
 
-glm::vec2 Simulator::backTrackV(State const* readFrom, int i, int j, float dt){
-  glm::vec2 position(i,j);
-  glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->get(i+0.5,j-0.5),
-                          readFrom->velocityGrid->v->getLerp(i,j));
-  glm::vec2 midPos = position - (dt/2) * v;
 
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getLerp(midPos.x+0.5, midPos.y-0.5),
-                             readFrom->velocityGrid->v->getLerp(midPos));
-  return position-dt*midV;
-}
-
-glm::vec2 Simulator::backTrackMid(State const* readFrom, int i, int j, float dt){
-  glm::vec2 position(i,j);
-  glm::vec2 v = glm::vec2(readFrom->velocityGrid->u->getLerp(i+0.5,j),
-                          readFrom->velocityGrid->v->getLerp(i,j+0.5));
-  glm::vec2 midPos = position - (dt/2) * v;
-
-  glm::vec2 midV = glm::vec2(readFrom->velocityGrid->u->getLerp(midPos.x+0.5f, midPos.y),
-                             readFrom->velocityGrid->v->getLerp(midPos.x, midPos.y+0.5f));
-  return position-dt*midV;
-}
 
 //Apply gravity to fluid cells
 void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){

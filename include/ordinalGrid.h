@@ -24,10 +24,6 @@ class OrdinalGrid : public Grid<T> {
    * @param j, the position along the y axis (h)
    */
   T getLerp(float i, float j) const{
-    if (i > this->w - 1) i = this->w - 1;
-    if (j > this->h - 1) j = this->h - 1;
-    if (i < 0) i = 0;
-    if (j < 0) j = 0;
     unsigned int lowerI = floor(i);
     unsigned int upperI = ceil(i);
     unsigned int lowerJ = floor(j);
@@ -36,10 +32,10 @@ class OrdinalGrid : public Grid<T> {
     float ti = i - (int)i;
     float tj = j - (int)j;
     
-    T v00 = this->get(lowerI, lowerJ);
-    T v01 = this->get(lowerI, upperJ);
-    T v10 = this->get(upperI, lowerJ);
-    T v11 = this->get(upperI, upperJ);
+    T v00 = this->clampGet(lowerI, lowerJ);
+    T v01 = this->clampGet(lowerI, upperJ);
+    T v10 = this->clampGet(upperI, lowerJ);
+    T v11 = this->clampGet(upperI, upperJ);
     
     T v0 = lerp(v00, v01, tj);
     T v1 = lerp(v10, v11, tj);
@@ -66,25 +62,25 @@ class OrdinalGrid : public Grid<T> {
     float ti = i - floor(i);
     float tj = j - floor(j);
     
-    T v00 = this->safeGet(i0, j0);
-    T v01 = this->safeGet(i0, j1);
-    T v02 = this->safeGet(i0, j2);
-    T v03 = this->safeGet(i0, j3);
+    T v00 = this->clampGet(i0, j0);
+    T v01 = this->clampGet(i0, j1);
+    T v02 = this->clampGet(i0, j2);
+    T v03 = this->clampGet(i0, j3);
     
-    T v10 = this->safeGet(i1, j0);
-    T v11 = this->safeGet(i1, j1);
-    T v12 = this->safeGet(i1, j2);
-    T v13 = this->safeGet(i1, j3);
+    T v10 = this->clampGet(i1, j0);
+    T v11 = this->clampGet(i1, j1);
+    T v12 = this->clampGet(i1, j2);
+    T v13 = this->clampGet(i1, j3);
 
-    T v20 = this->safeGet(i2, j0);
-    T v21 = this->safeGet(i2, j1);
-    T v22 = this->safeGet(i2, j2);
-    T v23 = this->safeGet(i2, j3);
+    T v20 = this->clampGet(i2, j0);
+    T v21 = this->clampGet(i2, j1);
+    T v22 = this->clampGet(i2, j2);
+    T v23 = this->clampGet(i2, j3);
 
-    T v30 = this->safeGet(i3, j0);
-    T v31 = this->safeGet(i3, j1);
-    T v32 = this->safeGet(i3, j2);
-    T v33 = this->safeGet(i3, j3);
+    T v30 = this->clampGet(i3, j0);
+    T v31 = this->clampGet(i3, j1);
+    T v32 = this->clampGet(i3, j2);
+    T v33 = this->clampGet(i3, j3);
 
     T v0 = crer(v00,v10,v20,v30,ti);
     T v1 = crer(v01,v11,v21,v31,ti);
