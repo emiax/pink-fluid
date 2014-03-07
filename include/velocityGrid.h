@@ -1,7 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <ordinalGrid.h>
-#include <interfaces/quantity.h>
 #include <util.h>
 struct VelocityGrid{
   VelocityGrid(unsigned int w, unsigned int h);
