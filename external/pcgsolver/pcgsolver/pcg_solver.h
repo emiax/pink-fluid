@@ -11,7 +11,6 @@
 #include "sparse_matrix.h"
 
 #ifdef __APPLE__
-#include "blas_wrapper.h"
 #include "blas_win.h"
 #elif defined _WIN32 || defined _WIN64 || defined __unix__
 #include "blas_win.h"
@@ -262,6 +261,7 @@ struct PCGSolver
 
       form_preconditioner(matrix);
       apply_preconditioner(r, z);
+
       double rho=BLASWIN::dot(z, r);
       if(rho==0 || rho!=rho) {
          iterations_out=0;

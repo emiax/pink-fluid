@@ -95,12 +95,16 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 80, h = 80;
+  unsigned int w = 25, h = 25;
   State prevState(w, h);
   State newState(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
+
+
   prevState.setVelocityGrid(velocities);
+
+
 
   /**
    * Init Level set object
@@ -109,9 +113,9 @@ int main( void ) {
   // define initial signed distance
   SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
       // distance function to circle with radius w/3, center in (w/2, h/2)
-      const float x = (float)i - (float)w/3;
+      const float x = (float)i - (float)w/2;
       const float y = (float)j - (float)h/2;
-      return sqrt( x*x + y*y ) - (float)w/4;
+      return sqrt( x*x + y*y ) - (float)w/3;
     });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
@@ -154,7 +158,7 @@ int main( void ) {
   do{
 
     sim.step(deltaT);
-    //deltaT = sim.getDeltaT();
+    deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);

@@ -95,8 +95,10 @@ add_definitions(
 add_definitions(-D_UNIX)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-SET(EXTRA_LIBS "-framework Cocoa -framework OpenGL -framework IOKit -framework Foundation -framework AppKit")
-
+  SET(EXTRA_LIBS "-framework Cocoa -framework OpenGL -framework IOKit -framework Foundation -framework AppKit")
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+  endif()
 # TODO This generates compile errors from glfw on Mavericks, need to investigate further
 # add_definitions(-D_MACOSX -ObjC++)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

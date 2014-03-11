@@ -8,6 +8,7 @@
 #include <cassert>
 #include <levelSet.h>
 #include <jacobiIteration.h>
+#include <micSolver.h>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
 
@@ -22,7 +23,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
-  pressureSolver = new JacobiIteration(100);
+  pressureSolver = new MICSolver(w*h);
 }
 
 /**
@@ -50,9 +51,24 @@ void Simulator::step(float dt) {
   extrapolateVelocity(stateTo, stateTo);
 
   calculateDivergence(stateTo, divergenceGrid);
+/*  std::cout << "-----------------------------------------" << std::endl;
+  for(auto i = 0u; i < w; i++){
+    for (int j = 0; j < h; j++){
+      std::cout << divergenceGrid->get(j,i) << " ";
+    }
+    std::cout << std::endl;
+  }*/
   pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
-//  jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
+
+  calculateDivergence(stateTo, divergenceGrid);
+/*  for(auto i = 0u; i < w; i++){
+    for (int j = 0; j < h; j++){
+      std::cout << divergenceGrid->get(j,i) << " ";
+    }
+    std::cout << std::endl;
+  }
+  std::cin.get();*/
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
   std::swap(stateFrom, stateTo);
@@ -100,14 +116,14 @@ void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
   velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-      if (cellTypeGrid->get(i, j) != CellType::SOLID) {
+      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         return velocityGrid->u->get(i,j)+g.x*deltaT;
       }
       return velocityGrid->u->get(i,j);
     });
 
   velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
-      if (cellTypeGrid->get(i, j) != CellType::SOLID) {
+      if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         return velocityGrid->v->get(i,j)+g.y*deltaT;
       }
       return velocityGrid->v->get(i,j);
@@ -124,14 +140,12 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
-
   toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
     if (cellTypeGrid->get(i, j) == CellType::FLUID) {
-        float entering = u->get(i, j) + v->get(i, j);
-        float leaving = u->get(i + 1, j) + v->get(i, j + 1);
+        float entering = u->get(i, j)     + v->get(i, j);
+        float leaving  = u->get(i + 1, j) + v->get(i, j + 1);
 
-        float divergence = leaving - entering;
-
+        float divergence = leaving-entering;
         return divergence;
       } else {
         return 0.0f;
@@ -161,6 +175,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
+      //std::cout <<  pressureGridTo->get(i, j) << " ";
       if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float uL = uVelocityGrid->get(i, j);
         float uR = uVelocityGrid->get(i+1, j);
@@ -181,7 +196,10 @@ void Simulator::gradientSubtraction(State *state, float dt) {
         vVelocityGrid->set(i, j+1, vD);
       }
     }
+  //  std::cout << std::endl;
   }
+  //std::cin.get();
+
   #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid)
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
