@@ -23,6 +23,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
+  //pressureSolver = new JacobiIteration(100);
   pressureSolver = new MICSolver(w*h);
 }
 
@@ -137,15 +138,26 @@ void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
  * @param toDivergenceGrid An ordinal grid of floats to write the divergences to
  */
 void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
+  const float scale = 1.0f;
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
   toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
     if (cellTypeGrid->get(i, j) == CellType::FLUID) {
-        float entering = u->get(i, j)     + v->get(i, j);
-        float leaving  = u->get(i + 1, j) + v->get(i, j + 1);
+        float divergence = -scale * (u->get(i+1,j) - u->get(i,j) + v->get(i,j+1) - v->get(i,j));
+        if(cellTypeGrid->isValid(i-1,j) && cellTypeGrid->get(i-1,j) == CellType::SOLID) {
+          divergence -= u->get(i,j);
+        }
+        if(cellTypeGrid->isValid(i+1,j) && cellTypeGrid->get(i+1,j) == CellType::SOLID) {
+          divergence += u->get(i+1,j);
+        }
 
-        float divergence = leaving-entering;
+        if(cellTypeGrid->isValid(i,j-1) && cellTypeGrid->get(i,j-1) == CellType::SOLID) {
+          divergence -= v->get(i,j);
+        }
+        if(cellTypeGrid->isValid(i,j+1) && cellTypeGrid->get(i,j+1) == CellType::SOLID) {
+          divergence += v->get(i,j+1);
+        }
         return divergence;
       } else {
         return 0.0f;
