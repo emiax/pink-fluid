@@ -110,9 +110,12 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   }
 }
 
-
-
-//Apply gravity to fluid cells
+/**
+ * Apply gravity to fluid cells
+ * @param state  state with velocity grid to be augmented
+ * @param g      gravity vector
+ * @param deltaT time step, dt
+ */
 void Simulator::applyGravity(State *state, glm::vec2 g, float deltaT){
   VelocityGrid *velocityGrid = state->velocityGrid;
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
@@ -143,8 +146,8 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
-  toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
 
+  toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
     if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float divergence = -scale * (u->get(i+1,j) - u->get(i,j) + v->get(i,j+1) - v->get(i,j));
         
@@ -188,7 +191,6 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   // looping through pressure cells
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
-      // is current cell solid?
       // std::cout << std::setw(5) << pressureGridTo->get(i, j) << " ";
       if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float uL = uVelocityGrid->get(i, j);
@@ -213,11 +215,11 @@ void Simulator::gradientSubtraction(State *state, float dt) {
    // std::cout << std::endl;
   }
 
+  // enforce boundary condition
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
       if (cellTypeGrid->get(i, j) == CellType::SOLID) {
-
         uVelocityGrid->set(i, j, 0.0f);
         uVelocityGrid->set(i+1, j, 0.0f);
         vVelocityGrid->set(i, j, 0.0f);
@@ -287,56 +289,54 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
   });
 }
 
+/**
+ * Reset pressure grid
+ */
+OrdinalGrid<double>* Simulator::resetPressureGrid() {
+  for (unsigned int j = 0; j < h; ++j) {
+    for (unsigned int i = 0; i < w; ++i) {
+      pressureGridFrom->set(i, j, 0.0);
+      pressureGridTo->set(i, j, 0.0);
+    }
+  }
+  return pressureGridFrom;
+}
 
-  /**
-   * Reset pressure grid
-   */
-  OrdinalGrid<double>* Simulator::resetPressureGrid() {
-    for (unsigned int j = 0; j < h; ++j) {
-      for (unsigned int i = 0; i < w; ++i) {
-        pressureGridFrom->set(i, j, 0.0);
-        pressureGridTo->set(i, j, 0.0);
+OrdinalGrid<float>* Simulator::getDivergenceGrid() {
+  return divergenceGrid;
+}
+
+/**
+ * Find the maximum velocity present in the grid
+ * @param  velocity velocity grid to sample from
+ * @return maxVec   max velocity vector
+ */
+glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
+  glm::vec2 maxVec = velocity->getCell(0,0);
+  for(unsigned int i = 0; i < w; i++){
+    for(unsigned int j = 0; j < h; j++){
+      if(glm::length(maxVec) < glm::length(velocity->getCell(i,j))){
+        maxVec = velocity->getCell(i,j);
       }
     }
-    return pressureGridFrom;
   }
+  return maxVec;
+}
 
-  OrdinalGrid<float>* Simulator::getDivergenceGrid() {
-    return divergenceGrid;
-  }
+/**
+ * Calculate max deltaT for the current iteration.
+ * This calculation is based on the max velocity in the grid.
+ * @param  maxV     max velocity in the velocity grid
+ * @param  gravity  gravitational force vector
+ * @return dT       maximum time step length
+ */
+float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
+  //TODO: glm::length(gravity) should be changed to something else relating to gravity
+  float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
+  float dT = glm::min(5*gridSize/max, 1.0f);
+  return dT;
+}
 
-  /**
-   * Find the maximum velocity present in the grid
-   * @param  velocity velocity grid to sample from
-   * @return maxVec   max velocity vector
-   */
-  glm::vec2 Simulator::maxVelocity(VelocityGrid const *const velocity){
-    glm::vec2 maxVec = velocity->getCell(0,0);
-    for(unsigned int i = 0; i < w; i++){
-      for(unsigned int j = 0; j < h; j++){
-        if(glm::length(maxVec) < glm::length(velocity->getCell(i,j))){
-          maxVec = velocity->getCell(i,j);
-        }
-      }
-    }
-    return maxVec;
-  }
-
-  /**
-   * Calculate max deltaT for the current iteration.
-   * This calculation is based on the max velocity in the grid.
-   * @param  maxV     max velocity in the velocity grid
-   * @param  gravity  gravitational force vector
-   * @return dT       maximum time step length
-   */
-  float Simulator::calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity){
-    //TODO: glm::length(gravity) should be changed to something else relating to gravity
-    float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
-    float dT = glm::min(5*gridSize/max, 1.0f);
-    return dT;
-  }
-
-  float Simulator::getDeltaT(){
-    return deltaT;
-  }
-// 
+float Simulator::getDeltaT(){
+  return deltaT;
+}
