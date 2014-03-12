@@ -22,6 +22,7 @@ public:
   void setCellTypeGrid(Grid<CellType> const* const);
 
   void reinitialize();
+  void updateCellTypes();
 
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
@@ -33,7 +34,6 @@ private:
   void updateNeighborsFrom(unsigned int i, unsigned int j);
 
   void updateFromCell(unsigned int xTo, unsigned int yTo, unsigned int xFrom, unsigned int yFrom);
-  void updateCellTypes();
 
   void fastMarch();
 

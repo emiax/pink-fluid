@@ -95,7 +95,7 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 25, h = 25;
+  unsigned int w = 50, h = 50;
   State prevState(w, h);
   State newState(w, h);
 
@@ -158,7 +158,7 @@ int main( void ) {
   do{
 
     sim.step(deltaT);
-    deltaT = sim.getDeltaT();
+    // deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
@@ -175,11 +175,10 @@ int main( void ) {
       for(unsigned int i=0;i<w;++i) {
 
         // velocity
-        //tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
-        //tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-        //tex2D.set(i,j,2, 0.5 + newState.getCellTypeGrid()->get(i, j));
-        //tex2D.set(i,j,2, 0.5);
-        //tex2D.set(i,j,3, 1.0f);
+        // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+        // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+        // tex2D.set(i,j,2, 0.5);
+        // tex2D.set(i,j,3, 1.0f);
 
         // divergence
         //tex2D.set(i,j,0, fabs(sim.getDivergenceGrid()->get(i,j)));
@@ -193,7 +192,6 @@ int main( void ) {
         // tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
         // tex2D.set(i,j,3, 1.0f);
 
-
         //signed dist
         tex2D.set(i,j,0, newState.getSignedDistanceGrid()->get(i,j));
         tex2D.set(i,j,1, newState.getSignedDistanceGrid()->get(i,j));
@@ -201,10 +199,10 @@ int main( void ) {
         tex2D.set(i,j,3, 1.0f);
 
         //closest point
-        /*tex2D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
-        tex2D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
-        tex2D.set(i,j,2, 0.0f);
-        tex2D.set(i,j,3, 1.0f);*/
+        // tex2D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
+        // tex2D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
+        // tex2D.set(i,j,2, 0.0f);
+        // tex2D.set(i,j,3, 1.0f);
 
       }
     }

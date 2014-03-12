@@ -7,17 +7,19 @@ MICSolver::MICSolver(int size){
 	xVector = new std::vector<double>(size);
 	bVector = new std::vector<double>(size);
 }
-void MICSolver::solve(OrdinalGrid<float> const* const divergenceGrid, State const* const state, OrdinalGrid<double> *pressureGrid, const float dt){
+bool MICSolver::solve(OrdinalGrid<float> const* const divergenceGrid, State const* const state, OrdinalGrid<double> *pressureGrid, const float dt){
 	fillA(aMatrix, state, dt);
 	fillB(bVector, divergenceGrid);
 	double residual;
 	int iterations;
 	if(solver.solve(*aMatrix, *bVector, *xVector, residual, iterations)){
 		std::cout << "Pressure Solver status: Success" << std::endl;
+		return true;
 	}
 	else{
 		std::cout << "Pressure Solver status: Failed with " << iterations << " iterations and "
 		<<  residual << " as a residual" <<  std::endl;
+		return false;
 	}
 	pressureGrid->setForEach([&](unsigned int i, unsigned int j){
 		return xVector->at(pressureGrid->indexTranslation(i,j));

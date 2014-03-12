@@ -23,7 +23,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
-  //pressureSolver = new JacobiIteration(100);
+  jacobiSolver = new JacobiIteration(100);
   pressureSolver = new MICSolver(w*h);
 }
 
@@ -44,12 +44,13 @@ void Simulator::step(float dt) {
 
   glm::vec2 gravity = glm::vec2(0, 1);
 
-  // simulation stack
-  advect(stateFrom, stateTo, dt);
-  applyGravity(stateTo, gravity, dt);
+  stateFrom->levelSet->reinitialize();
+  extrapolateVelocity(stateFrom, stateFrom);
 
-  stateTo->levelSet->reinitialize();
-  extrapolateVelocity(stateTo, stateTo);
+  advect(stateFrom, stateTo, dt);
+
+  stateTo->levelSet->updateCellTypes();
+  applyGravity(stateTo, gravity, dt);
 
   calculateDivergence(stateTo, divergenceGrid);
 /*  std::cout << "-----------------------------------------" << std::endl;
@@ -59,7 +60,11 @@ void Simulator::step(float dt) {
     }
     std::cout << std::endl;
   }*/
-  pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
+
+  // if (!(pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt))) {
+    jacobiSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
+  // }
+
   gradientSubtraction(stateTo, dt);
 
   calculateDivergence(stateTo, divergenceGrid);
@@ -86,11 +91,11 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   #pragma omp parallel sections
   {
   //X
-    #pragma omp section
+  #pragma omp section
   writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-      glm::vec2 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, dt);
-      return readFrom->velocityGrid->u->getCrerp(position);
-    });
+    glm::vec2 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, dt);
+    return readFrom->velocityGrid->u->getCrerp(position);
+  });
 
   //Y
       #pragma omp section
@@ -143,21 +148,24 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
   toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
+
     if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float divergence = -scale * (u->get(i+1,j) - u->get(i,j) + v->get(i,j+1) - v->get(i,j));
+        
         if(cellTypeGrid->isValid(i-1,j) && cellTypeGrid->get(i-1,j) == CellType::SOLID) {
-          divergence -= u->get(i,j);
+          divergence -= scale*u->get(i,j);
         }
         if(cellTypeGrid->isValid(i+1,j) && cellTypeGrid->get(i+1,j) == CellType::SOLID) {
-          divergence += u->get(i+1,j);
+          divergence += scale*u->get(i+1,j);
         }
 
         if(cellTypeGrid->isValid(i,j-1) && cellTypeGrid->get(i,j-1) == CellType::SOLID) {
-          divergence -= v->get(i,j);
+          divergence -= scale*v->get(i,j);
         }
         if(cellTypeGrid->isValid(i,j+1) && cellTypeGrid->get(i,j+1) == CellType::SOLID) {
-          divergence += v->get(i,j+1);
+          divergence += scale*v->get(i,j+1);
         }
+
         return divergence;
       } else {
         return 0.0f;
@@ -243,8 +251,8 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
     GridCoordinate leftCell = GridCoordinate(i - 1, j);
     GridCoordinate rightCell = GridCoordinate(i, j);
 
-    if (cellTypeGrid->clampGet(leftCell) == CellType::FLUID || 
-        cellTypeGrid->clampGet(rightCell) == CellType::FLUID) {
+    if (cellTypeGrid->clampGet(leftCell) != CellType::EMPTY || 
+      cellTypeGrid->clampGet(rightCell) != CellType::EMPTY) {
       return fromVelocityGrid->u->get(i, j);
     }
 
@@ -268,8 +276,8 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
     GridCoordinate upCell = GridCoordinate(i, j - 1);
     GridCoordinate downCell = GridCoordinate(i, j);
 
-    if (cellTypeGrid->clampGet(upCell) == CellType::FLUID || 
-        cellTypeGrid->clampGet(downCell) == CellType::FLUID) {
+    if (cellTypeGrid->clampGet(upCell) != CellType::EMPTY || 
+        cellTypeGrid->clampGet(downCell) != CellType::EMPTY) {
       return fromVelocityGrid->v->get(i, j);
     }
 

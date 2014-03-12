@@ -6,7 +6,7 @@ JacobiIteration::JacobiIteration(int maxIterations){
 	this->maxIterations = maxIterations;
 }
 
-void JacobiIteration::solve(OrdinalGrid<float> const* const divergenceGrid, State const* const state, OrdinalGrid<double> *pressureGridTo, const float dt){
+bool JacobiIteration::solve(OrdinalGrid<float> const* const divergenceGrid, State const* const state, OrdinalGrid<double> *pressureGridTo, const float dt){
 	const float sqDeltaX = 1.0f;
 	Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 	const unsigned int w = state->getW();
@@ -64,7 +64,7 @@ void JacobiIteration::solve(OrdinalGrid<float> const* const divergenceGrid, Stat
 				divergence = divergenceGrid->get(i, j);
 				
         // discretized poisson equation
-				double p = pL + pR + pU + pD - sqDeltaX * divergence/dt;
+				double p = pL + pR + pU + pD + sqDeltaX * divergence/dt;
 				p /= ((double) neighbouringFluidCells);
 				pressureGridTo->set(i, j, p);
 				
@@ -73,4 +73,5 @@ void JacobiIteration::solve(OrdinalGrid<float> const* const divergenceGrid, Stat
 		std::swap(pressureGridFrom, pressureGridTo);
 	}
 	delete pressureGridFrom;
+	return true;
 }
