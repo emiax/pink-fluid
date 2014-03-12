@@ -23,7 +23,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h);
   pressureGridFrom = new OrdinalGrid<double>(w, h);
   pressureGridTo = new OrdinalGrid<double>(w, h);
-  jacobiSolver = new JacobiIteration(100);
+  // pressureSolver = new JacobiIteration(100);
   pressureSolver = new MICSolver(w*h);
 }
 
@@ -53,28 +53,25 @@ void Simulator::step(float dt) {
   applyGravity(stateTo, gravity, dt);
 
   calculateDivergence(stateTo, divergenceGrid);
-/*  std::cout << "-----------------------------------------" << std::endl;
-  for(auto i = 0u; i < w; i++){
-    for (int j = 0; j < h; j++){
-      std::cout << divergenceGrid->get(j,i) << " ";
-    }
-    std::cout << std::endl;
-  }*/
-
-  // if (!(pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt))) {
-    jacobiSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
+  // std::cout << "-----------------------------------------" << std::endl;
+  // for(auto i = 0u; i < w; i++){
+  //   for (int j = 0; j < h; j++){
+  //     std::cout << std::setw(5) << divergenceGrid->get(j,i);
+  //   }
+  //   std::cout << std::endl;
   // }
+
+  pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
 
   gradientSubtraction(stateTo, dt);
 
   calculateDivergence(stateTo, divergenceGrid);
-/*  for(auto i = 0u; i < w; i++){
-    for (int j = 0; j < h; j++){
-      std::cout << divergenceGrid->get(j,i) << " ";
-    }
-    std::cout << std::endl;
-  }
-  std::cin.get();*/
+  // for(auto i = 0u; i < w; i++){
+  //   for (int j = 0; j < h; j++){
+  //     std::cout << std::setw(5) << divergenceGrid->get(j,i) << " ";
+  //   }
+  //   std::cout << std::endl;
+  // }
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
   std::swap(stateFrom, stateTo);
@@ -90,28 +87,27 @@ void Simulator::step(float dt) {
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   #pragma omp parallel sections
   {
-  //X
-  #pragma omp section
-  writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
-    glm::vec2 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, dt);
-    return readFrom->velocityGrid->u->getCrerp(position);
-  });
+    //X
+    #pragma omp section
+    writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j){
+      glm::vec2 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, dt);
+      return readFrom->velocityGrid->u->getCrerp(position);
+    });
 
-  //Y
-      #pragma omp section
-  writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
+    //Y
+    #pragma omp section
+    writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j){
       glm::vec2 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, dt);
       return readFrom->velocityGrid->v->getCrerp(position);
     });
 
-  // level set distance grid
-      #pragma omp section
-  writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j){
-    
+    // level set distance grid
+    #pragma omp section
+    writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j){
       glm::vec2 position = util::advect::backTrack(readFrom->velocityGrid, i, j, dt);
       return readFrom->levelSet->distanceGrid->getCrerp(position);
     });
-}
+  }
 }
 
 
@@ -169,7 +165,6 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
         return divergence;
       } else {
         return 0.0f;
-
       }
     });
 }
@@ -191,11 +186,10 @@ void Simulator::gradientSubtraction(State *state, float dt) {
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
   // looping through pressure cells
-  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid)
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
-      //std::cout <<  pressureGridTo->get(i, j) << " ";
+      // std::cout << std::setw(5) << pressureGridTo->get(i, j) << " ";
       if (cellTypeGrid->get(i, j) == CellType::FLUID) {
         float uL = uVelocityGrid->get(i, j);
         float uR = uVelocityGrid->get(i+1, j);
@@ -216,11 +210,9 @@ void Simulator::gradientSubtraction(State *state, float dt) {
         vVelocityGrid->set(i, j+1, vD);
       }
     }
-  //  std::cout << std::endl;
+   // std::cout << std::endl;
   }
-  //std::cin.get();
 
-  #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid)
   for (unsigned int j = 0; j < h; ++j) {
     for (unsigned int i = 0; i < w; ++i) {
       // is current cell solid?
@@ -262,8 +254,8 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
     float dLeft = glm::distance(currentPoint, leftClosestPoint);
     float dRight = glm::distance(currentPoint, rightClosestPoint);
 
-    float uLeft = fromVelocityGrid->u->getLerp(leftClosestPoint.x + 0.5, leftClosestPoint.y);
-    float uRight = fromVelocityGrid->u->getLerp(rightClosestPoint.x + 0.5, rightClosestPoint.y);
+    float uLeft = fromVelocityGrid->u->getNearest(leftClosestPoint.x + 0.5, leftClosestPoint.y);
+    float uRight = fromVelocityGrid->u->getNearest(rightClosestPoint.x + 0.5, rightClosestPoint.y);
 
     float t = dLeft/(dLeft + dRight);
     return t*uRight + (1.0f - t)*uLeft;
@@ -287,8 +279,8 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
     float dUp = glm::distance(currentPoint, upClosestPoint);
     float dDown = glm::distance(currentPoint, downClosestPoint);
 
-    float vUp = fromVelocityGrid->v->getLerp(upClosestPoint.x, upClosestPoint.y + 0.5);
-    float vDown = fromVelocityGrid->v->getLerp(downClosestPoint.x, downClosestPoint.y + 0.5);
+    float vUp = fromVelocityGrid->v->getNearest(upClosestPoint.x, upClosestPoint.y + 0.5);
+    float vDown = fromVelocityGrid->v->getNearest(downClosestPoint.x, downClosestPoint.y + 0.5);
 
     float t = dUp/(dUp + dDown);
     return t*vDown + (1.0f - t)*vUp;
@@ -347,3 +339,4 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
   float Simulator::getDeltaT(){
     return deltaT;
   }
+// 

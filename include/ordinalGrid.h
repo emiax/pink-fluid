@@ -43,6 +43,13 @@ class OrdinalGrid : public Grid<T> {
     return lerp(v0, v1, ti);
   }
 
+  T getNearest(float i, float j) const {
+    unsigned int nearestI = round(i);
+    unsigned int nearestJ = round(j);
+    
+    return clampGet(nearestI, nearestJ);
+  }
+
   /**
    * Get the Catmull-Rom interpolated value of the stored quantity.
    * @param i, the position along the x axis (w)

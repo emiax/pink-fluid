@@ -139,9 +139,9 @@ void LevelSet::updateFromCell(unsigned int xFrom,
 void LevelSet::fastMarch() {
   while (!(gridHeap->empty())) {
     GridCoordinate c = gridHeap->pop();
-    if (distanceGrid->get(c) < 5.0) {
+    // if (fabs(distanceGrid->get(c)) < 5.0) {
       updateNeighborsFrom(c.x, c.y);
-    }
+    // }
   }
 }
 
