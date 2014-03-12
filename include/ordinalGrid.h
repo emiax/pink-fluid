@@ -1,5 +1,4 @@
 #pragma once
-#define GLM_FORCE_RADIANS
 #include <grid.h>
 #include <cmath>
 #include <glm/glm.hpp>
