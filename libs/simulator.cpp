@@ -43,12 +43,12 @@ void Simulator::step(float dt) {
 
   glm::vec3 gravity = glm::vec3(0, -1, 0);
 
+  stateFrom->levelSet->reinitialize();
+  extrapolateVelocity(stateFrom, stateFrom);
+
   // simulation stack
   advect(stateFrom, stateTo, dt);
   applyGravity(stateTo, gravity, dt);
-
-  stateTo->levelSet->reinitialize();
-  extrapolateVelocity(stateTo, stateTo);
 
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);

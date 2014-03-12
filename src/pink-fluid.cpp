@@ -74,14 +74,11 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 32, h = 32, d = 32;
+  unsigned int w = 24, h = 24, d = 24;
   State prevState(w, h, d);
   State newState(w, h, d);
 
   VelocityGrid* velocities = new VelocityGrid(w, h, d);
-  velocities->v->setForEach([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
-      return 1.0;
-    });
   prevState.setVelocityGrid(velocities);
 
   /**
@@ -241,7 +238,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, (float) glfwGetTime()*10.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.5f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 
     // Render back face of the cube.
@@ -310,19 +307,18 @@ int main( void ) {
           //tex3D.set(i,j,3, 1.0f);
 
           // type
-          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
-          tex3D.set(i,j,k, 1, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
-          tex3D.set(i,j,k, 2, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
-          tex3D.set(i,j,k, 3, 1.0f);
-
+          // tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
+          // tex3D.set(i,j,k, 1, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
+          // tex3D.set(i,j,k, 2, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
+          // tex3D.set(i,j,k, 3, 1.0f);
 
           //signed dist
-          //          tex3D.set(i, j, k, 0, newState.getSignedDistanceGrid()->get(i, j, k));
-          //tex3D.set(i, j, k, 1, newState.getSignedDistanceGrid()->get(i, j, k));
-          //tex3D.set(i, j, k, 2, 1.0f);
-          //tex3D.set(i, j, k, 3, 1.0f);
-
-
+          float dist = newState.getSignedDistanceGrid()->get(i, j, k);
+          dist = -glm::clamp(dist, -1.0f, 0.0f);
+          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
+          tex3D.set(i, j, k, 1, dist*0.3f);
+          tex3D.set(i, j, k, 2, dist);
+          tex3D.set(i, j, k, 3, 1.0f);
 
           //closest point
           // tex3D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);

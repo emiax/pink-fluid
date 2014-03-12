@@ -142,7 +142,7 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsig
     closestPointGrid->set(i, j, k, closestPoint);
   }
 
-  distanceGrid->set(i, j, k, d*currentCellSign);
+  distanceGrid->set(i, j, k, dist*currentCellSign);
 }
 
 void LevelSet::updateNeighborsFrom(GridCoordinate from) {
