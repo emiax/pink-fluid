@@ -135,7 +135,7 @@ int main( void ) {
 
   //Load in shaders
   static ShaderProgram colorCubeProg("../vertShader.vert", "../colorCube.frag");
-  static ShaderProgram rayCasterProg("../vertShader.vert", "../raycaster.frag");
+  static ShaderProgram rayCasterProg("../vertShader.vert", "../rayCaster.frag");
 
   static const GLfloat vertexBufferData[] = {
     -1.0f, -1.0f, -1.0f,

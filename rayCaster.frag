@@ -7,8 +7,7 @@ uniform sampler3D volumeTexture;
 
 out vec4 color;
 
-void main()
-{
+void main() {
   vec3 frontCoord = 0.5*position+vec3(0.5, 0.5, 0.5);
   vec2 texCoords = vec2(gl_FragCoord.x / windowSize.x, gl_FragCoord.y / windowSize.y);
   vec3 backCoord = texture(backfaceTexture, texCoords).xyz;
