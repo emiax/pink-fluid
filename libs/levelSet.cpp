@@ -84,10 +84,10 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsig
   float current = distanceGrid->get(i, j, k);
   float east = distanceGrid->clampGet(i+1, j, k);
   float west = distanceGrid->clampGet(i-1, j, k);
-  float north = distanceGrid->clampGet(i, j-1, k);
-  float south = distanceGrid->clampGet(i, j+1, k);
-  float down = distanceGrid->clampGet(i, j, k-1);
-  float up = distanceGrid->clampGet(i, j, k+1);
+  float north = distanceGrid->clampGet(i, j+1, k);
+  float south = distanceGrid->clampGet(i, j-1, k);
+  float down = distanceGrid->clampGet(i, j, k+1);
+  float up = distanceGrid->clampGet(i, j, k-1);
 
   int currentCellSign = sgn(current);
   
@@ -109,21 +109,20 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsig
       closestPoint = glm::vec3(i - dist, j, k);
     }
   }
-  if (sgn(south) != currentCellSign) {
-    float distCandidate = - current / (south - current);
+  if (sgn(north) != currentCellSign) {
+    float distCandidate = - current / (north - current);
     if (distCandidate < dist) {
       dist = distCandidate;
       closestPoint = glm::vec3(i, j + dist, k);
     }
   }
-  if (sgn(north) != currentCellSign) {
-    float distCandidate = - current / (north - current);
+  if (sgn(south) != currentCellSign) {
+    float distCandidate = - current / (south - current);
     if (distCandidate < dist) {
       dist = distCandidate;
       closestPoint = glm::vec3(i, j - dist, k);
     }
   }
-
   if (sgn(down) != currentCellSign) {
     float distCandidate = - current / (down - current);
     if (distCandidate < dist) {
@@ -138,7 +137,7 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsig
       closestPoint = glm::vec3(i, j, k - dist);
     }
   }
-
+  
   if (dist != INF) {
     closestPointGrid->set(i, j, k, closestPoint);
   }
@@ -150,7 +149,6 @@ void LevelSet::updateNeighborsFrom(GridCoordinate from) {
   unsigned int i = from.x;
   unsigned int j = from.y;
   unsigned int k = from.z;
-
 
   if (i + 1 < w) updateFromCell(from, GridCoordinate(i+1, j, k)); // right
   if (i > 0) updateFromCell(from, GridCoordinate(i-1, j, k)); // left
@@ -186,9 +184,9 @@ void LevelSet::updateFromCell(GridCoordinate from,
 void LevelSet::fastMarch() {
   while (!(gridHeap->empty())) {
     GridCoordinate c = gridHeap->pop();
-    if (distanceGrid->get(c) < 5.0) {
+    //    if (distanceGrid->get(c) < 5.0) {
       updateNeighborsFrom(GridCoordinate(c.x, c.y, c.z));
-    }
+      // }
   }
 }
 

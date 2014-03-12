@@ -22,15 +22,15 @@ void main()
   
   float depth = length(frontCoord - backCoord);
   
-  float accumulated = 0.0;
+  vec3 accumulated = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < maxIter; ++i) {
     // break if we are outside the volumeTexture.
     vec3 displacement = step*i;
     if (length(displacement) > depth) break;
 
     vec3 sampleCoord = backCoord + step*i;
-    accumulated += texture(volumeTexture, sampleCoord).x/float(gridSize);
+    accumulated += texture(volumeTexture, sampleCoord).xyz/float(gridSize);
   }
 
-  color = vec4(accumulated, accumulated, accumulated, 1.0);
+  color = vec4(accumulated, 1.0);
 }

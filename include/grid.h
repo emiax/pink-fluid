@@ -18,7 +18,6 @@ class Grid {
     this->w = w;
     this->h = h;
     this->d = d;
-    std::cout << w << "," << h << "," << d << std::endl;
     // int size = this->size();
     quantities = new T[w*h*d];
     for(auto i = 0u; i < size(); i++){
@@ -60,6 +59,12 @@ class Grid {
    * @param j, the position along the y axis (h)
    */
   T get(unsigned int i, unsigned int j, unsigned int k) const{
+    assert(i >= 0);
+    assert(j >= 0);
+    assert(k >= 0);
+    assert(i < w);
+    assert(j < h);
+    assert(k < d);
     return quantities[k*w*h + j*w + i];
   };
 
@@ -78,7 +83,7 @@ class Grid {
   T clampGet(int i, int j, int k) const {
     i = (i < 0) ? 0 : (i >= w) ? w-1 : i;
     j = (j < 0) ? 0 : (j >= h) ? h-1 : j;
-    k = (k < 0) ? 0 : (k >= d) ? d-1 : j;
+    k = (k < 0) ? 0 : (k >= d) ? d-1 : k;
     return get(i, j, k);
   };
 

@@ -74,11 +74,14 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 20, h = 20, d = 20;
+  unsigned int w = 32, h = 32, d = 32;
   State prevState(w, h, d);
   State newState(w, h, d);
 
   VelocityGrid* velocities = new VelocityGrid(w, h, d);
+  velocities->v->setForEach([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
+      return 1.0;
+    });
   prevState.setVelocityGrid(velocities);
 
   /**
@@ -87,10 +90,10 @@ int main( void ) {
   // define initial signed distance
   SignedDistanceFunction ballSD([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
       // distance function to circle with radius w/3, center in (w/2, h/2, d/2)
-      const float x = (float)i - (float)w/2;
-      const float y = (float)j - (float)h/2;
-      const float z = (float)k - (float)d/2;
-      return sqrt( x*x + y*y + z*z) - (float)w/3;
+      const float x = (float)i - (float)w/2.0;
+      const float y = (float)j - (float)h/2.0;
+      const float z = (float)k - (float)d/2.0;
+      return sqrt( x*x + y*y + z*z) - (float)w/2.5;
     });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h, d);
@@ -121,6 +124,8 @@ int main( void ) {
   LevelSet *ls = new LevelSet( w, h, d, ballSD, cellTypeGrid );
   prevState.setLevelSet(ls);
   newState.setLevelSet(ls);
+
+  delete ls;
 
   // init simulator
   Simulator sim(&prevState, &newState, 0.1f);
@@ -236,7 +241,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    //    matrix = glm::rotate(matrix, (float) glfwGetTime()*100.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, (float) glfwGetTime()*10.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 
     // Render back face of the cube.
@@ -292,7 +297,7 @@ int main( void ) {
         for(unsigned int i=0;i<w;++i) {
 
           // velocity
-          //tex3D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
+          //tex3D.set(i,j,k,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j,k));
           //tex3D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
           //tex3D.set(i,j,2, 0.5 + newState.getCellTypeGrid()->get(i, j));
           //tex3D.set(i,j,2, 0.5);
@@ -306,9 +311,9 @@ int main( void ) {
 
           // type
           tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
-          //          tex3D.set(i,j,k, 1, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
-          //tex3D.set(i,j,k, 2, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
-          //tex3D.set(i,j,k, 3, 1.0f);
+          tex3D.set(i,j,k, 1, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
+          tex3D.set(i,j,k, 2, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
+          tex3D.set(i,j,k, 3, 1.0f);
 
 
           //signed dist

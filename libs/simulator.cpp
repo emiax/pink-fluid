@@ -47,14 +47,14 @@ void Simulator::step(float dt) {
   advect(stateFrom, stateTo, dt);
   applyGravity(stateTo, gravity, dt);
 
-  /*stateTo->levelSet->reinitialize();
+  stateTo->levelSet->reinitialize();
   extrapolateVelocity(stateTo, stateTo);
 
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
-
-  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);*/
+ 
+  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
   std::swap(stateFrom, stateTo);
 }
 
@@ -69,33 +69,32 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   #pragma omp parallel sections
   {
     //X
-    #pragma omp section
+#pragma omp section
     writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->velocityGrid->u->getCrerp(position);
-    });
+      });
 
     //Y
     #pragma omp section
     writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, k, dt);
-      //      std::cout << position.y << std::endl;
       return readFrom->velocityGrid->v->getCrerp(position);
-    });
+      });
 
     //Z
     #pragma omp section
     writeTo->velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::mac::backTrackW(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->velocityGrid->w->getCrerp(position);
-    });
+      });
 
     // level set distance grid
     #pragma omp section
     writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::backTrack(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->levelSet->distanceGrid->getCrerp(position);
-    });
+      });
   }
 }
 
@@ -106,23 +105,23 @@ void Simulator::applyGravity(State *state, glm::vec3 g, float deltaT){
 
   // u velocities
   velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-    if (cellTypeGrid->get(i, j, k) != CellType::SOLID) {
+      if (i < w && cellTypeGrid->get(i, j, k) != CellType::SOLID) {
       return velocityGrid->u->get(i, j, k)+g.x*deltaT;
     }
     return velocityGrid->u->get(i, j, k);
   });
 
   // v velocities
-  velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-    if (cellTypeGrid->get(i, j, k) != CellType::SOLID) {
+    velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (j < h && cellTypeGrid->get(i, j, k) != CellType::SOLID) {
       return velocityGrid->v->get(i, j, k)+g.y*deltaT;
     }
     return velocityGrid->v->get(i, j, k);
-  });
+    });
 
   // w velocities
   velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-    if (cellTypeGrid->get(i, j, k) != CellType::SOLID) {
+    if (k < d && cellTypeGrid->get(i, j, k) != CellType::SOLID) {
       return velocityGrid->w->get(i, j, k)+g.z*deltaT;
     }
     return velocityGrid->w->get(i, j, k);
@@ -174,7 +173,7 @@ void Simulator::jacobiIteration(State const* readFrom, unsigned int nIterations,
     pressureGridTo = tmp;
 
     #pragma omp parallel for default(none) 
-    for(unsigned k = 0; k < d; ++k) {
+    for (unsigned k = 0; k < d; ++k) {
       for (unsigned j = 0; j < h; ++j) {
         for (unsigned i = 0; i < w; ++i) {
 
@@ -255,7 +254,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
 
   // looping through pressure cells
   #pragma omp parallel for default(none) shared(uVelocityGrid, vVelocityGrid, wVelocityGrid)
-  for(unsigned k = 0; k < d; ++k) {
+  for(unsigned int k = 0; k < d; ++k) {
     for (unsigned int j = 0; j < h; ++j) {
       for (unsigned int i = 0; i < w; ++i) {
         // is current cell solid?
@@ -324,6 +323,7 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
   unsigned int h = stateFrom->h;
   unsigned int d = stateFrom->d;
 
+  
   // u velocities
   toVelocityGrid->u->setForEach([&](int i, int j, int k) {
     glm::vec3 currentPoint = glm::vec3(i - 0.5, j, k);
@@ -338,6 +338,7 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
     glm::vec3 leftClosestPoint = closestPointGrid->clampGet(leftCell);
     glm::vec3 rightClosestPoint = closestPointGrid->clampGet(rightCell);
 
+    
     float dLeft = glm::distance(currentPoint, leftClosestPoint);
     float dRight = glm::distance(currentPoint, rightClosestPoint);
 
@@ -356,6 +357,7 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
     return t*uRight + (1.0f - t)*uLeft;
     
   });
+
 
   // v velocities
   toVelocityGrid->v->setForEach([&](int i, int j, int k) {
@@ -449,6 +451,8 @@ glm::vec3 Simulator::maxVelocity(VelocityGrid const *const velocity){
   
   glm::vec3 maxVec = velocity->getCell(0, 0, 0);
 
+  //  std::cout << maxVec.x << ", " << maxVec.y << " " << maxVec.z << std::endl;
+  
   for (unsigned k = 0; k < d; ++k) {
     for (unsigned j = 0; j < h; j++) {
       for (unsigned i = 0; i < w; i++) {
@@ -458,6 +462,7 @@ glm::vec3 Simulator::maxVelocity(VelocityGrid const *const velocity){
       }
     }
   }
+
   return maxVec;
 }
 
