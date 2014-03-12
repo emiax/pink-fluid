@@ -87,10 +87,10 @@ int main( void ) {
   // define initial signed distance
   SignedDistanceFunction ballSD([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
       // distance function to circle with radius w/3, center in (w/2, h/2, d/2)
-      const float x = (float)i - (float)w/3;
+      const float x = (float)i - (float)w/2;
       const float y = (float)j - (float)h/2;
       const float z = (float)k - (float)d/2;
-      return sqrt( x*x + y*y + z*z) - (float)w/4;
+      return sqrt( x*x + y*y + z*z) - (float)w/3;
     });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h, d);
@@ -199,6 +199,11 @@ int main( void ) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+  GLuint volumeTextureId;
+  glGenTextures(1, &volumeTextureId);
+  glBindTexture(GL_TEXTURE_3D, volumeTextureId);
+
+
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backfaceTextureId, 0);
 
   // fail check
@@ -231,7 +236,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, (float) glfwGetTime()*100.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    //    matrix = glm::rotate(matrix, (float) glfwGetTime()*100.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 
     // Render back face of the cube.
@@ -252,12 +257,12 @@ int main( void ) {
     glDisableVertexAttribArray(0);
      
      
+    
     // Do the ray casting.
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     glCullFace(GL_BACK);
     rayCasterProg();
 
-    std::cout << "ERROR: " << glGetError() << std::endl;
 
     {
       GLuint tLocation = glGetUniformLocation(rayCasterProg, "time");
@@ -270,18 +275,14 @@ int main( void ) {
       glUniform2f(windowSizeLocation, width, height);
     }
 
+
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
-    
     GLuint textureLocation = glGetUniformLocation(rayCasterProg, "backfaceTexture");
-    //    std::cout << textureLocation << std::endl;
     glUniform1i(textureLocation, 0);
 
-    glEnableVertexAttribArray(0);
-    glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
-    glDisableVertexAttribArray(0);
 
     // Set the x,y positions in the texture, in order to visualize the velocity field.
     // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
@@ -304,17 +305,19 @@ int main( void ) {
           //tex3D.set(i,j,3, 1.0f);
 
           // type
-          // tex3D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
-          // tex3D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
-          // tex3D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
-          // tex3D.set(i,j,3, 1.0f);
+          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
+          //          tex3D.set(i,j,k, 1, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
+          //tex3D.set(i,j,k, 2, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
+          //tex3D.set(i,j,k, 3, 1.0f);
 
 
           //signed dist
-          tex3D.set(i, j, k, 0, newState.getSignedDistanceGrid()->get(i,j));
-          tex3D.set(i, j, k, 1, newState.getSignedDistanceGrid()->get(i,j));
-          tex3D.set(i, j, k, 2, 1.0f);
-          tex3D.set(i, j, k, 3, 1.0f);
+          //          tex3D.set(i, j, k, 0, newState.getSignedDistanceGrid()->get(i, j, k));
+          //tex3D.set(i, j, k, 1, newState.getSignedDistanceGrid()->get(i, j, k));
+          //tex3D.set(i, j, k, 2, 1.0f);
+          //tex3D.set(i, j, k, 3, 1.0f);
+
+
 
           //closest point
           // tex3D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
@@ -325,6 +328,19 @@ int main( void ) {
       }
     }
 
+
+    //    glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_3D, volumeTextureId);
+    tex3D(GL_TEXTURE1);
+    GLuint volumeTextureLocation = glGetUniformLocation(rayCasterProg, "volumeTexture");
+    glUniform1i(volumeTextureLocation, 1);
+
+
+
+    glEnableVertexAttribArray(0);
+    glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
+    glDisableVertexAttribArray(0);
+    
     //Get the uniformlocation of the texture from the shader.
     //    GLuint textureLocation = glGetUniformLocation(prog, "myFloatTex");
     //Use GL_TEXTURE0 as a textureposition for the texture.

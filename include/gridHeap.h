@@ -8,7 +8,7 @@ class GridHeap
 {
 public:
 
-  GridHeap(unsigned int w, unsigned int h, OrdinalGrid<float> *cg);
+  GridHeap(unsigned int w, unsigned int h, unsigned int d, OrdinalGrid<float> *cg);
   ~GridHeap();
 
   void insert(GridCoordinate coord);

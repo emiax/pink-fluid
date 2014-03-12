@@ -22,6 +22,9 @@ State::State(unsigned int width, unsigned int height, unsigned int depth) :
 State::~State() {
   delete velocityGrid;
   delete inkGrid;
+  if (levelSet) {
+    delete levelSet;
+  }
 }
 
 /**
@@ -140,7 +143,7 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
  * @param levelSet pointer to LevelSet object
  */
 void State::setLevelSet(LevelSet *ls) {
-  levelSet = new LevelSet( w, h, *(ls->initSDF), ls->getCellTypeGrid() );
+  levelSet = new LevelSet(w, h, d, *(ls->initSDF), ls->getCellTypeGrid() );
 }
 
 /**

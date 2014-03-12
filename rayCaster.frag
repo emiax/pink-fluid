@@ -3,7 +3,7 @@
 uniform sampler2D backfaceTexture;
 in vec3 position;
 uniform vec2 windowSize;
-uniform sampler3D volume;
+uniform sampler3D volumeTexture;
 
 out vec4 color;
 
@@ -16,21 +16,21 @@ void main()
   //  color = vec4(length(frontCoord - backCoord), 0.0, 0.0, 1.0);
 
   int gridSize = 80;
-  vec4 step = normalize(frontCoord - backCoord)/(float(gridSize));
+  vec3 step = normalize(frontCoord - backCoord)/(float(gridSize)); 
 
   int maxIter = gridSize * 2;
   
   float depth = length(frontCoord - backCoord);
   
   float accumulated = 0.0;
-  for (int i = 0; i++; i < maxIter) {
-    // break if we are outside the volume.
+  for (int i = 0; i < maxIter; ++i) {
+    // break if we are outside the volumeTexture.
     vec3 displacement = step*i;
     if (length(displacement) > depth) break;
 
-    vec4 sampleCoord = backCoord + step*i;
-    accumulated += texture(volume, sampleCoord)/float(gridSize);
+    vec3 sampleCoord = backCoord + step*i;
+    accumulated += texture(volumeTexture, sampleCoord).x/float(gridSize);
   }
 
-  color = accumulated;
+  color = vec4(accumulated, accumulated, accumulated, 1.0);
 }

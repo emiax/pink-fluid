@@ -2,7 +2,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 #include <glm/glm.hpp>
-#include <velocityGrid.h>
+class VelocityGrid;
+
 namespace util {
 	namespace advect{
     /**
@@ -16,6 +17,7 @@ namespace util {
    namespace mac{
    	glm::vec3 backTrackU(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt);
    	glm::vec3 backTrackV(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt);
+   	glm::vec3 backTrackW(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt);
    }
    
    glm::vec3 backTrack(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt);

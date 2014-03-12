@@ -12,6 +12,8 @@ class GridHeap;
 class LevelSet{
 public:
   LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanceFunction sdf, Grid<CellType> const* const boundaries);
+
+  ~LevelSet();
   // LevelSet(unsigned int w, unsigned int h, Grid<CellType> const* const ctg);
 
   Grid<CellType> const *const getCellTypeGrid() const;
@@ -22,7 +24,6 @@ public:
   void setCellTypeGrid(Grid<CellType> const* const);
 
   void reinitialize();
-
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
   SignedDistanceFunction *initSDF;
@@ -30,7 +31,7 @@ public:
 private:
   void updateInterfaceNeighbors();
   void updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsigned int k);
-  void updateNeighborsFrom(unsigned int i, unsigned int j, unsigned int k);
+  void updateNeighborsFrom(GridCoordinate from);
 
   void updateFromCell(GridCoordinate to, GridCoordinate from);
   void updateCellTypes();

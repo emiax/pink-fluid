@@ -41,20 +41,20 @@ Simulator::~Simulator() {
  */
 void Simulator::step(float dt) {
 
-  glm::vec3 gravity = glm::vec3(0, 1, 0);
+  glm::vec3 gravity = glm::vec3(0, -1, 0);
 
   // simulation stack
   advect(stateFrom, stateTo, dt);
   applyGravity(stateTo, gravity, dt);
 
-  stateTo->levelSet->reinitialize();
+  /*stateTo->levelSet->reinitialize();
   extrapolateVelocity(stateTo, stateTo);
 
   calculateDivergence(stateTo, divergenceGrid);
   jacobiIteration(stateTo, 100, dt);
   gradientSubtraction(stateTo, dt);
 
-  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
+  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);*/
   std::swap(stateFrom, stateTo);
 }
 
@@ -79,6 +79,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     #pragma omp section
     writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, k, dt);
+      //      std::cout << position.y << std::endl;
       return readFrom->velocityGrid->v->getCrerp(position);
     });
 

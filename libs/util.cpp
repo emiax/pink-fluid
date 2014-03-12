@@ -1,4 +1,5 @@
 #include <util.h>
+#include <velocityGrid.h>
 
 namespace {
 	inline glm::vec3 RK2BackTrack(
@@ -38,7 +39,7 @@ namespace {
 		glm::vec3 dispV = glm::vec3(0),
 		glm::vec3 dispW = glm::vec3(0)){
 
-		glm::vec3 position(i,j);
+          glm::vec3 position(i, j, k);
 		glm::vec3 k1 = glm::vec3(
 			velocityGrid->u->getLerp(position + dispU),
 			velocityGrid->v->getLerp(position + dispV),
@@ -102,7 +103,7 @@ namespace util {
 		} // mac
 
 		glm::vec3 backTrack(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt){
-			return RK3BackTrack(velocityGrid, i, j, dt, 
+                  return RK3BackTrack(velocityGrid, i, j, k, dt, 
 				glm::vec3(0.5f, 0.0f, 0.5f), 
 				glm::vec3(0.0f, 0.5f, 0.5f),
 				glm::vec3(0.5f, 0.5f, 0.0f)

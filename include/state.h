@@ -31,6 +31,7 @@ public:
   
   unsigned int getW();
   unsigned int getH();
+  unsigned int getD();
 
 private:
   void resetVelocityGrids();

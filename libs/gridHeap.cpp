@@ -2,18 +2,24 @@
 #include <cassert>
 #include <iostream>
 
-GridHeap::GridHeap(unsigned int w, unsigned int h, OrdinalGrid<float> *cg) {
-  capacity = w*h;
+GridHeap::GridHeap(unsigned int w, unsigned int h, unsigned int d,  OrdinalGrid<float> *cg) {
+  capacity = w*h*d;
   size = 0;
 
   coordinates = new GridCoordinate[capacity];
-  heapIndices = new Grid<int>(w, h);
-  heapIndices->setForEach([&](unsigned int i, unsigned int j) {
+  heapIndices = new Grid<int>(w, h, d);
+  heapIndices->setForEach([&](unsigned int i, unsigned int j, unsigned int k) {
       return NOT_IN_HEAP;
     });
   
   comparisonGrid = cg;
 }
+
+GridHeap::~GridHeap() {
+  delete coordinates;
+  delete heapIndices;
+}
+
 
 void GridHeap::insert(GridCoordinate coord) {
   int heapIndex = heapIndices->get(coord);

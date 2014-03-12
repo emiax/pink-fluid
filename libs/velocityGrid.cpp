@@ -1,10 +1,11 @@
+#include <ordinalGrid.h>
 #include <velocityGrid.h>
 
 
 VelocityGrid::VelocityGrid(unsigned int w, unsigned int h, unsigned int d){
-    u = new OrdinalGrid<float>(w+1, h, d);
-    v = new OrdinalGrid<float>(w, h+1, d);
-    w = new OrdinalGrid<float>(w, h, d + 1);
+  this->u = new OrdinalGrid<float>(w+1, h, d);
+  this->v = new OrdinalGrid<float>(w, h+1, d);
+  this->w = new OrdinalGrid<float>(w, h, d + 1);
 }
 
 VelocityGrid::~VelocityGrid(){

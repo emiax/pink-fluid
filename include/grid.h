@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <glm/glm.hpp>
+#include <iostream>
 
 typedef glm::i32vec3 GridCoordinate;
 
@@ -17,6 +18,7 @@ class Grid {
     this->w = w;
     this->h = h;
     this->d = d;
+    std::cout << w << "," << h << "," << d << std::endl;
     // int size = this->size();
     quantities = new T[w*h*d];
     for(auto i = 0u; i < size(); i++){
