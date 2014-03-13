@@ -47,7 +47,7 @@ class OrdinalGrid : public Grid<T> {
     unsigned int nearestI = round(i);
     unsigned int nearestJ = round(j);
     
-    return clampGet(nearestI, nearestJ);
+    return this->clampGet(nearestI, nearestJ);
   }
 
   /**
