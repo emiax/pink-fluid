@@ -74,7 +74,7 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 24, h = 24, d = 24;
+  unsigned int w = 50, h = 50, d = 3;
   State prevState(w, h, d);
   State newState(w, h, d);
 
@@ -89,10 +89,13 @@ int main( void ) {
   // define initial signed distance
   SignedDistanceFunction ballSD([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
       // distance function to circle with radius w/3, center in (w/2, h/2, d/2)
+      if(k != 1) {
+        return 0.5;
+      }
       const float x = (float)i - (float)w/2.0;
       const float y = (float)j - (float)h/2.0;
-      const float z = (float)k - (float)d/2.0;
-      return sqrt( x*x + y*y + z*z) - (float)w/2.5;
+      const float z = (float)k - (float)1.0f;
+      return sqrt( x*x + y*y + z*z) - (float)w/3.0;
     });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h, d);
@@ -217,7 +220,6 @@ int main( void ) {
     std::cout << "successfully initialized FBO" << std::endl;
   }
   
-
   //Object which encapsulates a texture + The destruction of a texture.
   Texture3D tex3D(w, h, d);
   double lastTime = glfwGetTime();
@@ -225,7 +227,7 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glfwSwapInterval(1);
   int i = 0;
@@ -240,7 +242,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();

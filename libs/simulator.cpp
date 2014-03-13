@@ -57,8 +57,6 @@ void Simulator::step(float dt) {
   pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
   gradientSubtraction(stateTo, dt);
 
-
-
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
   std::swap(stateFrom, stateTo);
 }
