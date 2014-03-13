@@ -14,7 +14,7 @@ void main() {
   
   //  color = vec4(length(frontCoord - backCoord), 0.0, 0.0, 1.0);
 
-  int gridSize = 40;
+  int gridSize = 20;
   vec3 step = normalize(frontCoord - backCoord)/(float(gridSize)); 
 
   int maxIter = gridSize * 2;

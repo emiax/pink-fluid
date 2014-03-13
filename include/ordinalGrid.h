@@ -61,6 +61,14 @@ public:
     return lerp(v0, v1, ti);
   }
 
+  T getNearest(float i, float j, float k) const {
+    unsigned int nearestI = round(i);
+    unsigned int nearestJ = round(j);
+    unsigned int nearestK = round(k);
+    
+    return this->clampGet(nearestI, nearestJ, nearestK);
+  }
+
   /**
    * Get the Catmull-Rom interpolated value of the stored quantity.
    * @param i, the position along the x axis (w)

@@ -86,7 +86,7 @@ void State::setVelocityGrid(VelocityGrid const* const velocity){
 /**
  * Get width
  */
-unsigned int State::getW() {
+unsigned int State::getW() const{
   return w;
 }
 
@@ -94,14 +94,14 @@ unsigned int State::getW() {
 /**
  * Get height
  */
-unsigned int State::getH() {
+unsigned int State::getH() const{
   return h;
 }
 
 /**
  * Get depth
  */
-unsigned int State::getD() {
+unsigned int State::getD() const {
   return d;
 }
 

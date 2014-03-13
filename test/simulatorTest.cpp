@@ -54,18 +54,18 @@ TEST_F(SimulatorTest, BackTrack){
 
 
 TEST_F(SimulatorTest, Advect){
-  sim->advect(readState, writeState, 1.0f);
-  float v1 = writeState->getVelocityGrid()->u->get(1,1);
-  ASSERT_EQ(v1, 0.5625);
+  // sim->advect(readState, writeState, 1.0f);
+  // float v1 = writeState->getVelocityGrid()->u->get(1,1);
+  // ASSERT_EQ(v1, 0.5625);
 }
 
 TEST_F(SimulatorTest, PressureGridReset) {
-  OrdinalGrid<double> *p = sim->resetPressureGrid();
+  // OrdinalGrid<double> *p = sim->resetPressureGrid();
 
-  for (int j = 0; j < h; ++j) {
-    for (int i = 0; i < w; ++i) {
-      ASSERT_EQ(p->get(i,j), 0.0);
-    }
-  }
+  // for (int j = 0; j < h; ++j) {
+  //   for (int i = 0; i < w; ++i) {
+  //     ASSERT_EQ(p->get(i,j), 0.0);
+  //   }
+  // }
 }
 */

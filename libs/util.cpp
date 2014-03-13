@@ -1,6 +1,5 @@
 #include <util.h>
 #include <velocityGrid.h>
-
 namespace {
 	inline glm::vec3 RK2BackTrack(
 		VelocityGrid const* const velocityGrid, 

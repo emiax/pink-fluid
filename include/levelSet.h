@@ -23,7 +23,10 @@ public:
 
   void setCellTypeGrid(Grid<CellType> const* const);
 
+
   void reinitialize();
+  void updateCellTypes();
+
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
   SignedDistanceFunction *initSDF;
@@ -33,8 +36,11 @@ private:
   void updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsigned int k);
   void updateNeighborsFrom(GridCoordinate from);
 
+
   void updateFromCell(GridCoordinate to, GridCoordinate from);
-  void updateCellTypes();
+
+
+  void updateFromCell(unsigned int xTo, unsigned int yTo, unsigned int xFrom, unsigned int yFrom);
 
   void fastMarch();
 

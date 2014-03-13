@@ -184,9 +184,7 @@ void LevelSet::updateFromCell(GridCoordinate from,
 void LevelSet::fastMarch() {
   while (!(gridHeap->empty())) {
     GridCoordinate c = gridHeap->pop();
-    //    if (distanceGrid->get(c) < 5.0) {
-      updateNeighborsFrom(GridCoordinate(c.x, c.y, c.z));
-      // }
+    updateNeighborsFrom(GridCoordinate(c.x, c.y, c.z));
   }
 }
 

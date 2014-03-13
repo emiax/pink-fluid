@@ -29,9 +29,9 @@ public:
   void setInkGrid(OrdinalGrid<glm::vec3> const* const);
   void setLevelSet(LevelSet *ls);
   
-  unsigned int getW();
-  unsigned int getH();
-  unsigned int getD();
+  unsigned int getW() const;
+  unsigned int getH() const;
+  unsigned int getD() const;
 
 private:
   void resetVelocityGrids();

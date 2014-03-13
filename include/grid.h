@@ -53,11 +53,17 @@ class Grid {
   }
 
 
+  T get(unsigned int i) const{
+    return quantities[i];
+  }
+
+
   /**
    * Get value of the stored quantity.
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
+
   T get(unsigned int i, unsigned int j, unsigned int k) const{
     assert(i >= 0);
     assert(j >= 0);
@@ -80,6 +86,10 @@ class Grid {
     return clampGet(c.x, c.y, c.z);
   };
 
+  inline unsigned int indexTranslation(unsigned int i, unsigned int j, unsigned int k) const{
+    return k*w*h + j*w + i;
+  }
+
   T clampGet(int i, int j, int k) const {
     i = (i < 0) ? 0 : (i >= w) ? w-1 : i;
     j = (j < 0) ? 0 : (j >= h) ? h-1 : j;
@@ -99,6 +109,15 @@ class Grid {
     return get(i, j, k);
   };
 
+
+  inline bool isValid(int i, int j, int k) const{
+    return (
+      i >= 0 && i < w &&
+      j >= 0 && j < h && 
+      k >= 0 && k < d);
+  }
+
+
   /**
    * Set value of the stored quantity.
    */
@@ -110,6 +129,16 @@ class Grid {
     set(c.x, c.y, c.z, value);
   };
 
+  unsigned int getW() const{
+    return w;
+  }
+  unsigned int getH() const{
+    return h;
+  }
+
+  unsigned int getD() const{
+    return d;
+  }
 
  protected:
   unsigned int w, h, d;

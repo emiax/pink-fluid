@@ -81,6 +81,8 @@ int main( void ) {
   VelocityGrid* velocities = new VelocityGrid(w, h, d);
   prevState.setVelocityGrid(velocities);
 
+
+
   /**
    * Init Level set object
    */
@@ -238,7 +240,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.5f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 
     // Render back face of the cube.
@@ -276,7 +278,6 @@ int main( void ) {
       GLuint windowSizeLocation = glGetUniformLocation(rayCasterProg, "windowSize");
       glUniform2f(windowSizeLocation, width, height);
     }
-
 
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -384,3 +385,4 @@ int main( void ) {
   glDeleteVertexArrays(1, &VertexArrayID);
   exit(EXIT_SUCCESS);
 }
+// 
