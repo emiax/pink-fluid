@@ -14,22 +14,47 @@ void main() {
   
   //  color = vec4(length(frontCoord - backCoord), 0.0, 0.0, 1.0);
 
-  int gridSize = 20;
-  vec3 step = normalize(frontCoord - backCoord)/(float(gridSize)); 
+  int gridSize = 24;
+  vec3 step = normalize(backCoord - frontCoord)/(float(gridSize)*10.0); 
 
   int maxIter = gridSize * 2;
   
   float depth = length(frontCoord - backCoord);
+
+  color = vec4(0.0, 0.0, 0.0, 0.0);
   
+  float cellSize = 1.0/gridSize;
+  float offset = cellSize/2.0;
+
   vec3 accumulated = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < maxIter; ++i) {
     // break if we are outside the volumeTexture.
     vec3 displacement = step*i;
     if (length(displacement) > depth) break;
+    
+    vec3 mid = frontCoord + step*i;
+    vec3 left = vec3(mid.x - offset, mid.yz);
+    vec3 right = vec3(mid.x + offset, mid.yz);
+    vec3 up = vec3(mid.x, mid.y - offset, mid.z);
+    vec3 down = vec3(mid.x, mid.y + offset, mid.z);
+    vec3 front = vec3(mid.xy, mid.z - offset);
+    vec3 back = vec3(mid.xy, mid.z + offset);
 
-    vec3 sampleCoord = backCoord + step*i;
-    accumulated += texture(volumeTexture, sampleCoord).xyz/float(gridSize);
+    vec4 current = texture(volumeTexture, mid);
+    vec4 dvdx = texture(volumeTexture, right) - texture(volumeTexture, left);
+    vec4 dvdy = texture(volumeTexture, down) - texture(volumeTexture, up);
+    vec4 dvdz = texture(volumeTexture, back) - texture(volumeTexture, front);
+    
+    float b = current.z;
+    vec3 bGradient = vec3(dvdx.b, dvdy.b, dvdz.b);
+    
+    if (b > 0) {
+      color = vec4(0.3, 0.3, 0.8, 1.0);
+      color += vec4(0.5, 0.5, 0.5, 1.0) * dot(vec3(-1.0, -1.0, 0.0), bGradient);
+      break;
+    } 
+    
   }
 
-  color = vec4(accumulated, 1.0);
+  //  color = vec4(accumulated, 1.0);
 }

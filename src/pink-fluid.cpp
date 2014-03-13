@@ -225,7 +225,7 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glfwSwapInterval(1);
   int i = 0;

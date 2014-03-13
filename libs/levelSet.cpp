@@ -19,6 +19,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanc
   setCellTypeGrid(ctg);
   initializeDistanceGrid(sdf);
   updateCellTypes();
+  targetVolume = currentVolume;
 }
 
 
@@ -38,6 +39,8 @@ void LevelSet::reinitialize() {
   fastMarch();
   updateCellTypes();
   clampInfiniteCells();
+  // std::cout << "magicPeople = " << targetVolume << std::endl;
+  // std::cout << "voodooPeople = " << currentVolume << std::endl;
 }
 
 void LevelSet::updateInterfaceNeighbors(){
@@ -188,51 +191,9 @@ void LevelSet::fastMarch() {
   }
 }
 
-// void LevelSet::fastSweep() {
-//   const float deltaX = 1.0;
-
-//   // columns
-//   for(unsigned i = 0; i < w; i++) {
-    
-//     // sweep down
-//     for(unsigned j = 0; j < h; j++) {
-//       propagateDistance(0, 1);
-//     }
-
-//     // sweep up
-//     for(unsigned j = h-1; j >= 0; j--) {
-//       propagateDistance(0, -1);
-//     }
-//   }
-
-//   // rows
-//   for(unsigned j = 0; j < h; j++) {
-    
-//     // sweep right
-//     for(unsigned i = 0; i < w; i++) {
-//       propagateDistance(1, 0);
-//     }
-    
-//     // sweep left
-//     for(unsigned i = w-1; i >= 0; i--) {
-//       propagateDistance(-1, 0);
-//     }
-//   }
-// }
-
-// void LevelSet::propagateDistance(int &dx, int &dy) {
-//   float deltaX = 1.0*(glm::abs(a) + glm::abs(b));
-
-//   float current = distanceGrid->get(i, j);
-//   float predecessor = distanceGrid->safeGet(i + dx, j + dy);
-  
-//   precedingSign = sgn(predecessor);
-//   float candidate = predecessor + deltaX*precedingSign;
-  
-//   if(glm::abs(candidate) < glm::abs(current)) {
-//     distanceGrid->set(i, j, candidate);
-//   }
-// }
+float LevelSet::getVolumeError() {
+  return targetVolume - currentVolume;
+}
 
 /**
  * Init Level set from analytic function
@@ -245,16 +206,20 @@ void LevelSet::initializeDistanceGrid(SignedDistanceFunction sdf) {
 }
 
 void LevelSet::updateCellTypes() {
+  unsigned int totalFluidCells = 0;
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       if(cellTypeGrid->get(i, j, k) != CellType::SOLID ) {
         if(distanceGrid->get(i, j, k) > 0) {
-        return CellType::EMPTY;
+          return CellType::EMPTY;
+        }
+        ++totalFluidCells;
+        return CellType::FLUID;
+      } else {
+        return CellType::SOLID;
       }
-      return CellType::FLUID;
-    } else {
-      return CellType::SOLID;
-    }
-  });
+    });
+  
+  currentVolume = (float)totalFluidCells / (float)(w*h);
 }
 
 void LevelSet::setCellTypeGrid(Grid<CellType> const* const ctg) {

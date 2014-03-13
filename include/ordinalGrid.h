@@ -208,6 +208,7 @@ public:
    * A thin frontend for T getInterpolated(float i, float j)
    * @param p, A vector to interpolate from
    */
+
   T getLerp(glm::vec3 p) const{
     return getLerp(p.x, p.y, p.z);
   }

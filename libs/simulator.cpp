@@ -103,7 +103,12 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
   }
 }
 
-//Apply gravity to fluid cells
+/**
+ * Apply gravity to fluid cells
+ * @param state  state with velocity grid to be augmented
+ * @param g      gravity vector
+ * @param deltaT time step, dt
+ */
 void Simulator::applyGravity(State *state, glm::vec3 g, float deltaT){
   VelocityGrid *velocityGrid = state->velocityGrid;
   Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
@@ -145,6 +150,8 @@ void Simulator::calculateNegativeDivergence(State const* readFrom, OrdinalGrid<f
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
   OrdinalGrid<float> *w = readFrom->velocityGrid->w;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
+  
+  float volumeError = readFrom->levelSet->getVolumeError();
 
   toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       if (cellTypeGrid->get(i, j, k) == CellType::FLUID) {
@@ -153,7 +160,7 @@ void Simulator::calculateNegativeDivergence(State const* readFrom, OrdinalGrid<f
 
         float divergence = leaving - entering;
 
-        return -divergence;
+        return - divergence + volumeError; // non-scientific adjustment for volume loss
       } else {
         return 0.0f;
       }
@@ -377,48 +384,50 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
       return pressureGridFrom;
     }
 
-    OrdinalGrid<float>* Simulator::getDivergenceGrid() {
-      return divergenceGrid;
-    }
 
-    /**
-     * Find the maximum velocity present in the grid
-     * @param  velocity velocity grid to sample from
-     * @return maxVec   max velocity vector
-     */
-    glm::vec3 Simulator::maxVelocity(VelocityGrid const *const velocity){
-
-      glm::vec3 maxVec = velocity->getCell(0, 0, 0);
-
-      //  std::cout << maxVec.x << ", " << maxVec.y << " " << maxVec.z << std::endl;
-
-      for (unsigned k = 0; k < d; ++k) {
-        for (unsigned j = 0; j < h; j++) {
-          for (unsigned i = 0; i < w; i++) {
-            if (glm::length(maxVec) < glm::length(velocity->getCell(i, j, k))) {
-              maxVec = velocity->getCell(i, j, k);
-            }
-          }
+/**
+ * Find the maximum velocity present in the grid
+ * @param  velocity velocity grid to sample from
+ * @return maxVec   max velocity vector
+ */
+glm::vec3 Simulator::maxVelocity(VelocityGrid const *const velocity){
+  
+  glm::vec3 maxVec = velocity->getCell(0, 0, 0);
+  
+  //  std::cout << maxVec.x << ", " << maxVec.y << " " << maxVec.z << std::endl;
+  
+  for (unsigned k = 0; k < d; ++k) {
+    for (unsigned j = 0; j < h; j++) {
+      for (unsigned i = 0; i < w; i++) {
+        if (glm::length(maxVec) < glm::length(velocity->getCell(i, j, k))) {
+          maxVec = velocity->getCell(i, j, k);
         }
       }
-
-      return maxVec;
     }
+  }
+  return maxVec;
+}
 
-    /**
-     * Calculate max deltaT for the current iteration.
-     * This calculation is based on the max velocity in the grid.
-     * @param  maxV     max velocity in the velocity grid
-     * @param  gravity  gravitational force vector
-     * @return dT       maximum time step length
-     */
-    float Simulator::calculateDeltaT(glm::vec3 maxV, glm::vec3 gravity){
-      //TODO: glm::length(gravity) should be changed to something else relating to gravity
-      float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
-      float dT = glm::min(5*gridSize/max, 1.0f);
-      return dT;
-    }
 
-    float Simulator::getDeltaT(){
-      return deltaT;
-    }
+OrdinalGrid<float>* Simulator::getDivergenceGrid() {
+  return divergenceGrid;
+}
+
+  /**
+   * Calculate max deltaT for the current iteration.
+   * This calculation is based on the max velocity in the grid.
+   * @param  maxV     max velocity in the velocity grid
+   * @param  gravity  gravitational force vector
+   * @return dT       maximum time step length
+   */
+  float Simulator::calculateDeltaT(glm::vec3 maxV, glm::vec3 gravity){
+    //TODO: glm::length(gravity) should be changed to something else relating to gravity
+    float max = glm::length(maxV) + sqrt(abs(5*gridSize*glm::length(gravity)));
+    float dT = glm::min(5*gridSize/max, 1.0f);
+    return dT;
+  }
+  
+  float Simulator::getDeltaT(){
+    return deltaT;
+  }
+  

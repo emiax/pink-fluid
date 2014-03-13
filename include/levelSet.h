@@ -26,6 +26,7 @@ public:
 
   void reinitialize();
   void updateCellTypes();
+  float getVolumeError();
 
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
@@ -57,5 +58,8 @@ private:
   Grid<glm::vec3> *closestPointGrid;
   GridHeap *gridHeap;
   unsigned int heapEnd;
+
   int w, h, d;
+  float targetVolume, currentVolume;
+
 };

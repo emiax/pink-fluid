@@ -144,13 +144,6 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
  */
 void State::setLevelSet(LevelSet *ls) {
   levelSet = new LevelSet(w, h, d, *(ls->initSDF), ls->getCellTypeGrid() );
-}
-
-/**
- * Get velocity grid 
- */
-VelocityGrid const *const State::getVelocityGrid() const{
-  return velocityGrid;
 };
 
 /**
