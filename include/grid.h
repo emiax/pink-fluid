@@ -42,7 +42,8 @@ class Grid {
    * Function in order to set each cell in a grid using a lambda.
    * @param func Function to apply for each cell
    */
-  void setForEach(std::function< T (unsigned int i, unsigned int j, unsigned int k)> func){
+  void setForEach(const std::function< T (unsigned int i, unsigned int j, unsigned int k)> func){
+    #pragma omp parallel for collapse(3)
     for(auto k = 0u; k < d; k++){
       for(auto j = 0u; j < h; j++){
         for(auto i = 0u; i < w; i++){
@@ -75,15 +76,15 @@ class Grid {
   };
 
   inline T get(GridCoordinate c) const{
-    return get(c.x, c.y, c.z);
+    return this->get(c.x, c.y, c.z);
   };
 
   inline T safeGet(GridCoordinate c) const {
-    return safeGet(c.x, c.y, c.z);
+    return this->safeGet(c.x, c.y, c.z);
   };
 
   inline T clampGet(GridCoordinate c) const {
-    return clampGet(c.x, c.y, c.z);
+    return this->clampGet(c.x, c.y, c.z);
   };
 
   inline unsigned int indexTranslation(unsigned int i, unsigned int j, unsigned int k) const{
@@ -94,7 +95,7 @@ class Grid {
     i = (i < 0) ? 0 : (i >= w) ? w-1 : i;
     j = (j < 0) ? 0 : (j >= h) ? h-1 : j;
     k = (k < 0) ? 0 : (k >= d) ? d-1 : k;
-    return get(i, j, k);
+    return this->get(i, j, k);
   };
 
   /**
@@ -106,7 +107,7 @@ class Grid {
     if(i < 0 || j < 0 || k < 0 || i > int(w - 1) || j > int(h - 1) || k > int(d - 1)){
       return T(0);
     }
-    return get(i, j, k);
+    return this->get(i, j, k);
   };
 
 
@@ -126,7 +127,7 @@ class Grid {
   };
 
   inline void set(GridCoordinate c, T value) {
-    set(c.x, c.y, c.z, value);
+    this->set(c.x, c.y, c.z, value);
   };
 
   unsigned int getW() const{

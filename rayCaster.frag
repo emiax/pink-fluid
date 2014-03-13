@@ -15,9 +15,10 @@ void main() {
   //  color = vec4(length(frontCoord - backCoord), 0.0, 0.0, 1.0);
 
   int gridSize = 24;
-  vec3 step = normalize(backCoord - frontCoord)/(float(gridSize)*10.0); 
+  float samplesPerCell = 2.0;
+  vec3 step = normalize(backCoord - frontCoord)/(float(gridSize)*samplesPerCell); 
 
-  int maxIter = gridSize * 2;
+  int maxIter = gridSize * int(samplesPerCell);
   
   float depth = length(frontCoord - backCoord);
 

@@ -191,9 +191,11 @@ void LevelSet::fastMarch() {
   }
 }
 
+
 float LevelSet::getVolumeError() {
   return targetVolume - currentVolume;
 }
+
 
 /**
  * Init Level set from analytic function
@@ -218,7 +220,6 @@ void LevelSet::updateCellTypes() {
         return CellType::SOLID;
       }
     });
-  
   currentVolume = (float)totalFluidCells / (float)(w*h);
 }
 
@@ -227,6 +228,7 @@ void LevelSet::setCellTypeGrid(Grid<CellType> const* const ctg) {
       return ctg->get(i, j, k);
   });
 }
+
 
 OrdinalGrid<float> const *const LevelSet::getDistanceGrid() const {
   return distanceGrid;
