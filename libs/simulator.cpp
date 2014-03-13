@@ -73,28 +73,28 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
     writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->velocityGrid->u->getCrerp(position);
-      });
+    });
 
     //Y
     #pragma omp section
     writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->velocityGrid->v->getCrerp(position);
-      });
+    });
 
     //Z
     #pragma omp section
     writeTo->velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::mac::backTrackW(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->velocityGrid->w->getCrerp(position);
-      });
+    });
 
     // level set distance grid
     #pragma omp section
     writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       glm::vec3 position = util::advect::backTrack(readFrom->velocityGrid, i, j, k, dt);
       return readFrom->levelSet->distanceGrid->getCrerp(position);
-      });
+    });
   }
 }
 
