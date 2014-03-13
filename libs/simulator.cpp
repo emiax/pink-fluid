@@ -146,6 +146,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
   OrdinalGrid<float> *u = readFrom->velocityGrid->u;
   OrdinalGrid<float> *v = readFrom->velocityGrid->v;
   Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
+  float volumeError = readFrom->levelSet->getVolumeError();
 
   toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){
     if (cellTypeGrid->get(i, j) == CellType::FLUID) {
@@ -165,7 +166,7 @@ void Simulator::calculateDivergence(State const* readFrom, OrdinalGrid<float>* t
           divergence += scale*v->get(i,j+1);
         }
 
-        return divergence;
+        return divergence + volumeError; // non-scientific adjustment for volume loss
       } else {
         return 0.0f;
       }

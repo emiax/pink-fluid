@@ -23,6 +23,7 @@ public:
 
   void reinitialize();
   void updateCellTypes();
+  float getVolumeError();
 
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
@@ -51,4 +52,5 @@ private:
   GridHeap *gridHeap;
   unsigned int heapEnd;
   int w, h;
+  float targetVolume, currentVolume;
 };

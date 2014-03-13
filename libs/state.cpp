@@ -112,7 +112,7 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
  * @param levelSet LevelSet object
  */
 void State::setLevelSet(LevelSet *ls) {
-  levelSet = new LevelSet( w, h, *(ls->initSDF), ls->getCellTypeGrid() );
+  levelSet = new LevelSet(w, h, *(ls->initSDF), ls->getCellTypeGrid());
 }
 
 /**

@@ -47,7 +47,7 @@ class OrdinalGrid : public Grid<T> {
     unsigned int nearestI = round(i);
     unsigned int nearestJ = round(j);
     
-    return clampGet(nearestI, nearestJ);
+    return this->clampGet(nearestI, nearestJ);
   }
 
   /**
@@ -125,15 +125,15 @@ class OrdinalGrid : public Grid<T> {
    * @param p, A vector to interpolate from
    */
   T getLerp(glm::vec2 p) const{
-    return getLerp(p.x,p.y);
+    return this->getLerp(p.x,p.y);
   }
 
   T getCrerp(glm::vec2 p) const{
-    return getCrerp(p.x,p.y);
+    return this->getCrerp(p.x,p.y);
   }
 
   T getInterpolated(float x, float y) const {
-    return getLerp(x, y);
+    return this->getLerp(x, y);
   }
 
  private:
