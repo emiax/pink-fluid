@@ -238,7 +238,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.5f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.3f, glm::vec3(0.0f, 1.0f, 0.0f));
 
 
     // Render back face of the cube.
@@ -315,7 +315,7 @@ int main( void ) {
           //signed dist
           float dist = newState.getSignedDistanceGrid()->get(i, j, k);
           dist = -glm::clamp(dist, -1.0f, 0.0f);
-          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
+          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 0.0 : 0.0);
           tex3D.set(i, j, k, 1, dist*0.3f);
           tex3D.set(i, j, k, 2, dist);
           tex3D.set(i, j, k, 3, 1.0f);

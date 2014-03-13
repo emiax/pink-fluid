@@ -24,6 +24,8 @@ public:
   void setCellTypeGrid(Grid<CellType> const* const);
 
   void reinitialize();
+  float getVolumeError();
+
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
   SignedDistanceFunction *initSDF;
@@ -52,4 +54,5 @@ private:
   GridHeap *gridHeap;
   unsigned int heapEnd;
   int w, h, d;
+  float targetVolume, currentVolume;
 };

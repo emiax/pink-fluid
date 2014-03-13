@@ -42,7 +42,8 @@ class Grid {
    * Function in order to set each cell in a grid using a lambda.
    * @param func Function to apply for each cell
    */
-  void setForEach(std::function< T (unsigned int i, unsigned int j, unsigned int k)> func){
+  void setForEach(const std::function< T (unsigned int i, unsigned int j, unsigned int k)> func){
+    #pragma omp parallel for collapse(3)
     for(auto k = 0u; k < d; k++){
       for(auto j = 0u; j < h; j++){
         for(auto i = 0u; i < w; i++){

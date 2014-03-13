@@ -19,6 +19,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanc
   setCellTypeGrid(ctg);
   initializeDistanceGrid(sdf);
   updateCellTypes();
+  targetVolume = currentVolume;
 }
 
 
@@ -190,52 +191,6 @@ void LevelSet::fastMarch() {
   }
 }
 
-// void LevelSet::fastSweep() {
-//   const float deltaX = 1.0;
-
-//   // columns
-//   for(unsigned i = 0; i < w; i++) {
-    
-//     // sweep down
-//     for(unsigned j = 0; j < h; j++) {
-//       propagateDistance(0, 1);
-//     }
-
-//     // sweep up
-//     for(unsigned j = h-1; j >= 0; j--) {
-//       propagateDistance(0, -1);
-//     }
-//   }
-
-//   // rows
-//   for(unsigned j = 0; j < h; j++) {
-    
-//     // sweep right
-//     for(unsigned i = 0; i < w; i++) {
-//       propagateDistance(1, 0);
-//     }
-    
-//     // sweep left
-//     for(unsigned i = w-1; i >= 0; i--) {
-//       propagateDistance(-1, 0);
-//     }
-//   }
-// }
-
-// void LevelSet::propagateDistance(int &dx, int &dy) {
-//   float deltaX = 1.0*(glm::abs(a) + glm::abs(b));
-
-//   float current = distanceGrid->get(i, j);
-//   float predecessor = distanceGrid->safeGet(i + dx, j + dy);
-  
-//   precedingSign = sgn(predecessor);
-//   float candidate = predecessor + deltaX*precedingSign;
-  
-//   if(glm::abs(candidate) < glm::abs(current)) {
-//     distanceGrid->set(i, j, candidate);
-//   }
-// }
-
 /**
  * Init Level set from analytic function
  * @param sdf Anlytic SignedDistanceFunction
@@ -247,22 +202,31 @@ void LevelSet::initializeDistanceGrid(SignedDistanceFunction sdf) {
 }
 
 void LevelSet::updateCellTypes() {
+  unsigned int totalFluidCells = 0;
+
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       if(cellTypeGrid->get(i, j, k) != CellType::SOLID ) {
         if(distanceGrid->get(i, j, k) > 0) {
         return CellType::EMPTY;
       }
+      ++totalFluidCells;
       return CellType::FLUID;
     } else {
       return CellType::SOLID;
     }
   });
+
+  currentVolume = (float) totalFluidCells / (w*h);
 }
 
 void LevelSet::setCellTypeGrid(Grid<CellType> const* const ctg) {
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
       return ctg->get(i, j, k);
   });
+}
+
+float LevelSet::getVolumeError() {
+  return targetVolume - currentVolume;
 }
 
 OrdinalGrid<float> const *const LevelSet::getDistanceGrid() const {
