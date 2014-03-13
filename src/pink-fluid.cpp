@@ -112,11 +112,11 @@ int main( void ) {
   
   // define initial signed distance
   SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
-      // distance function to circle with radius w/3, center in (w/2, h/2)
-      const float x = (float)i - (float)w/2.5;
-      const float y = (float)j - (float)h/2.5;
-      return sqrt( x*x + y*y ) - (float)w/4;
-    });
+    // distance function to circle with radius w/3, center in (w/2, h/2)
+    const float x = (float)i - (float)w/2.5;
+    const float y = (float)j - (float)h/2.5;
+    return sqrt( x*x + y*y ) - (float)w/4;
+  });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
   // init boundary grid
