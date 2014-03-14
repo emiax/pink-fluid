@@ -9,7 +9,6 @@ namespace factory{
           const float x = (float)i - (float)w/2.0;
           const float y = (float)j - (float)h/2.0;
           const float z = (float)k - (float)d/2.0;
-          std::cout << "wat in ctg init "<< w << " " <<  h<< " " << d << std::endl;
 
           return sqrt( x*x + y*y + z*z) - (float)w/2.5;
         }, [=](unsigned int i, unsigned int j, unsigned int k){
