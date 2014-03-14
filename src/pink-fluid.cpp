@@ -75,7 +75,7 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 24, h = 24, d = 24;
+  unsigned int w = 50, h = 50, d = 50;
   State prevState(w, h, d);
   State newState(w, h, d);
 
@@ -207,7 +207,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();
@@ -281,8 +281,9 @@ int main( void ) {
 
           //signed dist
           float dist = newState.getSignedDistanceGrid()->get(i, j, k);
-          dist = -glm::clamp(dist, -1.0f, 0.0f);
-          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 0.0 : 0.0);
+          float solid = newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0;
+          dist = (glm::clamp(dist + solid, -1.0f, 1.0f)+1)/2;
+          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
           tex3D.set(i, j, k, 1, dist*0.3f);
           tex3D.set(i, j, k, 2, dist);
           tex3D.set(i, j, k, 3, 1.0f);
