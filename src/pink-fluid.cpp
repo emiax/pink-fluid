@@ -31,6 +31,7 @@
 #include <common/Shader.h>
 #include <common/Texture2D.h>
 #include <common/Texture3D.h>
+#include <factories/levelSetFactories.h>
 #include <ordinalGrid.h>
 #include <state.h>
 #include <simulator.h>
@@ -86,41 +87,7 @@ int main( void ) {
   /**
    * Init Level set object
    */
-  // define initial signed distance
-  SignedDistanceFunction ballSD([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
-      // distance function to circle with radius w/3, center in (w/2, h/2, d/2)
-      const float x = (float)i - (float)w/2.0;
-      const float y = (float)j - (float)h/2.0;
-      const float z = (float)k - (float)d/2.0;
-      return sqrt( x*x + y*y + z*z) - (float)w/2.5;
-    });
-
-  Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h, d);
-  // init boundary grid
-  cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-    CellType bt = CellType::EMPTY;
-    if(i == 0){
-      bt = CellType::SOLID;
-    }
-    else if(j == 0){
-      bt = CellType::SOLID;
-    }
-    else if(k == 0){
-      bt = CellType::SOLID;
-    }
-    else if(i == w - 1){
-      bt = CellType::SOLID;
-    }
-    else if(j == h - 1){
-      bt = CellType::SOLID;
-    }
-    else if(k == d - 1){
-      bt = CellType::SOLID;
-    }
-    return bt;
-  });
-
-  LevelSet *ls = new LevelSet( w, h, d, ballSD, cellTypeGrid );
+  LevelSet *ls = factory::levelSet::ball(w,h,d);
   prevState.setLevelSet(ls);
   newState.setLevelSet(ls);
 
@@ -149,7 +116,7 @@ int main( void ) {
 
   static const GLuint triangleBufferData[] = {
     // xy plane (z = -1)
-    0, 1, 3, 
+    0, 1, 3,
     3, 2, 0,
     // xz plane (y = -1)
     0, 5, 1,
@@ -158,7 +125,7 @@ int main( void ) {
     0, 2, 4,
     2, 6, 4,
     // xy plane (z = 1)
-    4, 7, 5, 
+    4, 7, 5,
     4, 6, 7,
     // xz plane (y = 1)
     2, 7, 6,
@@ -189,12 +156,12 @@ int main( void ) {
   glGenBuffers(1, &triangleBuffer);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleBuffer);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
-  
+
   // Create framebuffer
   GLuint framebuffer;
   glGenFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-  
+
   GLuint backfaceTextureId;
   glGenTextures(1, &backfaceTextureId);
   glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
@@ -216,7 +183,7 @@ int main( void ) {
   } else {
     std::cout << "successfully initialized FBO" << std::endl;
   }
-  
+
 
   //Object which encapsulates a texture + The destruction of a texture.
   Texture3D tex3D(w, h, d);
@@ -230,7 +197,7 @@ int main( void ) {
   glfwSwapInterval(1);
   int i = 0;
   do{
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // bind the framebuffer 
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // bind the framebuffer
 
     //glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     // common for both render passes.
@@ -249,7 +216,7 @@ int main( void ) {
     {
       GLuint tLocation = glGetUniformLocation(colorCubeProg, "time");
       glUniform1f(tLocation, glfwGetTime());
-      
+
       GLuint mvLocation = glGetUniformLocation(colorCubeProg, "mvMatrix");
       glUniformMatrix4fv(mvLocation, 1, false, glm::value_ptr(matrix));
     }
@@ -258,9 +225,9 @@ int main( void ) {
     glEnableVertexAttribArray(0);
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(0);
-     
-     
-    
+
+
+
     // Do the ray casting.
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     glCullFace(GL_BACK);
@@ -341,7 +308,7 @@ int main( void ) {
     glEnableVertexAttribArray(0);
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(0);
-    
+
     //Get the uniformlocation of the texture from the shader.
     //    GLuint textureLocation = glGetUniformLocation(prog, "myFloatTex");
     //Use GL_TEXTURE0 as a textureposition for the texture.
@@ -355,9 +322,9 @@ int main( void ) {
     //glDrawArrays(GL_TRIANGLE_STRIP, 0, 6); // 3 indices starting at 0 -> 1 triangle
     //    glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
 
-    
+
     //    glDisableVertexAttribArray(0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer
     glfwPollEvents();
     glfwSwapBuffers(window);
     double currentTime = glfwGetTime();
@@ -384,4 +351,4 @@ int main( void ) {
   glDeleteVertexArrays(1, &VertexArrayID);
   exit(EXIT_SUCCESS);
 }
-// 
+//

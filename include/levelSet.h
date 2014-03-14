@@ -12,6 +12,7 @@ class GridHeap;
 class LevelSet{
 public:
   LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanceFunction sdf, Grid<CellType> const* const boundaries);
+  LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFunc sdf, std::function<CellType (unsigned int i, unsigned int j, unsigned int k)>);
 
   ~LevelSet();
   // LevelSet(unsigned int w, unsigned int h, Grid<CellType> const* const ctg);
@@ -51,9 +52,9 @@ private:
 
   void initializeDistanceGrid(SignedDistanceFunction sdf);
   void clampInfiniteCells();
-  
+
   static constexpr float INF = 9999999.0f;
-  
+
   Grid<bool> *doneGrid;
   Grid<glm::vec3> *closestPointGrid;
   GridHeap *gridHeap;
