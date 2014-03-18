@@ -8,7 +8,7 @@ uniform sampler3D volumeTexture;
 out vec4 color;
 #define THRESHOLD 0.000001
 void main() {
-  vec3 frontCoord = 0.5*position+vec3(0.5, 0.5, 0.5);
+  vec3 frontCoord = 0.5*position+vec3(0.5); // world coord -> tex coord
   vec2 texCoords = vec2(gl_FragCoord.x / windowSize.x, gl_FragCoord.y / windowSize.y);
   vec3 backCoord = texture(backfaceTexture, texCoords).xyz;
 
@@ -25,12 +25,14 @@ void main() {
   color = vec4(0.0, 0.0, 0.0, 0.0);
 
   float cellSize = 1.0/gridSize;
-  float offset = cellSize/2.0;
+  float offset = cellSize/5.0;
 
   vec3 accumulated = vec3(0.0, 0.0, 0.0);
+
   for (int i = 0; i < maxIter; ++i) {
-    // break if we are outside the volumeTexture.
     vec3 displacement = step*i;
+    
+    // break if we are outside the volumeTexture.
     if (length(displacement) > depth) break;
 
     vec3 mid = frontCoord + step*i;
@@ -47,11 +49,18 @@ void main() {
     vec4 dvdz = texture(volumeTexture, back) - texture(volumeTexture, front);
 
     float b = current.z;
+    float solid = current.x;
     vec3 bGradient = vec3(dvdx.b, dvdy.b, dvdz.b);
 
+    // hitting the water interface?
     if (abs(b - 0.5) < 0.05) {
       color = vec4(0.3, 0.3, 0.8, 0.5);
       break;
+    }
+
+    // hitting a wall?
+    if (solid > 0.5){
+      color += vec4(0.2,0.2,0.2,0.2);
     }
 
   }

@@ -191,7 +191,7 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glfwSwapInterval(1);
   int i = 0;
@@ -206,7 +206,8 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, -3.1415926535f/2.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();
@@ -231,7 +232,6 @@ int main( void ) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     glCullFace(GL_BACK);
     rayCasterProg();
-
 
     {
       GLuint tLocation = glGetUniformLocation(rayCasterProg, "time");
@@ -282,8 +282,9 @@ int main( void ) {
           float dist = newState.getSignedDistanceGrid()->get(i, j, k);
           float solid = newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0;
           dist = (glm::clamp(dist + solid, -1.0f, 1.0f)+1)/2;
-          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
-          tex3D.set(i, j, k, 1, dist*0.3f);
+
+          tex3D.set(i,j,k, 0, solid);
+          tex3D.set(i, j, k, 1, 0.0f); // not used
           tex3D.set(i, j, k, 2, dist);
           tex3D.set(i, j, k, 3, 1.0f);
 
@@ -302,8 +303,6 @@ int main( void ) {
     tex3D(GL_TEXTURE1);
     GLuint volumeTextureLocation = glGetUniformLocation(rayCasterProg, "volumeTexture");
     glUniform1i(volumeTextureLocation, 1);
-
-
 
     glEnableVertexAttribArray(0);
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
