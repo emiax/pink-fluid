@@ -369,7 +369,7 @@ void Simulator::gradientSubtraction(State *state, float dt) {
           float dBack = glm::distance(currentPoint, backClosestPoint);
 
           float wFront = fromVelocityGrid->v->getNearest(frontClosestPoint.x, frontClosestPoint.y, frontClosestPoint.z + 0.5);
-          float wBack = fromVelocityGrid->v->getNearest(backClosestPoint.x, backClosestPoint.y + 0.5, backClosestPoint.z + 0.5);
+          float wBack = fromVelocityGrid->v->getNearest(backClosestPoint.x, backClosestPoint.y, backClosestPoint.z + 0.5);
 
           float t = dFront/(dFront + dBack);
           return t*wBack + (1.0f - t)*wFront;
