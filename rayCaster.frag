@@ -25,7 +25,7 @@ void main() {
   color = vec4(0.0, 0.0, 0.0, 0.0);
 
   float cellSize = 1.0/gridSize;
-  float offset = cellSize/2.0;
+  float offset = cellSize/5.0;
 
   vec3 accumulated = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < maxIter; ++i) {

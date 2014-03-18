@@ -75,7 +75,7 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 24, h = 24, d = 24;
+  unsigned int w = 50, h = 50, d = 3;
   State prevState(w, h, d);
   State newState(w, h, d);
 
@@ -191,7 +191,7 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glfwSwapInterval(1);
   int i = 0;
