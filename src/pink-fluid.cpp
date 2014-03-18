@@ -75,7 +75,7 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 50, h = 50, d = 50;
+  unsigned int w = 24, h = 24, d = 24;
   State prevState(w, h, d);
   State newState(w, h, d);
 
@@ -174,7 +174,6 @@ int main( void ) {
   glGenTextures(1, &volumeTextureId);
   glBindTexture(GL_TEXTURE_3D, volumeTextureId);
 
-
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backfaceTextureId, 0);
 
   // fail check
@@ -207,7 +206,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();
