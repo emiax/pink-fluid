@@ -47,8 +47,11 @@ void main() {
     vec4 dvdz = texture(volumeTexture, back) - texture(volumeTexture, front);
 
     float b = current.z;
+    float solid = current.x;
     vec3 bGradient = vec3(dvdx.b, dvdy.b, dvdz.b);
-
+    if (solid < 0.5){
+      color += vec4(0.2,0.2,0.2,0.2);
+    }
     if (abs(b - 0.5) < 0.05) {
       color = vec4(0.3, 0.3, 0.8, 0.5);
       break;

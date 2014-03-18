@@ -26,7 +26,8 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h, d);
   pressureGridFrom = new OrdinalGrid<double>(w, h, d);
   pressureGridTo = new OrdinalGrid<double>(w, h, d);
-  pressureSolver = new MICSolver(w*h*d);
+  pressureSolver = new JacobiIteration(100);
+  // pressureSolver = new MICSolver(w*h*d);
 }
 
 /**
@@ -110,7 +111,7 @@ void Simulator::advect(State const* readFrom, State* writeTo, float dt){
       });
   }
 }
-    
+
     /**
      * Apply gravity to fluid cells
      * @param state  state with velocity grid to be augmented
