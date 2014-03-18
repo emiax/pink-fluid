@@ -16,13 +16,13 @@ enum CellType{
 
 class State {
 public:
-  State(unsigned int width, unsigned int height);
+  State(unsigned int width, unsigned int height, unsigned int depth);
   ~State();
   Grid<CellType>const *const getCellTypeGrid() const;
   VelocityGrid const *const getVelocityGrid() const;
   OrdinalGrid<glm::vec3> const *const getInkGrid() const;
   OrdinalGrid<float> const *const getSignedDistanceGrid() const;
-  Grid<glm::vec2> const *const getClosestPointGrid() const;
+  Grid<glm::vec3> const *const getClosestPointGrid() const;
   
   void setCellTypeGrid(Grid<CellType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
@@ -31,13 +31,14 @@ public:
   
   unsigned int getW() const;
   unsigned int getH() const;
+  unsigned int getD() const;
 
 private:
   void resetVelocityGrids();
   
   OrdinalGrid<glm::vec3> *inkGrid;
   VelocityGrid *velocityGrid;
-  unsigned int w, h;
+  unsigned int w, h, d;
   LevelSet *levelSet;
 
   friend class Simulator;

@@ -4,14 +4,14 @@
 #include <iostream>
 #include <levelSet.h>
 
-
-
 /**
  * Constructor.
  */
-State::State(unsigned int width, unsigned int height) : w(width), h(height) {
-  velocityGrid = new VelocityGrid(w,h);
-  inkGrid = new OrdinalGrid<glm::vec3>(w, h);
+State::State(unsigned int width, unsigned int height, unsigned int depth) : 
+  w(width), h(height), d(depth) {
+
+  velocityGrid = new VelocityGrid(w, h, d);
+  inkGrid = new OrdinalGrid<glm::vec3>(w, h, d);
 
   resetVelocityGrids();
 }
@@ -22,21 +22,34 @@ State::State(unsigned int width, unsigned int height) : w(width), h(height) {
 State::~State() {
   delete velocityGrid;
   delete inkGrid;
+  if (levelSet) {
+    delete levelSet;
+  }
 }
-
 
 /**
  * Reset velocity grids
  */
 void State::resetVelocityGrids() {
-  for(unsigned int i = 0u; i <= w; i++){
-    for(unsigned int j = 0u; j < h; j++){
-      velocityGrid->u->set(i, j, 0.0f);
+  for(unsigned k = 0; k < d; ++k) {
+    for(unsigned j = 0; j < h; j++){
+      for(unsigned i = 0; i <= w; i++){
+        velocityGrid->u->set(i, j, k, 0.0f);
+      }
     }
   }
-  for(unsigned int i = 0u; i < w; i++){
-    for(unsigned int j = 0u; j <= h; j++){
-      velocityGrid->v->set(i, j, 0.0f);
+  for(unsigned k = 0; k < d; ++k) {
+    for(unsigned j = 0; j <= h; j++){
+      for(unsigned i = 0; i < w; i++){
+        velocityGrid->v->set(i, j, k, 0.0f);
+      }
+    }
+  }
+  for(unsigned k = 0; k <= d; ++k) {
+    for(unsigned j = 0; j < h; j++){
+      for(unsigned i = 0; i < w; i++){
+        velocityGrid->w->set(i, j, k, 0.0f);
+      }
     }
   }
 }
@@ -46,15 +59,25 @@ void State::resetVelocityGrids() {
  * Copy velocity grid to internal velocity grid
  */
 void State::setVelocityGrid(VelocityGrid const* const velocity){
-  for(unsigned int i = 0u; i < w; i++){
-    for(unsigned int j = 0u; j <= h; j++){
-      velocityGrid->v->set(i, j, velocity->v->get(i,j));
+  for(unsigned k = 0; k < d; ++k) {
+    for(unsigned j = 0; j < h; j++){
+      for(unsigned i = 0; i <= w; i++){
+        velocityGrid->u->set(i, j, k, velocity->u->get(i, j, k));
+      }
     }
   }
-
-  for(unsigned int i = 0u; i <= w; i++){
-    for(unsigned int j = 0u; j < h; j++){
-      velocityGrid->u->set(i, j, velocity->u->get(i,j));
+  for(unsigned k = 0; k < d; ++k) {
+    for(unsigned j = 0; j <= h; j++){
+      for(unsigned i = 0; i < w; i++){
+        velocityGrid->v->set(i, j, k, velocity->v->get(i, j, k));
+      }
+    }
+  }
+  for(unsigned k = 0; k <= d; ++k) {
+    for(unsigned j = 0; j < h; j++){
+      for(unsigned i = 0; i < w; i++){
+        velocityGrid->w->set(i, j, k, velocity->w->get(i, j, k));
+      }
     }
   }
 }
@@ -75,6 +98,12 @@ unsigned int State::getH() const{
   return h;
 }
 
+/**
+ * Get depth
+ */
+unsigned int State::getD() const {
+  return d;
+}
 
 /**
  * Set cell type grid
@@ -88,10 +117,12 @@ void State::setCellTypeGrid(Grid<CellType>const* const ctg) {
  * @param ink grid to copy concentration values from
  */
 void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
-  for (unsigned int j = 0; j < h; ++j) {
-    for (unsigned int i = 0; i < w; ++i) {
-      this->inkGrid->set( i, j, ink->get(i, j) );
-    }
+  for (unsigned k = 0; k < d; ++k) {
+    for (unsigned int j = 0; j < h; ++j) {
+      for (unsigned int i = 0; i < w; ++i) {
+        this->inkGrid->set(i, j, k, ink->get(i, j, k));
+      }
+    } 
   }
 }
 
@@ -109,17 +140,10 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
 
 /**
  * Set level set
- * @param levelSet LevelSet object
+ * @param levelSet pointer to LevelSet object
  */
 void State::setLevelSet(LevelSet *ls) {
-  levelSet = new LevelSet(w, h, *(ls->initSDF), ls->getCellTypeGrid());
-}
-
-/**
- * Get velocity grid 
- */
-VelocityGrid const *const State::getVelocityGrid() const{
-  return velocityGrid;
+  levelSet = new LevelSet(w, h, d, *(ls->initSDF), ls->getCellTypeGrid() );
 };
 
 /**
@@ -150,7 +174,7 @@ OrdinalGrid<float> const *const State::getSignedDistanceGrid() const {
  * Get closest point grid
  * @return const pointer to closest point grid.
  */
-Grid<glm::vec2> const *const State::getClosestPointGrid() const {
+Grid<glm::vec3> const *const State::getClosestPointGrid() const {
   return levelSet->getClosestPointGrid();
 }
 

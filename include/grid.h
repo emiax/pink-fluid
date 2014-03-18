@@ -1,8 +1,9 @@
 #pragma once
 #include <functional>
 #include <glm/glm.hpp>
+#include <iostream>
 
-typedef glm::i32vec2 GridCoordinate;
+typedef glm::i32vec3 GridCoordinate;
 
 template <class T>
 class Grid {
@@ -13,14 +14,15 @@ class Grid {
    * @param w width
    * @param h height
    */
-  Grid(unsigned int w, unsigned int h) {
+  Grid(unsigned int w, unsigned int h, unsigned int d) {
     this->w = w;
     this->h = h;
+    this->d = d;
     // int size = this->size();
-    quantities = new T[w*h];
-    setForEach([](unsigned int, unsigned int){
-      return T(0);
-    });
+    quantities = new T[w*h*d];
+    for(auto i = 0u; i < size(); i++){
+      quantities[i] = T(0);
+    }
   };
   
   ~Grid(){
@@ -32,7 +34,7 @@ class Grid {
    * @returns the total number of cells
    */
   unsigned int size() const{
-    return w*h;
+    return w*h*d;
   };
 
 
@@ -40,11 +42,13 @@ class Grid {
    * Function in order to set each cell in a grid using a lambda.
    * @param func Function to apply for each cell
    */
-  void setForEach(const std::function< T (unsigned int i, unsigned int j)> func){
-    #pragma omp parallel for collapse(2)
-    for(auto j = 0u; j < h; j++){
-      for(auto i = 0u; i < w; i++){
-        set(i,j, func(i,j));
+  void setForEach(const std::function< T (unsigned int i, unsigned int j, unsigned int k)> func){
+    #pragma omp parallel for collapse(3)
+    for(auto k = 0u; k < d; k++){
+      for(auto j = 0u; j < h; j++){
+        for(auto i = 0u; i < w; i++){
+          set(i, j, k, func(i, j, k));
+        }
       }
     }
   }
@@ -54,35 +58,44 @@ class Grid {
     return quantities[i];
   }
 
+
   /**
    * Get value of the stored quantity.
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T get(unsigned int i, unsigned int j) const{
-    return quantities[indexTranslation(i,j)];
+
+  T get(unsigned int i, unsigned int j, unsigned int k) const{
+    assert(i >= 0);
+    assert(j >= 0);
+    assert(k >= 0);
+    assert(i < w);
+    assert(j < h);
+    assert(k < d);
+    return quantities[k*w*h + j*w + i];
   };
 
   inline T get(GridCoordinate c) const{
-    return get(c.x, c.y);
+    return this->get(c.x, c.y, c.z);
   };
 
   inline T safeGet(GridCoordinate c) const {
-    return safeGet(c.x, c.y);
+    return this->safeGet(c.x, c.y, c.z);
   };
 
   inline T clampGet(GridCoordinate c) const {
-    return clampGet(c.x, c.y);
+    return this->clampGet(c.x, c.y, c.z);
   };
 
-  inline unsigned int indexTranslation(unsigned int i, unsigned int j) const{
-    return j*w + i;
+  inline unsigned int indexTranslation(unsigned int i, unsigned int j, unsigned int k) const{
+    return k*w*h + j*w + i;
   }
 
-  T clampGet(int i, int j) const {
+  T clampGet(int i, int j, int k) const {
     i = (i < 0) ? 0 : (i >= w) ? w-1 : i;
     j = (j < 0) ? 0 : (j >= h) ? h-1 : j;
-    return get(i, j);
+    k = (k < 0) ? 0 : (k >= d) ? d-1 : k;
+    return this->get(i, j, k);
   };
 
   /**
@@ -90,30 +103,31 @@ class Grid {
    * @param i, the position along the x axis (w)
    * @param j, the position along the y axis (h)
    */
-  T safeGet(int i, int j) const{
-    if(i < 0 || j < 0 || i > int(w - 1) || j > int(h - 1) ){
+  T safeGet(int i, int j, int k) const{
+    if(i < 0 || j < 0 || k < 0 || i > int(w - 1) || j > int(h - 1) || k > int(d - 1)){
       return T(0);
     }
-    return get(i,j);
+    return this->get(i, j, k);
   };
 
 
-  inline bool isValid(int i, int j) const{
+  inline bool isValid(int i, int j, int k) const{
     return (
       i >= 0 && i < w &&
-      j >= 0 && j < h);
+      j >= 0 && j < h && 
+      k >= 0 && k < d);
   }
 
 
   /**
    * Set value of the stored quantity.
    */
-  void set(unsigned int i, unsigned int j, T value) {
-    quantities[j*w + i] = value;
+  void set(unsigned int i, unsigned int j, unsigned int k, T value) {
+    quantities[k*w*h + j*w + i] = value;
   };
 
   inline void set(GridCoordinate c, T value) {
-    set(c.x, c.y, value);
+    this->set(c.x, c.y, c.z, value);
   };
 
   unsigned int getW() const{
@@ -123,8 +137,12 @@ class Grid {
     return h;
   }
 
+  unsigned int getD() const{
+    return d;
+  }
+
  protected:
-  unsigned int w, h;
+  unsigned int w, h, d;
   T *quantities;
   
 };

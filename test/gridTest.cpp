@@ -3,7 +3,7 @@
 class GridTest : public ::testing::Test{
 protected:
   GridTest() {
-    doubleGrid = new Grid<double>(10, 10);
+    doubleGrid = new Grid<double>(10, 10, 10);
   }
 
   ~GridTest() {
@@ -15,7 +15,7 @@ protected:
 
 TEST_F(GridTest, settingAndGetting) {
   double a = 1.0;
-  doubleGrid->set(4, 3, a);
-  double b = doubleGrid->get(4, 3);
+  doubleGrid->set(4, 3, 1, a);
+  double b = doubleGrid->get(4, 3, 1);
   ASSERT_EQ(a, b);
 }
