@@ -77,35 +77,35 @@ namespace util {
 		 */
 		namespace mac{
 		 	glm::vec3 backTrackU(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt){
-		 		return RK3BackTrack(velocityGrid, i, j, k, dt, 
+		 		return RK2BackTrack(velocityGrid, i, j, k, dt, 
 		 			glm::vec3(0.0f),
 		 			glm::vec3(-0.5f, 0.5f, 0.0f),
-		 			glm::vec3(0.0f, 0.5f, -0.5f)
+		 			glm::vec3(-0.5f, 0.0f, 0.5f)
 	 			);
 		 	}
 
 		 	glm::vec3 backTrackV(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt){
-		 		return RK3BackTrack(velocityGrid, i, j, k, dt, 
+		 		return RK2BackTrack(velocityGrid, i, j, k, dt, 
 		 			glm::vec3(0.5f, -0.5f, 0.0f),
 		 			glm::vec3(0.0f),
-		 			glm::vec3(0.5f, 0.0f, -0.5f)
+		 			glm::vec3(0.0f, -0.5f, 0.5f)
 	 			);
 		 	}
 
 		 	glm::vec3 backTrackW(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt){
-		 		return RK3BackTrack(velocityGrid, i, j, k, dt, 
-		 			glm::vec3(0.0f, -0.5f, 0.5f),
-		 			glm::vec3(-0.5f, 0.0f, 0.5f),
+		 		return RK2BackTrack(velocityGrid, i, j, k, dt, 
+		 			glm::vec3(0.5f, 0.0f, -0.5f),
+		 			glm::vec3(0.0f, 0.5f, -0.5f),
 		 			glm::vec3(0.0f)
 		 		);
 		 	}
 		} // mac
 
 		glm::vec3 backTrack(VelocityGrid const* const velocityGrid, int i, int j, int k, float dt){
-			return RK3BackTrack(velocityGrid, i, j, k, dt, 
-				glm::vec3(0.5f, 0.0f, 0.5f), 
-				glm::vec3(0.0f, 0.5f, 0.5f),
-				glm::vec3(0.5f, 0.5f, 0.0f)
+			return RK2BackTrack(velocityGrid, i, j, k, dt, 
+				glm::vec3(0.5f, 0.0f, 0.0f), 
+				glm::vec3(0.0f, 0.5f, 0.0f),
+				glm::vec3(0.0f, 0.0f, 0.5f)
 			);
 		}
 

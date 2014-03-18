@@ -38,11 +38,10 @@ private:
   void updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsigned int k);
   void updateNeighborsFrom(GridCoordinate from);
 
-
   void updateFromCell(GridCoordinate to, GridCoordinate from);
-
-
   void updateFromCell(unsigned int xTo, unsigned int yTo, unsigned int xFrom, unsigned int yFrom);
+
+  void updateCurrentVolume();
 
   void fastMarch();
 

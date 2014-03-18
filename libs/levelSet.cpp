@@ -20,6 +20,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanc
   initializeDistanceGrid(sdf);
   updateCellTypes();
   targetVolume = currentVolume;
+  // std::cout << "targetVolume = " << targetVolume << std::endl;
 }
 
 LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFunc sdf, std::function<CellType (unsigned int i, unsigned int j, unsigned int k)> ctg){
@@ -40,6 +41,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFun
   initializeDistanceGrid(*initSDF);
   updateCellTypes();
   targetVolume = currentVolume;
+  // std::cout << "targetVolume = " << targetVolume << std::endl;
 }
 
 
@@ -59,8 +61,6 @@ void LevelSet::reinitialize() {
   fastMarch();
   updateCellTypes();
   clampInfiniteCells();
-  // std::cout << "magicPeople = " << targetVolume << std::endl;
-  // std::cout << "voodooPeople = " << currentVolume << std::endl;
 }
 
 void LevelSet::updateInterfaceNeighbors(){
@@ -228,18 +228,34 @@ void LevelSet::initializeDistanceGrid(SignedDistanceFunction sdf) {
 }
 
 void LevelSet::updateCellTypes() {
-  unsigned int totalFluidCells = 0;
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-      if(cellTypeGrid->get(i, j, k) != CellType::SOLID ) {
-        if(distanceGrid->get(i, j, k) > 0) {
-          return CellType::EMPTY;
-        }
-        ++totalFluidCells;
-        return CellType::FLUID;
-      } else {
-        return CellType::SOLID;
+    if(cellTypeGrid->get(i, j, k) != CellType::SOLID ) {
+      if(distanceGrid->get(i, j, k) > 0) {
+        return CellType::EMPTY;
       }
-    });
+      return CellType::FLUID;
+    } else {
+      return CellType::SOLID;
+    }
+  });
+
+  // cell type update done - update current volume
+  updateCurrentVolume();
+}
+
+void LevelSet::updateCurrentVolume() {
+  unsigned int totalFluidCells = 0;
+
+  for(unsigned k = 0; k < d; ++k) {
+    for(unsigned j = 0; j < h; ++j) {
+      for(unsigned i = 0; i < w; ++i) {
+        if(cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+          ++totalFluidCells; 
+        }
+      }
+    }
+  }
+
   currentVolume = (float)totalFluidCells / (float)(w*h);
 }
 

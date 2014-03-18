@@ -71,109 +71,101 @@ void Simulator::step(float dt) {
  * @param dt time step length
  */
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
-#pragma omp parallel sections
+  #pragma omp parallel sections
   {
     // X
-#pragma omp section
+    #pragma omp section
     writeTo->velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-        glm::vec3 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, k, dt);
-        return readFrom->velocityGrid->u->getCrerp(position);
-      });
+      glm::vec3 position = util::advect::mac::backTrackU(readFrom->velocityGrid, i, j, k, dt);
+      return readFrom->velocityGrid->u->getCrerp(position);
+    });
 
     // Y
-#pragma omp section
+    #pragma omp section
     writeTo->velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-        glm::vec3 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, k, dt);
-        return readFrom->velocityGrid->v->getCrerp(position);
-      });
+      glm::vec3 position = util::advect::mac::backTrackV(readFrom->velocityGrid, i, j, k, dt);
+      return readFrom->velocityGrid->v->getCrerp(position);
+    });
 
     // Z
-#pragma omp section
+    #pragma omp section
     writeTo->velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k) {
-        glm::vec3 position = util::advect::mac::backTrackW(readFrom->velocityGrid, i, j, k, dt);
-        return readFrom->velocityGrid->w->getCrerp(position);
-      });
-
-
-    //Z
-#pragma omp section
-    writeTo->velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-        glm::vec3 position = util::advect::mac::backTrackW(readFrom->velocityGrid, i, j, k, dt);
-        return readFrom->velocityGrid->w->getCrerp(position);
-      });
+      glm::vec3 position = util::advect::mac::backTrackW(readFrom->velocityGrid, i, j, k, dt);
+      return readFrom->velocityGrid->w->getCrerp(position);
+    });
 
     // level set distance grid
-#pragma omp section
+    #pragma omp section
     writeTo->levelSet->distanceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-        glm::vec3 position = util::advect::backTrack(readFrom->velocityGrid, i, j, k, dt);
-        return readFrom->levelSet->distanceGrid->getCrerp(position);
-      });
+      glm::vec3 position = util::advect::backTrack(readFrom->velocityGrid, i, j, k, dt);
+      return readFrom->levelSet->distanceGrid->getCrerp(position);
+    });
   }
 }
     
-    /**
-     * Apply gravity to fluid cells
-     * @param state  state with velocity grid to be augmented
-     * @param g      gravity vector
-     * @param deltaT time step, dt
-     */
-    void Simulator::applyGravity(State *state, glm::vec3 g, float deltaT){
-      VelocityGrid *velocityGrid = state->velocityGrid;
-      Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
+/**
+ * Apply gravity to fluid cells
+ * @param state  state with velocity grid to be augmented
+ * @param g      gravity vector
+ * @param deltaT time step, dt
+ */
+void Simulator::applyGravity(State *state, glm::vec3 g, float deltaT){
+  VelocityGrid *velocityGrid = state->velocityGrid;
+  Grid<CellType> const *const cellTypeGrid = state->getCellTypeGrid();
 
-      // u velocities
-      velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-          if (i < w && cellTypeGrid->get(i, j, k) != CellType::SOLID) {
-            return velocityGrid->u->get(i, j, k)+g.x*deltaT;
-          }
-          return velocityGrid->u->get(i, j, k);
-        });
-
-      // v velocities
-      velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-          if (j < h && cellTypeGrid->get(i, j, k) != CellType::SOLID) {
-            return velocityGrid->v->get(i, j, k)+g.y*deltaT;
-          }
-          return velocityGrid->v->get(i, j, k);
-        });
-
-      // w velocities
-      velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-          if (k < d && cellTypeGrid->get(i, j, k) != CellType::SOLID) {
-            return velocityGrid->w->get(i, j, k)+g.z*deltaT;
-          }
-          return velocityGrid->w->get(i, j, k);
-        });
+  // u velocities
+  velocityGrid->u->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (i < w && cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+      return velocityGrid->u->get(i, j, k)+g.x*deltaT;
     }
+    return velocityGrid->u->get(i, j, k);
+  });
 
-
-    /**
-     * Calculate divergence.
-     * @param readFrom State to read from
-     * @param toDivergenceGrid An ordinal grid of floats to write the divergences to
-     */
-    void Simulator::calculateNegativeDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
-      const float scale = 1.0f;
-      OrdinalGrid<float> *u = readFrom->velocityGrid->u;
-      OrdinalGrid<float> *v = readFrom->velocityGrid->v;
-      OrdinalGrid<float> *w = readFrom->velocityGrid->w;
-      Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
-
-      float volumeError = readFrom->levelSet->getVolumeError();
-
-      toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-          if (cellTypeGrid->get(i, j, k) == CellType::FLUID) {
-            float entering = u->get(i, j, k) + v->get(i, j, k) + w->get(i, j, k);
-            float leaving = u->get(i + 1, j, k) + v->get(i, j + 1, k) + w->get(i, j, k + 1);
-
-            float divergence = leaving - entering;
-
-            return - divergence + volumeError; // non-scientific adjustment for volume loss
-          } else {
-            return 0.0f;
-          }
-        });
+  // v velocities
+  velocityGrid->v->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (j < h && cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+      return velocityGrid->v->get(i, j, k)+g.y*deltaT;
     }
+    return velocityGrid->v->get(i, j, k);
+  });
+
+  // w velocities
+  velocityGrid->w->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (k < d && cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+      return velocityGrid->w->get(i, j, k)+g.z*deltaT;
+    }
+    return velocityGrid->w->get(i, j, k);
+  });
+}
+
+
+/**
+ * Calculate divergence.
+ * @param readFrom State to read from
+ * @param toDivergenceGrid An ordinal grid of floats to write the divergences to
+ */
+void Simulator::calculateNegativeDivergence(State const* readFrom, OrdinalGrid<float>* toDivergenceGrid) {
+  const float scale = 1.0f;
+  OrdinalGrid<float> *u = readFrom->velocityGrid->u;
+  OrdinalGrid<float> *v = readFrom->velocityGrid->v;
+  OrdinalGrid<float> *w = readFrom->velocityGrid->w;
+  Grid<CellType> const *const cellTypeGrid = readFrom->getCellTypeGrid();
+
+  float volumeError = readFrom->levelSet->getVolumeError();
+
+  toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
+    if (cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+      float entering = u->get(i, j, k) + v->get(i, j, k) + w->get(i, j, k);
+      float leaving = u->get(i + 1, j, k) + v->get(i, j + 1, k) + w->get(i, j, k + 1);
+
+      float divergence = leaving - entering;
+
+      return - divergence + volumeError; // non-scientific adjustment for volume loss
+    } else {
+      return 0.0f;
+    }
+  });
+}
 
 
 /*toDivergenceGrid->setForEach([&](unsigned int i, unsigned int j){

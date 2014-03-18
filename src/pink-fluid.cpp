@@ -202,11 +202,11 @@ int main( void ) {
     // common for both render passes.
     sim.step(deltaT);
 
-    deltaT = sim.getDeltaT();
+    // deltaT = sim.getDeltaT();
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, -3.1415926535f/2.0f, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();
