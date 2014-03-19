@@ -76,7 +76,7 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 32, h = 32, d = 32;
+  unsigned int w = 16, h = 16, d = 16;
   State prevState(w, h, d);
   State newState(w, h, d);
 
@@ -196,7 +196,7 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-<<<<<<< HEAD
+  //<<<<<<< HEAD
   glfwSwapInterval(1);
   int i = 0;
   do{
@@ -222,7 +222,7 @@ int main( void ) {
     matrix = glm::rotate(matrix, (float) i*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
     =======*/
     matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    //    matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
     //>>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048
 
     // Render back face of the cube.
@@ -359,7 +359,7 @@ int main( void ) {
       lastTime += 1.0;
     }
     i++;
-    // std::cin.get();
+    std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
     std::cout << "Cleaning up!" << std::endl;

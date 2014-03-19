@@ -52,11 +52,11 @@ void Simulator::step(float dt) {
   stateFrom->levelSet->reinitialize();
   extrapolateVelocity(stateFrom, stateFrom);
 
-  gpuAdvector->advect(stateFrom, stateTo, dt);
-  //  advect(stateFrom, stateTo, dt);
+  //gpuAdvector->advect(stateFrom, stateTo, dt);
+  advect(stateFrom, stateTo, dt);
   applyGravity(stateTo, gravity, dt);
-   stateTo->levelSet->updateCellTypes();
-
+  stateTo->levelSet->updateCellTypes();
+  
   calculateNegativeDivergence(stateTo, divergenceGrid);
   pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
   gradientSubtraction(stateTo, dt);

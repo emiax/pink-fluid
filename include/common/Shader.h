@@ -78,7 +78,7 @@ public:
       }
     }
     else{
-      std::cerr << "Could not open file" << std::endl;
+      std::cerr << "Could not open file " << fileName << std::endl;
     }
     ifs.close();
     return out;
