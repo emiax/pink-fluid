@@ -14,8 +14,8 @@ void main() {
   
   //  color = vec4(length(frontCoord - backCoord), 0.0, 0.0, 1.0);
 
-  int gridSize = 24;
-  float samplesPerCell = 2.0;
+  int gridSize = 64;
+  float samplesPerCell = 20.0;
   vec3 step = normalize(backCoord - frontCoord)/(float(gridSize)*samplesPerCell); 
 
   int maxIter = gridSize * int(samplesPerCell);
@@ -25,7 +25,7 @@ void main() {
   color = vec4(0.0, 0.0, 0.0, 0.0);
   
   float cellSize = 1.0/gridSize;
-  float offset = cellSize/2.0;
+  float offset = cellSize/samplesPerCell;
 
   vec3 accumulated = vec3(0.0, 0.0, 0.0);
   for (int i = 0; i < maxIter; ++i) {
@@ -51,7 +51,7 @@ void main() {
     
     if (b > 0) {
       color = vec4(0.3, 0.3, 0.8, 1.0);
-      color += vec4(0.5, 0.5, 0.5, 1.0) * dot(vec3(-1.0, -1.0, 0.0), bGradient);
+      color += samplesPerCell * vec4(0.5, 0.5, 0.5, 1.0) * dot(vec3(-1.0, -1.0, 0.0), bGradient);
       break;
     } 
     

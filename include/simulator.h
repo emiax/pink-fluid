@@ -4,6 +4,7 @@ class OrdinalGrid;
 template<typename T>
 class Grid;
 class State;
+class GpuAdvector;
 struct PressureSolver;
 struct VelocityGrid;
 #include <glm/glm.hpp>
@@ -45,7 +46,8 @@ private:
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
   OrdinalGrid<double> *pressureGridFrom, *pressureGridTo;
-  PressureSolver *pressureSolver, *jacobiSolver;
+  PressureSolver *pressureSolver;
+  GpuAdvector *gpuAdvector;
   float deltaT;
   float gridSize;
 };

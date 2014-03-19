@@ -178,3 +178,7 @@ Grid<glm::vec3> const *const State::getClosestPointGrid() const {
   return levelSet->getClosestPointGrid();
 }
 
+
+VelocityGrid const *const State::getVelocityGrid() const {
+  return this->velocityGrid;
+}

@@ -26,13 +26,13 @@ public:
     glDeleteTextures(1, &textureID);
     delete[] data;
   }
-  GLfloat get(GLuint i, GLuint j, GLuint k){
+  const GLfloat get(GLuint i, GLuint j, GLuint k) const{
     return data[indexTranslation(i,j,k)];
   }
   void set(GLuint i, GLuint j, GLuint k, GLfloat v){
     data[indexTranslation(i,j,k)] = v;
   }
-  operator GLuint(){
+  operator const GLuint() const {
     return textureID;
   }
   void operator()(GLenum texture) { 
@@ -40,12 +40,14 @@ public:
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, data);
   }
-  
+  void download() {
+    glReadPixels(0, 0, this->w, this->h, GL_RGBA, GL_FLOAT, data);
+  }
 private:
   GLuint w, h, d;
   GLuint textureID; 
   GLfloat *data;
-  GLuint indexTranslation(GLuint i, GLuint j, GLuint k){
+  GLuint indexTranslation(GLuint i, GLuint j, GLuint k) const {
     return j*w*d + i*d + k;
   }
 };

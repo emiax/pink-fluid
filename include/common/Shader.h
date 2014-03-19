@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <iostream>
+
 //Blatantly stolen from http://stackoverflow.com/questions/2795044/easy-framework-for-opengl-shaders-in-c-c
 class ShaderProgram {
  private:

@@ -9,6 +9,7 @@
 #include <levelSet.h>
 #include <jacobiIteration.h>
 #include <micSolver.h>
+#include <gpuAdvector.h>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
 
@@ -23,6 +24,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
 
   // init non-state grids
 
+  gpuAdvector = new GpuAdvector(w, h, d);
   divergenceGrid = new OrdinalGrid<float>(w, h, d);
   pressureGridFrom = new OrdinalGrid<double>(w, h, d);
   pressureGridTo = new OrdinalGrid<double>(w, h, d);
@@ -49,7 +51,8 @@ void Simulator::step(float dt) {
   stateFrom->levelSet->reinitialize();
   extrapolateVelocity(stateFrom, stateFrom);
 
-  advect(stateFrom, stateTo, dt);
+  gpuAdvector->advect(stateFrom, stateTo, dt);
+  //  advect(stateFrom, stateTo, dt);
   applyGravity(stateTo, gravity, dt);
   //  stateTo->levelSet->updateCellTypes();
 
@@ -71,6 +74,8 @@ void Simulator::step(float dt) {
  * @param dt time step length
  */
 void Simulator::advect(State const* readFrom, State* writeTo, float dt){
+
+  
 #pragma omp parallel sections
   {
     // X

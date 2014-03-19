@@ -30,7 +30,7 @@ public:
     glDeleteTextures(1, &textureID);
     delete[] data;
   }
-  GLfloat get(GLuint i, GLuint j, GLuint k, GLuint, GLuint c){
+  GLfloat get(GLuint i, GLuint j, GLuint k, GLuint c){
     return data[indexTranslation(i, j, k, c)];
   }
   void set(GLuint i, GLuint j, GLuint k, GLuint c, GLfloat v){

@@ -42,4 +42,5 @@ private:
   LevelSet *levelSet;
 
   friend class Simulator;
+  friend class GpuAdvector;
 };

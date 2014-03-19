@@ -3,10 +3,9 @@
 
 class FBO {
 public:
-  FBO(GLuint w, GLuint h, GLenum tb) {
+  FBO(GLuint w, GLuint h) {
     this->w = w;
     this->h = h;
-    this->texUnit = tb;
 
     // create new framebuffer
     glGenFramebuffers(1, &framebufferId);
@@ -15,17 +14,8 @@ public:
     // create texture
     texture = new Texture2D(w, h);
 
-    // init texture to all 0's
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, w, h, 0, GL_RGB, GL_FLOAT, 0);
-
-    // filter
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
     // init config
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture->getId(), 0);
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, DrawBuffers);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *texture, 0);
 
     // fail check
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -34,30 +24,42 @@ public:
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   };
 
+
   ~FBO() {
     glDeleteFramebuffers(1, &framebufferId);
     delete texture;
   };
 
-  /*void activateWrite() {
+  
+  
+  void activate() {
     glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
-    };*/
+  };
 
-  static void deactivateFramebuffers() {
+
+  static void deactivate() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   };
 
-  GLuint getTextureId() {
-    return texture->getId();
-  };
+  
+  operator const GLuint() const {
+    return framebufferId;
+  }
 
   Texture2D const *const getTexture() const {
     return texture;
   };
 
+  
+  void download() {
+    texture->download();
+  }
+
+
   GLenum getTextureUnit() {
     return texUnit;
   }
+
 
 private:
   GLuint w, h;

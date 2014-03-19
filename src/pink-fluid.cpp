@@ -31,6 +31,7 @@
 #include <common/Shader.h>
 #include <common/Texture2D.h>
 #include <common/Texture3D.h>
+#include <common/FBO.h>
 #include <ordinalGrid.h>
 #include <state.h>
 #include <simulator.h>
@@ -74,7 +75,7 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 24, h = 24, d = 24;
+  unsigned int w = 32, h = 32, d = 32;
   State prevState(w, h, d);
   State newState(w, h, d);
 
@@ -191,32 +192,12 @@ int main( void ) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
   
   // Create framebuffer
-  GLuint framebuffer;
-  glGenFramebuffers(1, &framebuffer);
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-  
-  GLuint backfaceTextureId;
-  glGenTextures(1, &backfaceTextureId);
-  glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  FBO *framebuffer = new FBO(width, height);
 
   GLuint volumeTextureId;
   glGenTextures(1, &volumeTextureId);
   glBindTexture(GL_TEXTURE_3D, volumeTextureId);
-
-
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backfaceTextureId, 0);
-
-  // fail check
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    std::cout << "failed to init FBO" << std::endl;
-  } else {
-    std::cout << "successfully initialized FBO" << std::endl;
-  }
-  
 
   //Object which encapsulates a texture + The destruction of a texture.
   Texture3D tex3D(w, h, d);
@@ -225,12 +206,10 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
   glfwSwapInterval(1);
   int i = 0;
   do{
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // bind the framebuffer 
+    framebuffer->activate();
 
     //glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     // common for both render passes.
@@ -240,7 +219,7 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    matrix = glm::rotate(matrix, (float) glfwGetTime()*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, (float) i*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();
@@ -281,7 +260,8 @@ int main( void ) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
+    glBindTexture(GL_TEXTURE_2D, *(framebuffer->getTexture()));
+
     GLuint textureLocation = glGetUniformLocation(rayCasterProg, "backfaceTexture");
     glUniform1i(textureLocation, 0);
 
@@ -357,7 +337,8 @@ int main( void ) {
 
     
     //    glDisableVertexAttribArray(0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer 
+    //    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer 
+    FBO::deactivate();
     glfwPollEvents();
     glfwSwapBuffers(window);
     double currentTime = glfwGetTime();
