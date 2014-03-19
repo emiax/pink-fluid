@@ -41,7 +41,16 @@ public:
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, data);
   }
   void download() {
+    //std::cout << this->w << std::endl;
+    //    std::cout << this->h << std::endl;
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
     glReadPixels(0, 0, this->w, this->h, GL_RGBA, GL_FLOAT, data);
+    //glReadPixels(0, 0, 128, 128, GL_RGBA, GL_FLOAT, data);
+    /*    for (int i = 0; i < this->w*this->h; i++) {
+      std::cout << data[i] << " ";
+      }*/
+
   }
 private:
   GLuint w, h, d;
