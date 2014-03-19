@@ -18,7 +18,7 @@ void main() {
   float samplesPerCell = 2.0;
   vec3 step = normalize(backCoord - frontCoord)/(float(gridSize)*samplesPerCell);
 
-  int maxIter = gridSize * int(samplesPerCell);
+  int maxIter = int(length(vec3(gridSize)) * int(samplesPerCell));
 
   float depth = length(frontCoord - backCoord);
 
@@ -50,11 +50,15 @@ void main() {
 
     float b = current.z;
     float solid = current.x;
-    vec3 bGradient = vec3(dvdx.b, dvdy.b, dvdz.b);
 
+    vec3 bGradient = normalize(vec3(dvdx.b, dvdy.b, dvdz.b));
+    vec3 light = normalize(vec3(1.0, 1.0, 1.0));
+    float diffuseCoefficient = dot(light, bGradient);
+
+    
     // hitting the water interface?
-    if (abs(b - 0.5) < 0.05) {
-      color = vec4(0.3, 0.3, 0.8, 0.5);
+    if (b - 0.5 < 0) {
+      color = vec4(0.3, diffuseCoefficient, 0.8, 0.5);
       break;
     }
 
@@ -62,6 +66,8 @@ void main() {
     if (solid > 0.5){
       color += vec4(0.2,0.2,0.2,0.2);
     }
+    
+    //color = vec4(bGradient, 1.0);
 
   }
 
