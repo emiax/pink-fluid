@@ -32,6 +32,7 @@
 #include <common/Texture2D.h>
 #include <common/Texture3D.h>
 #include <common/FBO.h>
+#include <factories/levelSetFactories.h>
 #include <ordinalGrid.h>
 #include <state.h>
 #include <simulator.h>
@@ -87,41 +88,7 @@ int main( void ) {
   /**
    * Init Level set object
    */
-  // define initial signed distance
-  SignedDistanceFunction ballSD([&](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
-      // distance function to circle with radius w/3, center in (w/2, h/2, d/2)
-      const float x = (float)i - (float)w/2.0;
-      const float y = (float)j - (float)h/2.0;
-      const float z = (float)k - (float)d/2.0;
-      return sqrt( x*x + y*y + z*z) - (float)w/2.5;
-    });
-
-  Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h, d);
-  // init boundary grid
-  cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-    CellType bt = CellType::EMPTY;
-    if(i == 0){
-      bt = CellType::SOLID;
-    }
-    else if(j == 0){
-      bt = CellType::SOLID;
-    }
-    else if(k == 0){
-      bt = CellType::SOLID;
-    }
-    else if(i == w - 1){
-      bt = CellType::SOLID;
-    }
-    else if(j == h - 1){
-      bt = CellType::SOLID;
-    }
-    else if(k == d - 1){
-      bt = CellType::SOLID;
-    }
-    return bt;
-  });
-
-  LevelSet *ls = new LevelSet( w, h, d, ballSD, cellTypeGrid );
+  LevelSet *ls = factory::levelSet::ball(w,h,d);
   prevState.setLevelSet(ls);
   newState.setLevelSet(ls);
 
@@ -150,7 +117,7 @@ int main( void ) {
 
   static const GLuint triangleBufferData[] = {
     // xy plane (z = -1)
-    0, 1, 3, 
+    0, 1, 3,
     3, 2, 0,
     // xz plane (y = -1)
     0, 5, 1,
@@ -159,7 +126,7 @@ int main( void ) {
     0, 2, 4,
     2, 6, 4,
     // xy plane (z = 1)
-    4, 7, 5, 
+    4, 7, 5,
     4, 6, 7,
     // xz plane (y = 1)
     2, 7, 6,
@@ -190,8 +157,18 @@ int main( void ) {
   glGenBuffers(1, &triangleBuffer);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleBuffer);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
-  
+
   // Create framebuffer
+  /*
+  GLuint framebuffer;
+  glGenFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+  GLuint backfaceTextureId;
+  glGenTextures(1, &backfaceTextureId);
+  glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
 
   FBO *framebuffer = new FBO(width, height);
 
@@ -199,6 +176,19 @@ int main( void ) {
   glGenTextures(1, &volumeTextureId);
   glBindTexture(GL_TEXTURE_3D, volumeTextureId);
 
+  /*<<<<<<< HEAD
+=======
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backfaceTextureId, 0);
+
+  // fail check
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    std::cout << "failed to init FBO" << std::endl;
+  } else {
+    std::cout << "successfully initialized FBO" << std::endl;
+  }
+
+
+  >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
   //Object which encapsulates a texture + The destruction of a texture.
   Texture3D tex3D(w, h, d);
   double lastTime = glfwGetTime();
@@ -206,20 +196,34 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
+<<<<<<< HEAD
   glfwSwapInterval(1);
   int i = 0;
   do{
     framebuffer->activate();
+    /*=======
+  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glfwSwapInterval(1);
+  int i = 0;
+  do{
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // bind the framebuffer
+    >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
 
     //glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     // common for both render passes.
     sim.step(deltaT);
 
-    deltaT = sim.getDeltaT();
+    // deltaT = sim.getDeltaT();
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
+    /*<<<<<<< HEAD
     matrix = glm::rotate(matrix, (float) i*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+    =======*/
+    matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    //>>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048
 
     // Render back face of the cube.
     colorCubeProg();
@@ -228,7 +232,7 @@ int main( void ) {
     {
       GLuint tLocation = glGetUniformLocation(colorCubeProg, "time");
       glUniform1f(tLocation, glfwGetTime());
-      
+
       GLuint mvLocation = glGetUniformLocation(colorCubeProg, "mvMatrix");
       glUniformMatrix4fv(mvLocation, 1, false, glm::value_ptr(matrix));
     }
@@ -237,14 +241,13 @@ int main( void ) {
     glEnableVertexAttribArray(0);
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(0);
-     
-     
-    
+
+
+
     // Do the ray casting.
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     glCullFace(GL_BACK);
     rayCasterProg();
-
 
     {
       GLuint tLocation = glGetUniformLocation(rayCasterProg, "time");
@@ -294,9 +297,11 @@ int main( void ) {
 
           //signed dist
           float dist = newState.getSignedDistanceGrid()->get(i, j, k);
-          dist = -glm::clamp(dist, -1.0f, 0.0f);
-          tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 0.0 : 0.0);
-          tex3D.set(i, j, k, 1, dist*0.3f);
+          float solid = newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0;
+          dist = (glm::clamp(dist + solid, -1.0f, 1.0f)+1)/2;
+
+          tex3D.set(i,j,k, 0, solid);
+          tex3D.set(i, j, k, 1, 0.0f); // not used
           tex3D.set(i, j, k, 2, dist);
           tex3D.set(i, j, k, 3, 1.0f);
 
@@ -316,12 +321,10 @@ int main( void ) {
     GLuint volumeTextureLocation = glGetUniformLocation(rayCasterProg, "volumeTexture");
     glUniform1i(volumeTextureLocation, 1);
 
-
-
     glEnableVertexAttribArray(0);
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(0);
-    
+
     //Get the uniformlocation of the texture from the shader.
     //    GLuint textureLocation = glGetUniformLocation(prog, "myFloatTex");
     //Use GL_TEXTURE0 as a textureposition for the texture.
@@ -335,10 +338,14 @@ int main( void ) {
     //glDrawArrays(GL_TRIANGLE_STRIP, 0, 6); // 3 indices starting at 0 -> 1 triangle
     //    glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
 
-    
+
     //    glDisableVertexAttribArray(0);
+    //<<<<<<< HEAD
     //    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer 
     FBO::deactivate();
+    /*=======
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer
+    >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
     glfwPollEvents();
     glfwSwapBuffers(window);
     double currentTime = glfwGetTime();
@@ -365,4 +372,4 @@ int main( void ) {
   glDeleteVertexArrays(1, &VertexArrayID);
   exit(EXIT_SUCCESS);
 }
-// 
+//

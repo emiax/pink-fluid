@@ -20,6 +20,28 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanc
   initializeDistanceGrid(sdf);
   updateCellTypes();
   targetVolume = currentVolume;
+  // std::cout << "targetVolume = " << targetVolume << std::endl;
+}
+
+LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFunc sdf, std::function<CellType (unsigned int i, unsigned int j, unsigned int k)> ctg){
+  this->w = w;
+  this->h = h;
+  this->d = d;
+
+
+  doneGrid = new Grid<bool>(w, h, d);
+  distanceGrid = new OrdinalGrid<float>(w, h, d);
+  cellTypeGrid = new Grid<CellType>(w, h, d);
+  this->initSDF = new SignedDistanceFunction(sdf);
+
+  gridHeap = new GridHeap(w,h,d, distanceGrid);
+  closestPointGrid = new Grid<glm::vec3>(w, h, d);
+
+  cellTypeGrid->setForEach(ctg);
+  initializeDistanceGrid(*initSDF);
+  updateCellTypes();
+  targetVolume = currentVolume;
+  // std::cout << "targetVolume = " << targetVolume << std::endl;
 }
 
 
@@ -39,8 +61,6 @@ void LevelSet::reinitialize() {
   fastMarch();
   updateCellTypes();
   clampInfiniteCells();
-  // std::cout << "magicPeople = " << targetVolume << std::endl;
-  // std::cout << "voodooPeople = " << currentVolume << std::endl;
 }
 
 void LevelSet::updateInterfaceNeighbors(){
@@ -93,11 +113,11 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsig
   float up = distanceGrid->clampGet(i, j, k-1);
 
   int currentCellSign = sgn(current);
-  
+
   float dist = INF;
   glm::vec3 closestPoint(i, j, k);
 
-  
+
   if (sgn(east) != currentCellSign) {
     float distCandidate = - current / (east - current);
     if (distCandidate < dist) {
@@ -140,7 +160,7 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsig
       closestPoint = glm::vec3(i, j, k - dist);
     }
   }
-  
+
   if (dist != INF) {
     closestPointGrid->set(i, j, k, closestPoint);
   }
@@ -176,7 +196,7 @@ void LevelSet::updateFromCell(GridCoordinate from,
   float d = distanceGrid->get(xTo, yTo, zTo);
   glm::vec3 pointCandidate = closestPointGrid->get(xFrom, yFrom, zFrom);
   float dCandidate = glm::distance(pointCandidate, glm::vec3(xTo, yTo, zTo));
-  
+
   if (dCandidate < glm::abs(d)) {
     distanceGrid->set(xTo, yTo, zTo, dCandidate*sgn(d));
     closestPointGrid->set(xTo, yTo, zTo, pointCandidate);
@@ -208,18 +228,34 @@ void LevelSet::initializeDistanceGrid(SignedDistanceFunction sdf) {
 }
 
 void LevelSet::updateCellTypes() {
-  unsigned int totalFluidCells = 0;
   cellTypeGrid->setForEach([&](unsigned int i, unsigned int j, unsigned int k){
-      if(cellTypeGrid->get(i, j, k) != CellType::SOLID ) {
-        if(distanceGrid->get(i, j, k) > 0) {
-          return CellType::EMPTY;
-        }
-        ++totalFluidCells;
-        return CellType::FLUID;
-      } else {
-        return CellType::SOLID;
+    if(cellTypeGrid->get(i, j, k) != CellType::SOLID ) {
+      if(distanceGrid->get(i, j, k) > 0) {
+        return CellType::EMPTY;
       }
-    });
+      return CellType::FLUID;
+    } else {
+      return CellType::SOLID;
+    }
+  });
+
+  // cell type update done - update current volume
+  updateCurrentVolume();
+}
+
+void LevelSet::updateCurrentVolume() {
+  unsigned int totalFluidCells = 0;
+
+  for(unsigned k = 0; k < d; ++k) {
+    for(unsigned j = 0; j < h; ++j) {
+      for(unsigned i = 0; i < w; ++i) {
+        if(cellTypeGrid->get(i, j, k) == CellType::FLUID) {
+          ++totalFluidCells; 
+        }
+      }
+    }
+  }
+
   currentVolume = (float)totalFluidCells / (float)(w*h);
 }
 

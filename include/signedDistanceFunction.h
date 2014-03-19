@@ -1,10 +1,11 @@
 #pragma once
 #include <functional>
 
+typedef std::function<float(const unsigned int &i, const unsigned int &j, const unsigned int &k)> SignedDistFunc;
+
 class SignedDistanceFunction {
 public:
-  
-  typedef std::function<float(const unsigned int &i, const unsigned int &j, const unsigned int &k)> SignedDistFunc;
+
 
   SignedDistanceFunction(SignedDistFunc f) : sdf(f) {};
   ~SignedDistanceFunction() {};
@@ -16,7 +17,7 @@ public:
   float operator()(const unsigned int &i, const unsigned int &j, const unsigned int &k) {
     return sdf(i, j, k);
   };
-  
+
 private:
   SignedDistFunc sdf;
 

@@ -209,15 +209,15 @@ public:
    * @param p, A vector to interpolate from
    */
 
-  T getLerp(glm::vec3 p) const{
+  inline T getLerp(glm::vec3 p) const{
     return getLerp(p.x, p.y, p.z);
   }
 
-  T getCrerp(glm::vec3 p) const{
+  inline T getCrerp(glm::vec3 p) const{
     return getCrerp(p.x, p.y, p.z);
   }
 
-  T getInterpolated(float x, float y, float z) const {
+  inline T getInterpolated(float x, float y, float z) const {
     return getLerp(x, y, z);
   }
 
