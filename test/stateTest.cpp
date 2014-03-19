@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+/*#include <gtest/gtest.h>
 #include <state.h>
 
 class StateTest : public ::testing::Test{
@@ -14,3 +14,4 @@ protected:
 };
 
 TEST_F(StateTest, instantiateAndDelete) {}
+*/

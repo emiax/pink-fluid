@@ -11,9 +11,9 @@ public:
 
     glBindTexture(GL_TEXTURE_3D, textureID);
     glPixelStorei(GL_UNPACK_ALIGNMENT,1);	
-    data = new GLfloat[h*w*nChannels];
-    for (unsigned int i = 0; i < h; ++i) {
-      for (unsigned int j = 0; j < w; ++j){
+    data = new GLfloat[h*w*d*nChannels];
+    for (unsigned int i = 0; i < w; ++i) {
+      for (unsigned int j = 0; j < h; ++j){
         for (unsigned int k = 0; k < d; ++k){
           data[indexTranslation(i,j,k,0)] = 0.0f;
           data[indexTranslation(i,j,k,1)] = 0.0f;
@@ -25,6 +25,10 @@ public:
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, w, h, d, 0, GL_RGBA, GL_FLOAT, data);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
   }
   ~Texture3D(){
     glDeleteTextures(1, &textureID);

@@ -3,10 +3,10 @@
 #include <ordinalGrid.h>
 #include <util.h>
 struct VelocityGrid{
-  VelocityGrid(unsigned int w, unsigned int h);
+  VelocityGrid(unsigned int w, unsigned int h, unsigned int d);
   ~VelocityGrid();
 
-  glm::vec2 getCell(unsigned int i, unsigned int j) const;
-  glm::vec2 getLerp(glm::vec2 p) const;
-  OrdinalGrid<float> *u, *v; 
+  glm::vec3 getCell(unsigned int i, unsigned int j, unsigned int k) const;
+  glm::vec3 getLerp(glm::vec3 p) const;
+  OrdinalGrid<float> *u, *v, *w; 
 };

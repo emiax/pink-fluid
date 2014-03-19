@@ -24,13 +24,11 @@ public:
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
   };
 
-
   ~FBO() {
     glDeleteFramebuffers(1, &framebufferId);
     delete texture;
   };
 
-  
   
   void activate() {
     glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
@@ -46,20 +44,18 @@ public:
     return framebufferId;
   }
 
+  static void deactivateFramebuffers() {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  };
+
+
   Texture2D const *const getTexture() const {
     return texture;
   };
 
-  
   void download() {
     texture->download();
   }
-
-
-  GLenum getTextureUnit() {
-    return texUnit;
-  }
-
 
 private:
   GLuint w, h;

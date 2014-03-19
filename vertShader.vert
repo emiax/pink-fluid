@@ -1,11 +1,21 @@
 #version 400 core
 
 layout(location = 0) in vec3 inputPosition;
-layout(location = 1) in vec2 texCoord;
+uniform mat4 mvMatrix;
 uniform float time;
+out vec3 position;
 
-out vec2 fragPosition;
 void main(void) {
-  fragPosition = texCoord;
-  gl_Position = vec4(inputPosition,1);
+
+
+  vec4 column0 = vec4(1.0, 0.0, 0.0, 0.0);
+  vec4 column1 = vec4(0.0, 1.0, 0.0, 0.0);
+  vec4 column2 = vec4(0.0, 0.0, 1.0, 1.0);
+  vec4 column3 = vec4(0.0, 0.0, 0.0, 0.0);
+  mat4 pMatrix = mat4(column0, column1, column2, column3);
+  
+  position = inputPosition;
+  gl_Position = pMatrix * mvMatrix * vec4(inputPosition, 1.0);
+  // BEWARE: BESTORP STYLE ORTHOGONAL PROJECTION
+  //  gl_Position.z = 0.0;
 }
