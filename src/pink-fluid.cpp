@@ -84,9 +84,7 @@ int main( void ) {
   prevState->setVelocityGrid(velocities);
 
 
-  /**
-   * Init Level set object
-   */
+  // init level set
   LevelSet *ls = factory::levelSet::ball(w,h,d);
   prevState->setLevelSet(ls);
   newState->setLevelSet(ls);
@@ -135,7 +133,7 @@ int main( void ) {
     3, 5, 7
   };
 
-  //Create us some buffers
+  //Create vertex buffer
   GLuint vertexbuffer;
   glGenBuffers(1, &vertexbuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -158,36 +156,12 @@ int main( void ) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
 
   // Create framebuffer
-  /*
-  GLuint framebuffer;
-  glGenFramebuffers(1, &framebuffer);
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-  GLuint backfaceTextureId;
-  glGenTextures(1, &backfaceTextureId);
-  glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-  >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
-
   FBO *framebuffer = new FBO(width, height);
 
   GLuint volumeTextureId;
   glGenTextures(1, &volumeTextureId);
   glBindTexture(GL_TEXTURE_3D, volumeTextureId);
 
-  /*<<<<<<< HEAD
-=======
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backfaceTextureId, 0);
-
-  // fail check
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    std::cout << "failed to init FBO" << std::endl;
-  } else {
-    std::cout << "successfully initialized FBO" << std::endl;
-  }
-
-
-  >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
   //Object which encapsulates a texture + The destruction of a texture.
   Texture3D tex3D(w, h, d);
   double lastTime = glfwGetTime();
@@ -195,21 +169,11 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
-  //<<<<<<< HEAD
   glfwSwapInterval(1);
   int i = 0;
   do{
     framebuffer->activate();
-    /*=======
-  glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  glfwSwapInterval(1);
-  int i = 0;
-  do{
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // bind the framebuffer
-    >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
-
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     // common for both render passes.
     sim.step(deltaT);
 
@@ -217,12 +181,8 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
-    /*<<<<<<< HEAD
-    matrix = glm::rotate(matrix, (float) i*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
-    =======*/
     matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    //    matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-    //>>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048
+    // matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();
@@ -240,8 +200,6 @@ int main( void ) {
     glEnableVertexAttribArray(0);
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(0);
-
-
 
     // Do the ray casting.
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
@@ -267,12 +225,10 @@ int main( void ) {
     GLuint textureLocation = glGetUniformLocation(rayCasterProg, "backfaceTexture");
     glUniform1i(textureLocation, 0);
 
-
-
+    // ping pong states
     std::swap(prevState, newState);
-    // Set the x,y positions in the texture, in order to visualize the velocity field.
-    // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
-    // corresponding cell-value instead of the edge velocities.
+
+    // copy desired quantities to texture
     for(unsigned int k=0;k<d;++k) {
       for(unsigned int j = 0; j < h; ++j){
         for(unsigned int i=0;i<w;++i) {
@@ -315,9 +271,7 @@ int main( void ) {
       }
     }
 
-
-    //    glActiveTexture(GL_TEXTURE1);
-    //glBindTexture(GL_TEXTURE_3D, volumeTextureId);
+    // activate and upload texture to gpu
     tex3D(GL_TEXTURE1);
     GLuint volumeTextureLocation = glGetUniformLocation(rayCasterProg, "volumeTexture");
     glUniform1i(volumeTextureLocation, 1);
@@ -326,27 +280,8 @@ int main( void ) {
     glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(0);
 
-    //Get the uniformlocation of the texture from the shader.
-    //    GLuint textureLocation = glGetUniformLocation(prog, "myFloatTex");
-    //Use GL_TEXTURE0 as a textureposition for the texture.
-    //tex2(GDgL_TEXTURE0);
-    //Set the uniform so that the uniform maps 0 -> GL_TEXTURE0
-    //    glUniform1i(textureLocation, 0);
-
-    //glEnableVertexAttribArray(0);
-    //    glEnableVertexAttribArray(1);
-
-    //glDrawArrays(GL_TRIANGLE_STRIP, 0, 6); // 3 indices starting at 0 -> 1 triangle
-    //    glDrawElements(GL_TRIANGLES, 12*3, GL_UNSIGNED_INT, 0);
-
-
-    //    glDisableVertexAttribArray(0);
-    //<<<<<<< HEAD
-    //    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer 
     FBO::deactivate();
-    /*=======
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer
-    >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
+
     glfwPollEvents();
     glfwSwapBuffers(window);
     double currentTime = glfwGetTime();
@@ -362,14 +297,14 @@ int main( void ) {
     i++;
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
-    std::cout << "Cleaning up!" << std::endl;
+
+  std::cout << "Cleaning up!" << std::endl;
+  
   // Close OpenGL window and terminate GLFW
   glfwDestroyWindow(window);
   glfwTerminate();
   glDeleteBuffers(1, &vertexbuffer);
-  //  glDeleteBuffers(1, &uvbuffer);
 
   glDeleteVertexArrays(1, &VertexArrayID);
   exit(EXIT_SUCCESS);
 }
-//
