@@ -31,6 +31,7 @@
 #include <common/Shader.h>
 #include <common/Texture2D.h>
 #include <common/Texture3D.h>
+#include <common/FBO.h>
 #include <factories/levelSetFactories.h>
 #include <ordinalGrid.h>
 #include <state.h>
@@ -75,26 +76,25 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 24, h = 24, d = 24;
-  State prevState(w, h, d);
-  State newState(w, h, d);
+  unsigned int w = 16, h = 16, d = 16;
+  State *prevState = new State(w, h, d);
+  State *newState = new State(w, h, d);
 
   VelocityGrid* velocities = new VelocityGrid(w, h, d);
-  prevState.setVelocityGrid(velocities);
-
+  prevState->setVelocityGrid(velocities);
 
 
   /**
    * Init Level set object
    */
   LevelSet *ls = factory::levelSet::ball(w,h,d);
-  prevState.setLevelSet(ls);
-  newState.setLevelSet(ls);
+  prevState->setLevelSet(ls);
+  newState->setLevelSet(ls);
 
   delete ls;
 
   // init simulator
-  Simulator sim(&prevState, &newState, 0.1f);
+  Simulator sim(prevState, newState, 0.1f);
 
   // Dark black background
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -158,6 +158,7 @@ int main( void ) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
 
   // Create framebuffer
+  /*
   GLuint framebuffer;
   glGenFramebuffers(1, &framebuffer);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -166,14 +167,16 @@ int main( void ) {
   glGenTextures(1, &backfaceTextureId);
   glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  FBO *framebuffer = new FBO(width, height);
 
   GLuint volumeTextureId;
   glGenTextures(1, &volumeTextureId);
   glBindTexture(GL_TEXTURE_3D, volumeTextureId);
 
+  /*<<<<<<< HEAD
+=======
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backfaceTextureId, 0);
 
   // fail check
@@ -184,6 +187,7 @@ int main( void ) {
   }
 
 
+  >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
   //Object which encapsulates a texture + The destruction of a texture.
   Texture3D tex3D(w, h, d);
   double lastTime = glfwGetTime();
@@ -191,12 +195,19 @@ int main( void ) {
 
   float deltaT = 0.1; //First time step
 
+  //<<<<<<< HEAD
+  glfwSwapInterval(1);
+  int i = 0;
+  do{
+    framebuffer->activate();
+    /*=======
   glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glfwSwapInterval(1);
   int i = 0;
   do{
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // bind the framebuffer
+    >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
 
     //glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the screen
     // common for both render passes.
@@ -206,8 +217,12 @@ int main( void ) {
 
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
+    /*<<<<<<< HEAD
+    matrix = glm::rotate(matrix, (float) i*0.1f, glm::vec3(0.0f, 1.0f, 0.0f));
+    =======*/
     matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    //    matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    //>>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048
 
     // Render back face of the cube.
     colorCubeProg();
@@ -247,11 +262,14 @@ int main( void ) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, backfaceTextureId);
+    glBindTexture(GL_TEXTURE_2D, *(framebuffer->getTexture()));
+
     GLuint textureLocation = glGetUniformLocation(rayCasterProg, "backfaceTexture");
     glUniform1i(textureLocation, 0);
 
 
+
+    std::swap(prevState, newState);
     // Set the x,y positions in the texture, in order to visualize the velocity field.
     // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
     // corresponding cell-value instead of the edge velocities.
@@ -279,8 +297,8 @@ int main( void ) {
           // tex3D.set(i,j,k, 3, 1.0f);
 
           //signed dist
-          float dist = newState.getSignedDistanceGrid()->get(i, j, k);
-          float solid = newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0;
+          float dist = newState->getSignedDistanceGrid()->get(i, j, k);
+          float solid = newState->getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0;
           dist = (glm::clamp(dist + solid, -1.0f, 1.0f)+1)/2;
 
           tex3D.set(i,j,k, 0, solid);
@@ -323,7 +341,12 @@ int main( void ) {
 
 
     //    glDisableVertexAttribArray(0);
+    //<<<<<<< HEAD
+    //    glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer 
+    FBO::deactivate();
+    /*=======
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // bind the framebuffer
+    >>>>>>> 6e92c51906a5a1cb6f4187faefb1d5bc47f8a048*/
     glfwPollEvents();
     glfwSwapBuffers(window);
     double currentTime = glfwGetTime();
@@ -337,7 +360,6 @@ int main( void ) {
       lastTime += 1.0;
     }
     i++;
-    // std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
     std::cout << "Cleaning up!" << std::endl;
