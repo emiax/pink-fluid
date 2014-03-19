@@ -10,7 +10,7 @@
 #include <jacobiIteration.h>
 #include <micSolver.h>
 
-Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
+Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale) {
 
   // grid dims must be equal
   assert(sf->getW() == st->getW());
@@ -52,7 +52,7 @@ void Simulator::step(float dt) {
 
   advect(stateFrom, stateTo, dt);
   applyGravity(stateTo, gravity, dt);
-   stateTo->levelSet->updateCellTypes();
+  stateTo->levelSet->updateCellTypes();
 
   calculateNegativeDivergence(stateTo, divergenceGrid);
   pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
