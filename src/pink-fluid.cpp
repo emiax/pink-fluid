@@ -77,25 +77,24 @@ int main( void ) {
 
   //Set up the initial state.
   unsigned int w = 16, h = 16, d = 16;
-  State prevState(w, h, d);
-  State newState(w, h, d);
+  State *prevState = new State(w, h, d);
+  State *newState = new State(w, h, d);
 
   VelocityGrid* velocities = new VelocityGrid(w, h, d);
-  prevState.setVelocityGrid(velocities);
-
+  prevState->setVelocityGrid(velocities);
 
 
   /**
    * Init Level set object
    */
   LevelSet *ls = factory::levelSet::ball(w,h,d);
-  prevState.setLevelSet(ls);
-  newState.setLevelSet(ls);
+  prevState->setLevelSet(ls);
+  newState->setLevelSet(ls);
 
   delete ls;
 
   // init simulator
-  Simulator sim(&prevState, &newState, 0.1f);
+  Simulator sim(prevState, newState, 0.1f);
 
   // Dark black background
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -269,6 +268,8 @@ int main( void ) {
     glUniform1i(textureLocation, 0);
 
 
+
+    std::swap(prevState, newState);
     // Set the x,y positions in the texture, in order to visualize the velocity field.
     // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
     // corresponding cell-value instead of the edge velocities.
@@ -296,8 +297,8 @@ int main( void ) {
           // tex3D.set(i,j,k, 3, 1.0f);
 
           //signed dist
-          float dist = newState.getSignedDistanceGrid()->get(i, j, k);
-          float solid = newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0;
+          float dist = newState->getSignedDistanceGrid()->get(i, j, k);
+          float solid = newState->getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0;
           dist = (glm::clamp(dist + solid, -1.0f, 1.0f)+1)/2;
 
           tex3D.set(i,j,k, 0, solid);
@@ -359,7 +360,6 @@ int main( void ) {
       lastTime += 1.0;
     }
     i++;
-    std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
     std::cout << "Cleaning up!" << std::endl;
