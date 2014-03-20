@@ -85,7 +85,7 @@ int main( void ) {
 
 
   // init level set
-  LevelSet *ls = factory::levelSet::ball(w,h,d);
+  LevelSet *ls = factory::levelSet::twoPillars(w,h,d);
   prevState->setLevelSet(ls);
   newState->setLevelSet(ls);
 
@@ -182,7 +182,7 @@ int main( void ) {
     glm::mat4 matrix = glm::mat4(1.0f);
     matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
     matrix = glm::rotate(matrix, -3.1415926535f/4.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    // matrix = glm::rotate(matrix, -3.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+    matrix = glm::rotate(matrix, 0.1415926535f/4.0f*(float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
 
     // Render back face of the cube.
     colorCubeProg();

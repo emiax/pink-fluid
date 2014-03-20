@@ -26,8 +26,8 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   divergenceGrid = new OrdinalGrid<float>(w, h, d);
   pressureGridFrom = new OrdinalGrid<double>(w, h, d);
   pressureGridTo = new OrdinalGrid<double>(w, h, d);
-  pressureSolver = new JacobiIteration(100);
-  // pressureSolver = new MICSolver(w*h*d);
+  // pressureSolver = new JacobiIteration(100);
+  pressureSolver = new MICSolver(w*h*d);
 }
 
 /**
@@ -45,7 +45,7 @@ Simulator::~Simulator() {
  */
 void Simulator::step(float dt) {
 
-  glm::vec3 gravity = glm::vec3(0, -1, 0);
+  glm::vec3 gravity = glm::vec3(0, -0.5, 0);
 
   stateFrom->levelSet->reinitialize();
   extrapolateVelocity(stateFrom, stateFrom);
