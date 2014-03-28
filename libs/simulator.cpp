@@ -278,7 +278,7 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
       return t*uRight + (1.0f - t)*uLeft;
 
     });
-
+  
 
   // v velocities
   toVelocityGrid->v->setForEach([&](int i, int j, int k) {
@@ -303,7 +303,7 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
       float t = dUp/(dUp + dDown);
       return t*vDown + (1.0f - t)*vUp;
     });
-
+    
   // w velocities
   toVelocityGrid->w->setForEach([&](int i, int j, int k) {
       glm::vec3 currentPoint = glm::vec3(i, j, k - 0.5);
@@ -322,11 +322,11 @@ void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
       float dBack = glm::distance(currentPoint, backClosestPoint);
 
       float wFront = fromVelocityGrid->v->getNearest(frontClosestPoint.x, frontClosestPoint.y, frontClosestPoint.z + 0.5);
-      float wBack = fromVelocityGrid->v->getNearest(backClosestPoint.x, backClosestPoint.y + 0.5, backClosestPoint.z + 0.5);
+      float wBack = fromVelocityGrid->v->getNearest(backClosestPoint.x, backClosestPoint.y, backClosestPoint.z + 0.5);
 
       float t = dFront/(dFront + dBack);
       return t*wBack + (1.0f - t)*wFront;
-    });
+      });
 }
 
 

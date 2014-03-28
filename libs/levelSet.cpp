@@ -10,6 +10,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanc
 
   doneGrid = new Grid<bool>(w, h, d);
   distanceGrid = new OrdinalGrid<float>(w, h, d);
+  oldDistanceGrid = new OrdinalGrid<float>(w, h, d);
   cellTypeGrid = new Grid<CellType>(w, h, d);
   this->initSDF = new SignedDistanceFunction(sdf.getFunction());
 
@@ -31,6 +32,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFun
 
   doneGrid = new Grid<bool>(w, h, d);
   distanceGrid = new OrdinalGrid<float>(w, h, d);
+  oldDistanceGrid = new OrdinalGrid<float>(w, h, d);
   cellTypeGrid = new Grid<CellType>(w, h, d);
   this->initSDF = new SignedDistanceFunction(sdf);
 
@@ -56,6 +58,7 @@ LevelSet::~LevelSet() {
 
 
 void LevelSet::reinitialize() {
+  std::swap(oldDistanceGrid, distanceGrid);
   gridHeap->clear();
   updateInterfaceNeighbors();
   fastMarch();
@@ -64,17 +67,14 @@ void LevelSet::reinitialize() {
 }
 
 void LevelSet::updateInterfaceNeighbors(){
-
   for(unsigned k = 0; k < d; ++k) {
     for(unsigned j = 0; j < h; ++j) {
       for(unsigned i = 0; i < w; ++i) {
-        //Currently only creates the levelset-based on fluid
-        CellType currentCellType = cellTypeGrid->get(i,j,k);
         updateInterfaceNeighborCell(i, j, k);
       }
     }
   }
-
+  
   for(unsigned k = 0; k < d; ++k) {
     for(unsigned j = 0; j < h; ++j) {
       for(unsigned i = 0; i < w; ++i) {
@@ -104,13 +104,13 @@ void LevelSet::clampInfiniteCells() {
 
 
 void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsigned int k) {
-  float current = distanceGrid->get(i, j, k);
-  float east = distanceGrid->clampGet(i+1, j, k);
-  float west = distanceGrid->clampGet(i-1, j, k);
-  float north = distanceGrid->clampGet(i, j+1, k);
-  float south = distanceGrid->clampGet(i, j-1, k);
-  float down = distanceGrid->clampGet(i, j, k+1);
-  float up = distanceGrid->clampGet(i, j, k-1);
+  float current = oldDistanceGrid->get(i, j, k);
+  float east = oldDistanceGrid->clampGet(i+1, j, k);
+  float west = oldDistanceGrid->clampGet(i-1, j, k);
+  float north = oldDistanceGrid->clampGet(i, j+1, k);
+  float south = oldDistanceGrid->clampGet(i, j-1, k);
+  float down = oldDistanceGrid->clampGet(i, j, k+1);
+  float up = oldDistanceGrid->clampGet(i, j, k-1);
 
   int currentCellSign = sgn(current);
 
@@ -166,6 +166,7 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsig
   }
 
   distanceGrid->set(i, j, k, dist*currentCellSign);
+  
 }
 
 void LevelSet::updateNeighborsFrom(GridCoordinate from) {

@@ -58,6 +58,7 @@ private:
   Grid<glm::vec3> *closestPointGrid;
   GridHeap *gridHeap;
   unsigned int heapEnd;
+  OrdinalGrid<float> *oldDistanceGrid;
 
   int w, h, d;
   float targetVolume, currentVolume;

@@ -76,7 +76,7 @@ int main( void ) {
   glBindVertexArray(VertexArrayID);
 
   //Set up the initial state.
-  unsigned int w = 16, h = 16, d = 16;
+  unsigned int w = 17, h = 17, d = 17;
   State *prevState = new State(w, h, d);
   State *newState = new State(w, h, d);
 
@@ -85,7 +85,7 @@ int main( void ) {
 
 
   // init level set
-  LevelSet *ls = factory::levelSet::twoPillars(w,h,d);
+  LevelSet *ls = factory::levelSet::fourthContainerBox(w,h,d);
   prevState->setLevelSet(ls);
   newState->setLevelSet(ls);
 

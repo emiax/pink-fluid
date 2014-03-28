@@ -5,7 +5,7 @@ namespace factory{
     LevelSet* ball(unsigned int w, unsigned int h, unsigned int d){
       return new LevelSet(w, h, d,
         [=](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
-          // distance function to circle with radius w/3, center in (w/2, h/2, d/2)
+          // distance function to sphere with radius w/3, center in (w/2, h/2, d/2)
           const float x = (float)i - (float)w/2.0;
           const float y = (float)j - (float)h/2.0;
           const float z = (float)k - (float)d/2.0;
@@ -35,6 +35,7 @@ namespace factory{
           return bt;
         });
     }
+
 
     LevelSet* halfContainerBox(unsigned int w, unsigned int h, unsigned int d){
       return new LevelSet(w, h, d,
