@@ -1,4 +1,5 @@
 #pragma once
+
 template<typename T>
 class OrdinalGrid;
 template<typename T>
@@ -6,8 +7,11 @@ class Grid;
 class State;
 struct PressureSolver;
 struct VelocityGrid;
+class ParticleTracker;
+
 #include <glm/glm.hpp>
 #include <util.h>
+
 class Simulator{
 public:
   Simulator(State *sf, State *st, float scale = 1.0f);
@@ -36,6 +40,7 @@ public:
   float getDeltaT();
 
 private:
+  void initializeExtrapolation(State *stateFrom);
   unsigned int w,h;
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
@@ -43,4 +48,7 @@ private:
   PressureSolver *pressureSolver, *jacobiSolver;
   float deltaT;
   float gridSize;
+
+  static constexpr unsigned int PARTICLES_PER_CELL = 16;
+  ParticleTracker *pTracker;
 };

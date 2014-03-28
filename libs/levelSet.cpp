@@ -9,6 +9,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, G
   
   doneGrid = new OrdinalGrid<bool>(w,h);
   distanceGrid = new OrdinalGrid<float>(w,h);
+  oldDistanceGrid = new OrdinalGrid<float>(w,h);
   cellTypeGrid = new Grid<CellType>(w, h);
   this->initSDF = new SignedDistanceFunction(sdf.getFunction());
 
@@ -23,20 +24,32 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, SignedDistanceFunction sdf, G
 
 void LevelSet::reinitialize() {
   gridHeap->clear();
+  std::swap(distanceGrid, oldDistanceGrid);
+
   updateInterfaceNeighbors();
   fastMarch();
   updateCellTypes();
   clampInfiniteCells();
-  // std::cout << "magicPeople = " << targetVolume << std::endl;
-  // std::cout << "voodooPeople = " << currentVolume << std::endl;
+
+  // for (unsigned j = 0; j < h; ++j) {
+  //   for (unsigned i = 0; i < w; ++i) {
+  //       pTracker->activeCells->set(i, j, fabs(distanceGrid->get(i, j)) < 3.0f);
+  //   }
+  // }
+
+  // for(unsigned j = 0; j < h; ++j) {
+  //   for(unsigned i = 0; i < w; ++i) {
+  //     std::cout << (pTracker->activeCells->get(i, j) ? "x" : " ");
+  //   }
+  //   std::cout << std::endl;
+  // }
 }
 
 void LevelSet::updateInterfaceNeighbors(){
 
+  // grid aligned level set
   for(unsigned j = 0; j < h; ++j) {
     for(unsigned i = 0; i < w; ++i) {
-      //Currently only creates the levelset-based on fluid
-      CellType currentCellType = cellTypeGrid->get(i,j);
       updateInterfaceNeighborCell(i, j);
     }
   }
@@ -48,6 +61,7 @@ void LevelSet::updateInterfaceNeighbors(){
       }
     }
   }
+
 }
 
 
@@ -66,17 +80,16 @@ void LevelSet::clampInfiniteCells() {
 
 
 void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j) {
-  float current = distanceGrid->get(i,j);
-  float right = distanceGrid->clampGet(i+1,j);
-  float left = distanceGrid->clampGet(i-1,j);
-  float down = distanceGrid->clampGet(i,j+1);
-  float up = distanceGrid->clampGet(i,j-1);
+  float current = oldDistanceGrid->get(i,j);
+  float right = oldDistanceGrid->clampGet(i+1,j);
+  float left = oldDistanceGrid->clampGet(i-1,j);
+  float down = oldDistanceGrid->clampGet(i,j+1);
+  float up = oldDistanceGrid->clampGet(i,j-1);
   int currentCellSign = sgn(current);
   
   float d = INF;
   glm::vec2 closestPoint(i, j);
 
-  
   if (sgn(right) != currentCellSign) {
     float dCandidate = - current / (right - current);
     if (dCandidate < d) {
@@ -106,6 +119,7 @@ void LevelSet::updateInterfaceNeighborCell(unsigned int i, unsigned int j) {
     }
   }
 
+  // found interface neighbor
   if (d != INF) {
     closestPointGrid->set(i, j, closestPoint);
   }

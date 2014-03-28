@@ -6,6 +6,7 @@
 #include <grid.h>
 #include <signedDistanceFunction.h>
 #include <limits>
+
 class VelocityGrid;
 class GridHeap;
 
@@ -52,5 +53,6 @@ private:
   GridHeap *gridHeap;
   unsigned int heapEnd;
   int w, h;
+  OrdinalGrid<float> *oldDistanceGrid;
   float targetVolume, currentVolume;
 };

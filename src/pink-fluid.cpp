@@ -54,7 +54,7 @@ int main( void ) {
 
   init.glew();
 
-  // Dark blue background
+  // Dark background
   glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
   //Load in shaders
@@ -83,28 +83,27 @@ int main( void ) {
     0.0f, 1.0f,
     0.0f, 0.0f
   };
-  //Create us some buffers
+
+  // Create vertex buffer
   GLuint vertexbuffer;
   glGenBuffers(1, &vertexbuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
+  // Create uv buffer
   GLuint uvbuffer;
   glGenBuffers(1, &uvbuffer);
   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 50, h = 50;
-  State prevState(w, h);
-  State newState(w, h);
+  unsigned int w = 32, h = 32;
+  State *prevState = new State(w, h);
+  State *newState = new State(w, h);
 
   VelocityGrid* velocities = new VelocityGrid(w,h);
 
-
-  prevState.setVelocityGrid(velocities);
-
-
+  prevState->setVelocityGrid(velocities);
 
   /**
    * Init Level set object
@@ -113,9 +112,12 @@ int main( void ) {
   // define initial signed distance
   SignedDistanceFunction circleSD([&](const unsigned int &i, const unsigned int &j) {
       // distance function to circle with radius w/3, center in (w/2, h/2)
-      const float x = (float)i - (float)w/2.5;
-      const float y = (float)j - (float)h/2.5;
+      const float x = (float)i - (float)w/2;
+      const float y = (float)j - (float)h/2;
       return sqrt( x*x + y*y ) - (float)w/4;
+
+      // square 
+      // return (i > w/3 && i < 2*w/3 && j > h/3 && j < 2*h/3) ? -0.5 : 0.5;
     });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
@@ -138,11 +140,11 @@ int main( void ) {
   });
 
   LevelSet *ls = new LevelSet( w, h, circleSD, cellTypeGrid );
-  prevState.setLevelSet(ls);
-  newState.setLevelSet(ls);
+  prevState->setLevelSet(ls);
+  newState->setLevelSet(ls);
 
   // init simulator
-  Simulator sim(&prevState, &newState,0.1f);
+  Simulator sim(prevState, newState ,0.1f);
 
   //Object which encapsulates a texture + The destruction of a texture.
   Texture2D tex2D(w, h);
@@ -156,8 +158,10 @@ int main( void ) {
   glfwSwapInterval(1);
   int i = 0;
   do{
+    std::swap(prevState, newState);
 
     sim.step(deltaT);
+
     // deltaT = sim.getDeltaT();
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -171,12 +175,19 @@ int main( void ) {
     // Set the x,y positions in the texture, in order to visualize the velocity field.
     // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
     // corresponding cell-value instead of the edge velocities.
+    
+    for(unsigned int j = 0; j < h; ++j){
+      for(unsigned int i=0;i<w;++i) {
+        tex2D.set(i, j, 0, 0.0f);
+      }
+    }
+
     for(unsigned int j = 0; j < h; ++j){
       for(unsigned int i=0;i<w;++i) {
 
         // velocity
-        // tex2D.set(i,j,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j));
-        // tex2D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
+        // tex2D.set(i,j,0, 0.5 + 0.5*newState->getVelocityGrid()->u->get(i,j));
+        // tex2D.set(i,j,1, 0.5 + 0.5*newState->getVelocityGrid()->v->get(i,j));
         // tex2D.set(i,j,2, 0.5);
         // tex2D.set(i,j,3, 1.0f);
 
@@ -187,22 +198,33 @@ int main( void ) {
         //tex2D.set(i,j,3, 1.0f);
 
         // type
-        // tex2D.set(i,j,0, newState.getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
-        // tex2D.set(i,j,1, newState.getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
-        // tex2D.set(i,j,2, newState.getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
+        // tex2D.set(i,j,0, newState->getCellTypeGrid()->get(i,j) == CellType::EMPTY ? 1.0 : 0.0);
+        // tex2D.set(i,j,1, newState->getCellTypeGrid()->get(i,j) == CellType::SOLID ? 1.0 : 0.0);
+        // tex2D.set(i,j,2, newState->getCellTypeGrid()->get(i,j) == CellType::FLUID ? 1.0 : 0.0);
         // tex2D.set(i,j,3, 1.0f);
 
         //signed dist
-        tex2D.set(i,j,0, newState.getSignedDistanceGrid()->get(i,j));
-        tex2D.set(i,j,1, newState.getSignedDistanceGrid()->get(i,j));
+        tex2D.set(i,j,0, newState->getSignedDistanceGrid()->get(i,j));
+        tex2D.set(i,j,1, newState->getSignedDistanceGrid()->get(i,j));
         tex2D.set(i,j,2, 1.0f);
         tex2D.set(i,j,3, 1.0f);
 
-        //closest point
-        // tex2D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
-        // tex2D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
+        // closest point per cell
+        // tex2D.set(i, j, 0, (newState->getClosestPointGrid()->get(i,j).x/49 - 0.5)*2 + 0.5);
+        // tex2D.set(i, j, 1, (newState->getClosestPointGrid()->get(i,j).y/49 - 0.5)*2 + 0.5);
+        // tex2D.set(i, j, 2, 0.0f);
+        // tex2D.set(i, j, 3, 1.0f);
+
+        // contour
+        // tex2D.set(
+        //   round(newState->getClosestPointGrid()->get(i,j).x),
+        //   round(newState->getClosestPointGrid()->get(i,j).y),
+        //   0, 1.0f
+        // );
+
+        // tex2D.set(i,j,1, 0.0f);
         // tex2D.set(i,j,2, 0.0f);
-        // tex2D.set(i,j,3, 1.0f);
+        // tex2D.set(i, j, 3, 1.0f);
 
       }
     }

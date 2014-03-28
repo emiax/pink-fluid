@@ -104,6 +104,10 @@ class Grid {
       j >= 0 && j < h);
   }
 
+  inline bool isValid(GridCoordinate c) const{
+    return isValid(c.x, c.y);
+  }
+
 
   /**
    * Set value of the stored quantity.
