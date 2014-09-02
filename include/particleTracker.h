@@ -20,6 +20,8 @@ public:
   void reinitializeParticles(OrdinalGrid<float> const* distance);
   void advect(VelocityGrid const* velocities, float dt);
 
+  void correct(OrdinalGrid<float> *distance);
+
   std::vector<Particle*> const* const getParticles() const;
 
 private:
@@ -31,13 +33,15 @@ private:
   void resetParticleCount();
 
   static constexpr float MAX_RADUIS = 0.5f;
-  static constexpr float INTERFACE_OFFSET = 1.0f;
+  static constexpr float INTERFACE_OFFSET = 3.0f;
 
   unsigned particlesPerCell;
 
   unsigned w, h;
   std::vector<Particle*> *interfaceParticles;
   std::stack<Particle*> *deadParticles;
+  std::vector<Particle*> *escapedParticles;
+  Grid<float> *corrPlus, *corrMinus;
   Grid<unsigned> *particleCount;
 
   // skaren ha nåra vänner eller?!

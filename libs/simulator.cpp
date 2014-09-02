@@ -29,6 +29,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   pressureSolver = new MICSolver(w*h);
 
   pTracker = new ParticleTracker(w, h, PARTICLES_PER_CELL);
+  // pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
 }
 
 /**
@@ -48,12 +49,20 @@ void Simulator::step(float dt) {
 
   glm::vec2 gravity = glm::vec2(0, 1);
 
-  stateFrom->levelSet->reinitialize();
-  pTracker->reinitializeParticles(stateFrom->getSignedDistanceGrid());
   extrapolateVelocity(stateFrom, stateFrom);
-
   advect(stateFrom, stateTo, dt);
+
+  // PLS stack
+  // 1. evolution
   pTracker->advect(stateFrom->velocityGrid, dt);
+  // 2. particle correction
+  // pTracker->correct(stateTo->levelSet->distanceGrid);
+  // 3. reinit levelset
+  stateTo->levelSet->reinitialize();
+  // 4. recorrection
+  // pTracker->correct(stateTo->levelSet->distanceGrid);
+  // 5. Radii adjustment
+  pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
 
   stateTo->levelSet->updateCellTypes();
   applyGravity(stateTo, gravity, dt);

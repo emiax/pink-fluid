@@ -97,7 +97,7 @@ int main( void ) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
   //Set up the initial state.
-  unsigned int w = 32, h = 32;
+  unsigned int w = 31, h = 31;
   State *prevState = new State(w, h);
   State *newState = new State(w, h);
 
@@ -204,8 +204,8 @@ int main( void ) {
         // tex2D.set(i,j,3, 1.0f);
 
         //signed dist
-        tex2D.set(i,j,0, newState->getSignedDistanceGrid()->get(i,j));
-        tex2D.set(i,j,1, newState->getSignedDistanceGrid()->get(i,j));
+        tex2D.set(i,j,0, newState->getSignedDistanceGrid()->get(i,j)*5.0);
+        tex2D.set(i,j,1, -newState->getSignedDistanceGrid()->get(i,j)*5.0);
         tex2D.set(i,j,2, 1.0f);
         tex2D.set(i,j,3, 1.0f);
 
@@ -292,4 +292,3 @@ int main( void ) {
   glDeleteVertexArrays(1, &VertexArrayID);
   exit(EXIT_SUCCESS);
 }
-// 

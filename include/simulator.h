@@ -45,6 +45,7 @@ private:
   State *stateFrom, *stateTo;
   OrdinalGrid<float> *divergenceGrid;
   OrdinalGrid<double> *pressureGridFrom, *pressureGridTo;
+  OrdinalGrid<float> *levelSetCorrectionGrid;
   PressureSolver *pressureSolver, *jacobiSolver;
   float deltaT;
   float gridSize;
