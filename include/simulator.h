@@ -40,6 +40,9 @@ public:
   float calculateDeltaT(glm::vec2 maxV, glm::vec2 gravity);
   float getDeltaT();
 
+  ParticleTracker const* const getParticleTracker() const;
+  BubbleTracker const* const getBubbleTracker() const;
+
 private:
   void initializeExtrapolation(State *stateFrom);
   unsigned int w,h;

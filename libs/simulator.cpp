@@ -430,6 +430,18 @@ OrdinalGrid<float>* Simulator::getDivergenceGrid() {
   return divergenceGrid;
 }
 
+
+/**
+ *
+ */
+ParticleTracker const* const Simulator::getParticleTracker() const {
+  return pTracker;
+}
+
+BubbleTracker const* const Simulator::getBubbleTracker() const {
+  return bTracker;
+}
+
 /**
  * Find the maximum velocity present in the grid
  * @param  velocity velocity grid to sample from

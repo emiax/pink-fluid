@@ -34,8 +34,14 @@
 #include <levelSet.h>
 #include <stdlib.h>
 #include <time.h>
+#include <particle.h>
+#include <particleTracker.h>
+#include <bubbleTracker.h>
 
 int main( void ) {
+
+
+
   srand(time(NULL));
 
   //Create init object
@@ -59,6 +65,8 @@ int main( void ) {
 
   //Load in shaders
   static ShaderProgram prog("../vertShader.vert", "../fragShader.frag");
+  static ShaderProgram particleProg("../particleVertShader.vert", "../particleFragShader.frag");
+  static ShaderProgram bubbleProg("../particleVertShader.vert", "../particleFragShader.frag");
 
   GLuint VertexArrayID;
   glGenVertexArrays(1, &VertexArrayID);
@@ -84,6 +92,10 @@ int main( void ) {
     0.0f, 0.0f
   };
 
+  std::vector<GLfloat> g_particle_buffer_data;
+  std::vector<GLfloat> g_bubble_buffer_data;
+  
+
   // Create vertex buffer
   GLuint vertexbuffer;
   glGenBuffers(1, &vertexbuffer);
@@ -96,8 +108,19 @@ int main( void ) {
   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(g_uv_buffer_data), g_uv_buffer_data, GL_STATIC_DRAW);
 
+
+  // Create particle buffer
+  GLuint particleBuffer;
+  glGenBuffers(1, &particleBuffer);
+
+  // Create bubble buffer
+  GLuint bubbleBuffer;
+  glGenBuffers(1, &bubbleBuffer);
+  
+
   //Set up the initial state.
-  unsigned int w = 31, h = 31;
+
+  unsigned int w = 51, h = 51;
   State *prevState = new State(w, h);
   State *newState = new State(w, h);
 
@@ -154,6 +177,10 @@ int main( void ) {
   float deltaT = 0.1; //First time step
 
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  glEnable (GL_BLEND);
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
   glfwSwapInterval(1);
   int i = 0;
@@ -266,6 +293,93 @@ int main( void ) {
 
     glDisableVertexAttribArray(0);
     glDisableVertexAttribArray(1);
+
+
+    ////////////////// Start drawing particles //////////////////////
+    // Draw particles 
+    /*    std::vector<Particle> particles = sim.getParticleTracker()->getParticles();
+    g_particle_buffer_data.clear();
+    for (int i = 0; i < particles.size(); i++) {
+      Particle p = particles[i];
+      g_particle_buffer_data.push_back(p.position.x / w);
+      g_particle_buffer_data.push_back(p.position.y / h);
+      std::cout << (p.position.x / w) << ", " << (p.position.y / h) << std::endl;
+      g_particle_buffer_data.push_back(0.0);
+      g_particle_buffer_data.push_back(p.phi);
+    }
+    
+    
+
+    std::cout << g_particle_buffer_data.size() << std::endl;
+
+    glBindBuffer(GL_ARRAY_BUFFER, particleBuffer);    
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * g_particle_buffer_data.size(), &g_particle_buffer_data[0], GL_DYNAMIC_DRAW);
+
+
+
+    particleProg();
+    //    glPointSize(10.0);
+
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+                          0,                  //Location 0
+                          4,                  // size
+                          GL_FLOAT,           // type
+                          GL_FALSE,           // normalized?
+                          0,                  // stride
+                          (void*)0            // array buffer offset
+                          );
+    
+
+    glDrawArrays(GL_POINTS, 0, 4 * g_particle_buffer_data.size()); // 3 indices starting at 0 -> 1 triangle
+    glDisable(GL_PROGRAM_POINT_SIZE);*/
+    ////////////////// End drawing particles //////////////////////
+
+    ////////////////// Start drawing bubbles //////////////////////
+
+    // Draw bubbles
+    const std::vector<Bubble*> *bubbles = sim.getBubbleTracker()->getBubbles();
+    g_bubble_buffer_data.clear();
+    for (int i = 0; i < bubbles->size(); i++) {
+      Bubble b = *bubbles->at(i);
+      g_bubble_buffer_data.push_back(b.position.x / w);
+      g_bubble_buffer_data.push_back(b.position.y / h);
+      std::cout << (b.position.x / w) << ", " << (b.position.y / h) << std::endl;
+      g_bubble_buffer_data.push_back(0.0);
+      g_bubble_buffer_data.push_back(b.radius);
+    }
+    
+    
+
+    std::cout << g_bubble_buffer_data.size() << std::endl;
+
+    glBindBuffer(GL_ARRAY_BUFFER, bubbleBuffer);    
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * g_bubble_buffer_data.size(), &g_bubble_buffer_data[0], GL_DYNAMIC_DRAW);
+
+
+
+    bubbleProg();
+    //    glPointSize(10.0);
+
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+                          0,                  //Location 0
+                          4,                  // size
+                          GL_FLOAT,           // type
+                          GL_FALSE,           // normalized?
+                          0,                  // stride
+                          (void*)0            // array buffer offset
+                          );
+    
+
+    glDrawArrays(GL_POINTS, 0, 4 * g_bubble_buffer_data.size()); // 3 indices starting at 0 -> 1 triangle
+    glDisable(GL_PROGRAM_POINT_SIZE);
+    ////////////////// End drawing bubbles //////////////////////
+
+
+
 
     glfwPollEvents();
     glfwSwapBuffers(window);

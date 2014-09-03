@@ -87,18 +87,18 @@ void ParticleTracker::reinitializeParticles(OrdinalGrid<float> const* distance) 
     }
   }
 
-  // std::cout << "Particles: " << interfaceParticles->size() << std::endl;
-  // std::cout << "Dead: " << deadParticles->size() << std::endl;
+  //   std::cout << "Particles: " << interfaceParticles->size() << std::endl;
+//   std::cout << "Dead: " << deadParticles->size() << std::endl;
 
-  // for(unsigned j = 0; j < h; ++j) {
-  //   for(unsigned i = 0; i < w; ++i) {
-  //     std::cout << std::setw(3) << particleCount->get(i,j);
-  //   }
-  //   std::cout << std::endl;
-  // }
+   /*   for(unsigned j = 0; j < h; ++j) {
+     for(unsigned i = 0; i < w; ++i) {
+       std::cout << std::setw(3) << particleCount->get(i,j);
+     }
+     std::cout << std::endl;
+     }*/
   
-  // std::cout << std::endl;
-  // std::cin.get();
+  //   std::cout << std::endl;
+   //   std::cin.get();
 }
 
 void ParticleTracker::advect(VelocityGrid const* velocities, float dt) {
@@ -201,9 +201,20 @@ void ParticleTracker::correct(OrdinalGrid<float> *distance) {
   });
 }
 
-std::vector<Particle*> const *const ParticleTracker::getParticles() const {
-  return interfaceParticles;
+std::vector<Particle> ParticleTracker::getParticles() const {
+  std::vector<Particle> validParticles;
+  int nAliveParticles = interfaceParticles->size() - deadParticles->size();
+  validParticles.reserve(nAliveParticles);
+
+  for (int i = 0; i < interfaceParticles->size(); i++) {
+    Particle p = *interfaceParticles->at(i);
+    if (p.alive) {
+      validParticles.push_back(p);
+    }
+  }
+  return validParticles;
 }
+
 
 void ParticleTracker::insertParticle(glm::vec2 pos, float radius) {
   Particle *p;

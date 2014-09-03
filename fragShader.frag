@@ -2,7 +2,7 @@
 
 in vec2 fragPosition;
 uniform sampler2D myFloatTex;
-// Ouput data
+// Output data
 out vec4 color;
 
 void main()

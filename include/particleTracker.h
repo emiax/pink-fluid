@@ -21,11 +21,12 @@ public:
   void reinitializeParticles(OrdinalGrid<float> const* distance);
   void advect(VelocityGrid const* velocities, float dt);
 
+
   void feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distance, VelocityGrid const* velocities);
 
   void correct(OrdinalGrid<float> *distance);
 
-  std::vector<Particle*> const* const getParticles() const;
+  std::vector<Particle> getParticles() const;
 
 private:
 
