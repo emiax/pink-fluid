@@ -6,6 +6,7 @@
 #include <grid.h>
 #include <ordinalGrid.h>
 #include <velocityGrid.h>
+#include <bubbleTracker.h>
 #include <glm/ext.hpp>
 
 ParticleTracker::ParticleTracker(unsigned w, unsigned h, unsigned int ppc) {
@@ -86,18 +87,18 @@ void ParticleTracker::reinitializeParticles(OrdinalGrid<float> const* distance) 
     }
   }
 
-  std::cout << "Particles: " << interfaceParticles->size() << std::endl;
-  std::cout << "Dead: " << deadParticles->size() << std::endl;
+  // std::cout << "Particles: " << interfaceParticles->size() << std::endl;
+  // std::cout << "Dead: " << deadParticles->size() << std::endl;
 
-  for(unsigned j = 0; j < h; ++j) {
-    for(unsigned i = 0; i < w; ++i) {
-      std::cout << std::setw(3) << particleCount->get(i,j);
-    }
-    std::cout << std::endl;
-  }
+  // for(unsigned j = 0; j < h; ++j) {
+  //   for(unsigned i = 0; i < w; ++i) {
+  //     std::cout << std::setw(3) << particleCount->get(i,j);
+  //   }
+  //   std::cout << std::endl;
+  // }
   
-  std::cout << std::endl;
-  std::cin.get();
+  // std::cout << std::endl;
+  // std::cin.get();
 }
 
 void ParticleTracker::advect(VelocityGrid const* velocities, float dt) {
@@ -110,6 +111,28 @@ void ParticleTracker::advect(VelocityGrid const* velocities, float dt) {
       glm::vec2 midPos = p->position + dt/2 * v;
       glm::vec2 midV = velocities->getLerp(midPos);
       p->position = p->position + dt * midV;
+    }
+  }
+}
+
+void ParticleTracker::feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distance, VelocityGrid const* velocities) {
+  // check all particles
+  for (unsigned i = 0; i < interfaceParticles->size(); ++i) {
+    Particle* p = interfaceParticles->at(i);
+    if (!(p->alive)) {
+      continue;
+    }
+
+    glm::vec2 pos = p->position;
+    GridCoordinate cell = GridCoordinate(round(pos.x), round(pos.y));
+
+    float radius = fabs(p->phi);
+    float dist = distance->getLerp(pos.x, pos.y);
+    
+    // bubble if                  (air particle) (in water)  (not touching surface)
+    if (distance->isValid(cell) && p->phi > 0 && dist < 0 && fabs(dist) > radius) {
+      glm::vec2 velocity = velocities->getLerp(pos);
+      bt->spawnBubble(pos, radius, velocity);
     }
   }
 }
@@ -137,8 +160,8 @@ void ParticleTracker::correct(OrdinalGrid<float> *distance) {
     float radius = fabs(p->phi);
     float dist = distance->getLerp(pos.x, pos.y);
     
-    // if escaped
-    if (distance->isValid(cell) && p->phi*dist < 0 && radius < fabs(dist)) {
+    // if escaped                  (different signs)  (particle does not touch surface)
+    if (distance->isValid(cell) && p->phi*dist < 0 && fabs(dist) > radius) {
       GridCoordinate leftUp = GridCoordinate(floor(pos.x), floor(pos.y));
       GridCoordinate rightUp = GridCoordinate(leftUp.x + 1, leftUp.y);
       GridCoordinate leftDown = GridCoordinate(leftUp.x, leftUp.y + 1);

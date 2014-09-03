@@ -11,6 +11,7 @@
 #include <micSolver.h>
 #include <particle.h>
 #include <particleTracker.h>
+#include <bubbleTracker.h>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale){
 
@@ -29,6 +30,7 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   pressureSolver = new MICSolver(w*h);
 
   pTracker = new ParticleTracker(w, h, PARTICLES_PER_CELL);
+  bTracker = new BubbleTracker(w, h);
   // pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
 }
 
@@ -52,15 +54,14 @@ void Simulator::step(float dt) {
   extrapolateVelocity(stateFrom, stateFrom);
   advect(stateFrom, stateTo, dt);
 
-  // PLS stack
-  // 1. evolution
+  // PLS + Bubble stack
+  // 1. evolve particles + bubbles
   pTracker->advect(stateFrom->velocityGrid, dt);
-  // 2. particle correction
-  // pTracker->correct(stateTo->levelSet->distanceGrid);
-  // 3. reinit levelset
+  bTracker->advect(stateFrom->velocityGrid, gravity, dt);
+  // 2. reinit levelset
   stateTo->levelSet->reinitialize();
-  // 4. recorrection
-  // pTracker->correct(stateTo->levelSet->distanceGrid);
+  // 4. make bubbles
+  pTracker->feedEscaped(bTracker, stateTo->levelSet->distanceGrid, stateTo->velocityGrid);
   // 5. Radii adjustment
   pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
 

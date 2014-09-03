@@ -8,6 +8,7 @@ class State;
 struct PressureSolver;
 struct VelocityGrid;
 class ParticleTracker;
+class BubbleTracker;
 
 #include <glm/glm.hpp>
 #include <util.h>
@@ -52,4 +53,5 @@ private:
 
   static constexpr unsigned int PARTICLES_PER_CELL = 16;
   ParticleTracker *pTracker;
+  BubbleTracker *bTracker;
 };
