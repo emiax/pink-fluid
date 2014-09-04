@@ -57,7 +57,13 @@ void Simulator::step(float dt) {
   // PLS + Bubble stack
   // 1. evolve particles + bubbles
   pTracker->advect(stateFrom->velocityGrid, dt);
-  bTracker->advect(stateFrom->velocityGrid, gravity, dt);
+  bTracker->advect(
+    stateFrom->getVelocityGrid(),
+    stateFrom->levelSet->distanceGrid,
+    pressureGridTo,
+    gravity,
+    dt
+  );
   // 2. reinit levelset
   stateTo->levelSet->reinitialize();
   // 4. make bubbles

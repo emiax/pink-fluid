@@ -137,10 +137,25 @@ int main( void ) {
       // distance function to circle with radius w/3, center in (w/2, h/2)
       const float x = (float)i - (float)w/2;
       const float y = (float)j - (float)h/2;
-      return sqrt( x*x + y*y ) - (float)w/4;
+      // return sqrt( x*x + y*y ) - (float)w/4;
 
       // square 
-      // return (i > w/3 && i < 2*w/3 && j > h/3 && j < 2*h/3) ? -0.5 : 0.5;
+      if (i > 1 && i < (w - 1) && j > 4*h/5 && j < (h - 1)) {
+        return -0.5;
+      } else {
+        // pillar
+        return (i > 2*w/5 && i < 3*w/5 && j > h/3 && j < 2*h/3) ? -0.5 : 0.5;
+        // circle
+        // return  sqrt( x*x + y*y ) - (float)w/5;
+      }
+      
+      // two squares
+      // if(i > w/8 && i < 3*w/8) {
+      //   return (j > h/6 && j < 5*h/6) ? -0.5 : 0.5;
+      // } else if (i > 5*w/8 && i < 7*w/8) {
+      //   return (j > h/6 && j < 5*h/6) ? -0.5 : 0.5;
+      // }
+      // return 0.5;
     });
 
   Grid<CellType> *cellTypeGrid = new Grid<CellType>(w, h);
@@ -345,14 +360,14 @@ int main( void ) {
       Bubble b = *bubbles->at(i);
       g_bubble_buffer_data.push_back(b.position.x / w);
       g_bubble_buffer_data.push_back(b.position.y / h);
-      std::cout << (b.position.x / w) << ", " << (b.position.y / h) << std::endl;
+      // std::cout << (b.position.x / w) << ", " << (b.position.y / h) << std::endl;
       g_bubble_buffer_data.push_back(0.0);
       g_bubble_buffer_data.push_back(b.radius);
     }
     
     
 
-    std::cout << g_bubble_buffer_data.size() << std::endl;
+    // std::cout << g_bubble_buffer_data.size() << std::endl;
 
     glBindBuffer(GL_ARRAY_BUFFER, bubbleBuffer);    
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * g_bubble_buffer_data.size(), &g_bubble_buffer_data[0], GL_DYNAMIC_DRAW);

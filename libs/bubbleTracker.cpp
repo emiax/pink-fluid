@@ -1,6 +1,7 @@
 #include <bubbleTracker.h>
 
 #include <velocityGrid.h>
+#include <ordinalGrid.h>
 #include <stdlib.h>
 #include <glm/ext.hpp>
 
@@ -22,7 +23,7 @@ BubbleTracker::~BubbleTracker() {
 void BubbleTracker::spawnBubble(glm::vec2 p, float r, glm::vec2 v) {
   Bubble* b;
 
-  // you not in nirvana yet?
+  // u not in nirvana yet?
   if (deadBubbles->size() > 0) {
     b = deadBubbles->top();
     b->position = p;
@@ -36,18 +37,38 @@ void BubbleTracker::spawnBubble(glm::vec2 p, float r, glm::vec2 v) {
   }
 }
 
-void BubbleTracker::advect(VelocityGrid const* velocities, glm::vec2 g, float dt) {
+void BubbleTracker::advect(
+  VelocityGrid const* velocities,
+  OrdinalGrid<float> *distances,
+  OrdinalGrid<double> *pressures,
+  glm::vec2 g,
+  float dt) {
   for (auto &b : *bubbles) {
     if (!(b->alive)) {
       continue;
     }
 
     glm::vec2 pos = b->position;
-
     glm::vec2 fluidVelocity = velocities->getLerp(pos);
 
-    b->velocity = b->velocity + fluidVelocity - g;
+    // Water-Bubble force calculations
+    float bubbleVolume = 3.1415*b->radius*b->radius;
+    float clampedVolume = bubbleVolume > 0.5f ? bubbleVolume : 0.5f;
+    float pGradX = pressures->getLerp(ceil(pos.x), pos.y) - pressures->getLerp(floor(pos.x), pos.y);
+    float pGradY = pressures->getLerp(pos.x, ceil(pos.y)) - pressures->getLerp(pos.x, floor(pos.y));
+    glm::vec2 pressureGradient = glm::vec2(pGradX, pGradY);
+    glm::vec2 pressureForce = - pressureGradient*K_P*clampedVolume;
+    glm::vec2 viscosityForce = (fluidVelocity - b->velocity)*K_V;
+
+    b->velocity = (1/K_V)*(K_V*fluidVelocity + pressureForce);
     b->position = b->position + b->velocity*dt;
+
+    // kill bubbles outside fluid
+    float dist = distances->getLerp(pos);
+    if (dist > 0) {
+      deadBubbles->push(b);
+      b->alive = false;
+    }
 
     // kill bubbles outside grid
     if (pos.x > width || pos.x < 0 || pos.y > height || pos.y < 0) {
@@ -58,5 +79,19 @@ void BubbleTracker::advect(VelocityGrid const* velocities, glm::vec2 g, float dt
 }
 
 std::vector<Bubble*> const *const BubbleTracker::getBubbles() const {
-  return bubbles;
+  std::vector<Bubble*> *validBubbles = new std::vector<Bubble*>();
+  int nAliveBubbles = bubbles->size() - deadBubbles->size();
+  
+  try {
+    validBubbles->reserve(nAliveBubbles);
+  } catch (...) {
+    // tja
+  }
+
+  for (auto &b : *bubbles) {
+    if (b->alive) {
+      validBubbles->push_back(b);
+    }
+  }
+  return validBubbles;
 }

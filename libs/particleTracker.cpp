@@ -75,8 +75,10 @@ void ParticleTracker::reinitializeParticles(OrdinalGrid<float> const* distance) 
 
         while (count < particlesPerCell) {
           glm::vec2 pos = jitterCoordinate(glm::vec2(i, j));
-          float d = distance->getLerp(pos);
-          float r = (d > MAX_RADUIS) ? MAX_RADUIS : d;
+          
+          // float d = distance->getLerp(pos);
+          // float r = (d > MAX_RADUIS) ? MAX_RADUIS : d;
+          float r = distance->getLerp(pos);
 
           insertParticle(pos, r);
           ++count;
@@ -222,6 +224,7 @@ void ParticleTracker::insertParticle(glm::vec2 pos, float radius) {
   if (deadParticles->size() > 0) {
     p = deadParticles->top();
     p->position = pos;
+    p->phi = radius;
     p->alive = true;
     deadParticles->pop();
   } else {
