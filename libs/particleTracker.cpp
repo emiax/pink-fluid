@@ -75,7 +75,7 @@ void ParticleTracker::reinitializeParticles(OrdinalGrid<float> const* distance) 
 
         while (count < particlesPerCell) {
           glm::vec2 pos = jitterCoordinate(glm::vec2(i, j));
-          
+
           // float d = distance->getLerp(pos);
           // float r = (d > MAX_RADUIS) ? MAX_RADUIS : d;
           float r = distance->getLerp(pos);
@@ -133,8 +133,10 @@ void ParticleTracker::feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distanc
     
     // bubble if                  (air particle) (in water)  (not touching surface)
     if (distance->isValid(cell) && p->phi > 0 && dist < 0 && fabs(dist) > radius) {
+      //      std::cout << radius << std::endl;
+      //      std::cin.get();
       glm::vec2 velocity = velocities->getLerp(pos);
-      bt->spawnBubble(pos, radius, velocity);
+      bt->spawnBubble(pos, fmin(radius*100.0, 3), velocity);
     }
   }
 }
@@ -226,6 +228,7 @@ void ParticleTracker::insertParticle(glm::vec2 pos, float radius) {
     p->position = pos;
     p->phi = radius;
     p->alive = true;
+    p->phi = radius;
     deadParticles->pop();
   } else {
     p = new Particle(pos, radius);

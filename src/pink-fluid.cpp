@@ -49,8 +49,12 @@ int main( void ) {
 
   //Initialize glfw
   init.glfw(4,1);
+
+  int windowWidth = 400, 
+    windowHeight = 400;
+  
   //Open a window
-  GLFWwindow* window = init.window(400, 400);
+  GLFWwindow* window = init.window(windowWidth, windowHeight);
 
   //Print window info
   init.printWindowInfo(window);
@@ -66,7 +70,7 @@ int main( void ) {
   //Load in shaders
   static ShaderProgram prog("../vertShader.vert", "../fragShader.frag");
   static ShaderProgram particleProg("../particleVertShader.vert", "../particleFragShader.frag");
-  static ShaderProgram bubbleProg("../particleVertShader.vert", "../particleFragShader.frag");
+  static ShaderProgram bubbleProg("../bubbleVertShader.vert", "../bubbleFragShader.frag");
 
   GLuint VertexArrayID;
   glGenVertexArrays(1, &VertexArrayID);
@@ -120,7 +124,7 @@ int main( void ) {
 
   //Set up the initial state.
 
-  unsigned int w = 51, h = 51;
+  unsigned int w = 61, h = 61;
   State *prevState = new State(w, h);
   State *newState = new State(w, h);
 
@@ -211,8 +215,22 @@ int main( void ) {
     glClear(GL_COLOR_BUFFER_BIT);
     prog();
 
-    GLuint location = glGetUniformLocation(prog, "time");
-    glUniform1f(location, glfwGetTime());
+    GLuint tLocation = glGetUniformLocation(prog, "time");
+    glUniform1f(tLocation, glfwGetTime());
+
+    GLuint wwLocation = glGetUniformLocation(prog, "windowWidth");
+    glUniform1f(wwLocation, windowWidth);
+
+    GLuint whLocation = glGetUniformLocation(prog, "windowHeight");
+    glUniform1f(whLocation, windowHeight);
+
+    GLuint wLocation = glGetUniformLocation(prog, "w");
+    glUniform1f(wLocation, windowWidth);
+
+    GLuint hLocation = glGetUniformLocation(prog, "h");
+    glUniform1f(hLocation, windowHeight);
+
+
 
     // Set the x,y positions in the texture, in order to visualize the velocity field.
     // Currently directly plots the mac-grid. Should perhaps use interpolation in order to use the
@@ -246,8 +264,10 @@ int main( void ) {
         // tex2D.set(i,j,3, 1.0f);
 
         //signed dist
-        tex2D.set(i,j,0, newState->getSignedDistanceGrid()->get(i,j)*5.0);
-        tex2D.set(i,j,1, -newState->getSignedDistanceGrid()->get(i,j)*5.0);
+        float airness = newState->getSignedDistanceGrid()->get(i,j)*5.0;
+        
+        tex2D.set(i,j,0, airness);
+        tex2D.set(i,j,1, airness);
         tex2D.set(i,j,2, 1.0f);
         tex2D.set(i,j,3, 1.0f);
 
@@ -316,16 +336,16 @@ int main( void ) {
     g_particle_buffer_data.clear();
     for (int i = 0; i < particles.size(); i++) {
       Particle p = particles[i];
-      g_particle_buffer_data.push_back(p.position.x / w);
-      g_particle_buffer_data.push_back(p.position.y / h);
-      std::cout << (p.position.x / w) << ", " << (p.position.y / h) << std::endl;
+      g_particle_buffer_data.push_back(p.position.x + 0.5);
+      g_particle_buffer_data.push_back(p.position.y + 0.5);
+      //      std::cout << (p.position.x / w) << ", " << (p.position.y / h) << std::endl;
       g_particle_buffer_data.push_back(0.0);
       g_particle_buffer_data.push_back(p.phi);
     }
     
     
 
-    std::cout << g_particle_buffer_data.size() << std::endl;
+    //    std::cout << g_particle_buffer_data.size() << std::endl;
 
     glBindBuffer(GL_ARRAY_BUFFER, particleBuffer);    
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * g_particle_buffer_data.size(), &g_particle_buffer_data[0], GL_DYNAMIC_DRAW);
@@ -334,6 +354,20 @@ int main( void ) {
 
     particleProg();
     //    glPointSize(10.0);
+
+    wLocation = glGetUniformLocation(particleProg, "w");
+    glUniform1f(wLocation, w);
+
+    hLocation = glGetUniformLocation(particleProg, "h");
+    glUniform1f(hLocation, h);
+
+    wwLocation = glGetUniformLocation(particleProg, "windowWidth");
+    glUniform1f(wwLocation, windowWidth);
+
+    whLocation = glGetUniformLocation(particleProg, "windowHeight");
+    glUniform1f(whLocation, windowHeight);
+
+
 
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnableVertexAttribArray(0);
@@ -354,20 +388,18 @@ int main( void ) {
     ////////////////// Start drawing bubbles //////////////////////
 
     // Draw bubbles
-    const std::vector<Bubble*> *bubbles = sim.getBubbleTracker()->getBubbles();
+        const std::vector<Bubble*> *bubbles = sim.getBubbleTracker()->getBubbles();
     g_bubble_buffer_data.clear();
     for (int i = 0; i < bubbles->size(); i++) {
       Bubble b = *bubbles->at(i);
-      g_bubble_buffer_data.push_back(b.position.x / w);
-      g_bubble_buffer_data.push_back(b.position.y / h);
-      // std::cout << (b.position.x / w) << ", " << (b.position.y / h) << std::endl;
+      g_bubble_buffer_data.push_back(b.position.x + 0.5);
+      g_bubble_buffer_data.push_back(b.position.y + 0.5);
+      //      std::cout << (b.position.x / w) << ", " << (b.position.y / h) << std::endl;
       g_bubble_buffer_data.push_back(0.0);
       g_bubble_buffer_data.push_back(b.radius);
     }
     
-    
-
-    // std::cout << g_bubble_buffer_data.size() << std::endl;
+    //    std::cout << g_bubble_buffer_data.size() << std::endl;
 
     glBindBuffer(GL_ARRAY_BUFFER, bubbleBuffer);    
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * g_bubble_buffer_data.size(), &g_bubble_buffer_data[0], GL_DYNAMIC_DRAW);
@@ -375,6 +407,20 @@ int main( void ) {
 
 
     bubbleProg();
+
+    wLocation = glGetUniformLocation(bubbleProg, "w");
+    glUniform1f(wLocation, w);
+
+    hLocation = glGetUniformLocation(bubbleProg, "h");
+    glUniform1f(hLocation, h);
+
+    wwLocation = glGetUniformLocation(bubbleProg, "windowWidth");
+    glUniform1f(wwLocation, windowWidth);
+
+    whLocation = glGetUniformLocation(bubbleProg, "windowHeight");
+    glUniform1f(whLocation, windowHeight);
+
+    
     //    glPointSize(10.0);
 
     glEnable(GL_PROGRAM_POINT_SIZE);
@@ -409,7 +455,7 @@ int main( void ) {
       lastTime += 1.0;
     }
     i++;
-    // std::cin.get();
+    //     std::cin.get();
   } // Check if the ESC key was pressed or the window was closed
   while( !glfwWindowShouldClose(window) );
     std::cout << "Cleaning up!" << std::endl;
