@@ -14,10 +14,9 @@ vec2 pos2Screen(vec2 pos) {
 
 void main(void) {
   float dist = distance(gl_FragCoord.xy, pos2Screen(pos));
+
   float a = step(dist, abs(radius)*windowWidth/w/2);
-  if (radius < 0) {
-    color = vec4(0, 0.0, 0.0, a*0.1);
-  } else {
-    color = vec4(1.0, 0.0, 0.0, a*0.1);
-  }
+  float b = 1.0 - step(dist, abs(radius)*windowWidth/w/2 - 2);
+
+  color = vec4(0.9, 0.9, 0.9, a*b);
 }    
