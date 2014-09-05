@@ -64,10 +64,14 @@ void Simulator::step(float dt) {
     gravity,
     dt
   );
-  // 2. reinit levelset
+  // 2. first correction
+  pTracker->correct(stateTo->levelSet->distanceGrid);
+  // 3. reinit levelset
   stateTo->levelSet->reinitialize();
   // 4. make bubbles
   pTracker->feedEscaped(bTracker, stateTo->levelSet->distanceGrid, stateTo->velocityGrid);
+
+  pTracker->correct(stateTo->levelSet->distanceGrid);
   // 5. Radii adjustment
   pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
 

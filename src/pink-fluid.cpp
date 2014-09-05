@@ -42,7 +42,7 @@ int main( void ) {
 
 
 
-  srand(time(NULL));
+  srand(0);
 
   //Create init object
   Init init = Init();
@@ -124,7 +124,7 @@ int main( void ) {
 
   //Set up the initial state.
 
-  unsigned int w = 61, h = 61;
+  unsigned int w = 40, h = 40;
   State *prevState = new State(w, h);
   State *newState = new State(w, h);
 
@@ -147,8 +147,14 @@ int main( void ) {
       if (i > 1 && i < (w - 1) && j > 4*h/5 && j < (h - 1)) {
         return -0.5;
       } else {
-        // pillar
-        return (i > 2*w/5 && i < 3*w/5 && j > h/3 && j < 2*h/3) ? -0.5 : 0.5;
+        // pillars
+        if (i > 2*w/7 && i < 3*w/7 && j > 1 && j < 2*h/5) {
+          return -0.5;
+        } else if (i > 4*w/7 && i < 5*w/7 && j > 1 && j < 2*h/5) {
+          return -0.5;
+        } else {
+          return 0.5;
+        }
         // circle
         // return  sqrt( x*x + y*y ) - (float)w/5;
       }
@@ -421,7 +427,7 @@ int main( void ) {
     glUniform1f(whLocation, windowHeight);
 
     
-    //    glPointSize(10.0);
+    // glPointSize(10.0);
 
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnableVertexAttribArray(0);

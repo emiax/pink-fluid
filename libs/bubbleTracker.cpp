@@ -53,10 +53,13 @@ void BubbleTracker::advect(
 
     // Water-Bubble force calculations
     float bubbleVolume = 3.1415*b->radius*b->radius;
-    float clampedVolume = bubbleVolume > 0.5f ? bubbleVolume : 0.5f;
+    float clampedVolume = fmin(bubbleVolume, 0.3);
     float pGradX = pressures->getLerp(ceil(pos.x), pos.y) - pressures->getLerp(floor(pos.x), pos.y);
     float pGradY = pressures->getLerp(pos.x, ceil(pos.y)) - pressures->getLerp(pos.x, floor(pos.y));
     glm::vec2 pressureGradient = glm::vec2(pGradX, pGradY);
+    if (glm::length(pressureGradient) > 1.0f) {
+      pressureGradient = glm::normalize(pressureGradient);
+    }
     glm::vec2 pressureForce = - pressureGradient*K_P*clampedVolume;
     glm::vec2 viscosityForce = (fluidVelocity - b->velocity)*K_V;
 

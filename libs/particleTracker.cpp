@@ -136,7 +136,7 @@ void ParticleTracker::feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distanc
       //      std::cout << radius << std::endl;
       //      std::cin.get();
       glm::vec2 velocity = velocities->getLerp(pos);
-      bt->spawnBubble(pos, fmin(radius*100.0, 3), velocity);
+      bt->spawnBubble(pos, radius*10.0, velocity);
     }
   }
 }
@@ -182,13 +182,14 @@ void ParticleTracker::correct(OrdinalGrid<float> *distance) {
         float leftDownContrib = sgn*(radius - glm::length(glm::vec2(leftDown) - pos));
         float rightDownContrib = sgn*(radius - glm::length(glm::vec2(rightDown) - pos));
 
-        if (sgn == 1) { // air
+        // air
+        if (sgn == 1) {
           corrPlus->set(leftUp, glm::max(corrPlus->clampGet(leftUp), leftUpContrib));
           corrPlus->set(rightUp, glm::max(corrPlus->clampGet(rightUp), rightUpContrib));
           corrPlus->set(leftDown, glm::max(corrPlus->clampGet(leftDown), leftDownContrib));
           corrPlus->set(rightDown, glm::max(corrPlus->clampGet(rightDown), rightDownContrib));
-
-        } else { // fluid
+        // fluid
+        } else {
           corrMinus->set(leftUp, glm::min(corrMinus->clampGet(leftUp), leftUpContrib));
           corrMinus->set(rightUp, glm::min(corrMinus->clampGet(rightUp), rightUpContrib));
           corrMinus->set(leftDown, glm::min(corrMinus->clampGet(leftDown), leftDownContrib));

@@ -50,6 +50,6 @@ private:
   const float WATER_DENSITY = 1000.0f;
 
   // Constants for bubble-fluid coupling
-  const float K_P = 0.05f;
+  const float K_P = 0.2f;
   const float K_V = 0.1f;
 };
