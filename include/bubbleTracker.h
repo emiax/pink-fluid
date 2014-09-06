@@ -9,11 +9,12 @@ template<typename T>
 class OrdinalGrid;
 
 struct Bubble {
-  Bubble(glm::vec3 p, float r, glm::vec3 v) {
+  Bubble(glm::vec3 p, float r, glm::vec3 v, int id) {
     this->position = p;
     this->radius = r;
     this->velocity = v;
     this->alive = true;
+    this->id = id;
   };
 
   ~Bubble() {};
@@ -22,6 +23,7 @@ struct Bubble {
   float radius;
   glm::vec3 velocity;
   bool alive;
+  int id;
 };
 
 class BubbleTracker {
@@ -41,6 +43,7 @@ public:
   std::vector<Bubble*> const *const getBubbles() const;
 
 private:
+  int nextBubbleId = 0;
   float width, height, depth;
   std::vector<Bubble*> *bubbles;
   std::stack<Bubble*> *deadBubbles;

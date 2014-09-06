@@ -636,6 +636,10 @@ OrdinalGrid<float>* Simulator::getDivergenceGrid() {
   return divergenceGrid;
 }
 
+
+const BubbleTracker* const Simulator::getBubbleTracker() const {
+  return bTracker;
+}
 /**
  * Calculate max deltaT for the current iteration.
  * This calculation is based on the max velocity in the grid.

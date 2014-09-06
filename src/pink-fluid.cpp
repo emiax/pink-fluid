@@ -44,7 +44,8 @@
 #include <levelSet.h>
 #include <stdlib.h>
 #include <time.h>
-
+#include <bubbleTracker.h>
+#include <bubbleMaxExporter.h>
 
 #include <marchingcubes/marchingcubes.h>
 
@@ -112,13 +113,15 @@ int main(void) {
 
     // init simulator
     Simulator sim(prevState, newState, 0.1f);
-
+    BubbleMaxExporter bubbleExporter;
+    
     // Dark black background
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     //Load in shaders
     static ShaderProgram colorCubeProg("../vertShader.vert", "../colorCube.frag");
     static ShaderProgram rayCasterProg("../vertShader.vert", "../rayCaster.frag");
+    static ShaderProgram bubbleProg("../bubbleVertShader.vert", "../bubbleFragShader.frag");
 
     static const GLfloat vertexBufferData[] = {
             -1.0f, -1.0f, -1.0f,
@@ -152,27 +155,24 @@ int main(void) {
             3, 5, 7
     };
 
+    std::vector<GLfloat> g_bubble_buffer_data;
+
     //Create vertex buffer
     GLuint vertexbuffer;
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData), vertexBufferData, GL_STATIC_DRAW);
 
-    //Triangle coordinates
-    glVertexAttribPointer(
-            0,                  // Location 0
-            3,                  // size
-            GL_FLOAT,           // type
-            GL_FALSE,           // normalized?
-            0,                  // stride
-            (void *) 0            // array buffer offset
-    );
 
 
     GLuint triangleBuffer;
     glGenBuffers(1, &triangleBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleBufferData), triangleBufferData, GL_STATIC_DRAW);
+
+    // Create bubble buffer
+    GLuint bubbleBuffer;
+    glGenBuffers(1, &bubbleBuffer);
 
     // Create framebuffer
     FBO *framebuffer = new FBO(width, height);
@@ -191,6 +191,8 @@ int main(void) {
     glfwSwapInterval(1);
     int i = 0;
     do {
+
+
         framebuffer->activate();
 
         // common for both render passes.
@@ -217,6 +219,19 @@ int main(void) {
 
         glClear(GL_COLOR_BUFFER_BIT);
         glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleBuffer);
+    //Triangle coordinates
+    glVertexAttribPointer(
+            0,                  // Location 0
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void *) 0            // array buffer offset
+    );
+
         glDrawElements(GL_TRIANGLES, 12 * 3, GL_UNSIGNED_INT, 0);
         glDisableVertexAttribArray(0);
 
@@ -355,6 +370,68 @@ int main(void) {
 
         FBO::deactivate();
 
+        
+
+        ////////////////// Start drawing bubbles //////////////////////
+        
+        // Draw bubbles
+        const std::vector<Bubble*> *bubbles = sim.getBubbleTracker()->getBubbles();
+        g_bubble_buffer_data.clear();
+        std::cout << "frame=" << i << ", nBubbles=" << bubbles->size() << std::endl;
+        for (int i = 0; i < bubbles->size(); i++) {
+          Bubble b = *bubbles->at(i);
+
+          //          std::cout << "bubble pos " << b.position.x << ", " << b.position.y << std::endl << b.radius << std::endl;
+            
+          g_bubble_buffer_data.push_back(b.position.x / (float)w * 2.0 - 1.0);
+          g_bubble_buffer_data.push_back(b.position.y / (float)h * 2.0 - 1.0);
+          g_bubble_buffer_data.push_back(b.position.z / (float)d * 2.0 - 1.0);
+          g_bubble_buffer_data.push_back(b.radius);
+        }
+
+           
+        glBindBuffer(GL_ARRAY_BUFFER, bubbleBuffer);    
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * g_bubble_buffer_data.size(), &g_bubble_buffer_data[0], GL_DYNAMIC_DRAW);
+        
+                
+        
+        bubbleProg();
+        glEnable(GL_PROGRAM_POINT_SIZE);
+
+        {
+            GLuint tLocation = glGetUniformLocation(colorCubeProg, "time");
+            glUniform1f(tLocation, glfwGetTime());
+
+            GLuint mvLocation = glGetUniformLocation(colorCubeProg, "mvMatrix");
+            glUniformMatrix4fv(mvLocation, 1, false, glm::value_ptr(matrix));
+        }
+
+        //        glEnable (GL_BLEND);
+        //        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                
+        glPointSize(4.0);
+        
+        if (g_bubble_buffer_data.size() > 0) {
+          glEnable(GL_PROGRAM_POINT_SIZE);
+          glEnableVertexAttribArray(0);
+          glVertexAttribPointer(
+                                0,                  //Location 0
+                                4,                  // size
+                                GL_FLOAT,           // type
+                                GL_FALSE,           // normalized?
+                                0,                  // stride
+                                (void*)0            // array buffer offset
+                                );
+          
+          glDrawArrays(GL_POINTS, 0, 4 * g_bubble_buffer_data.size()); // 3 indices starting at 0 -> 1 triangle
+          glDisableVertexAttribArray(0);
+        }
+        ////////////////// End drawing bubbles //////////////////////
+        
+
+
+
+
         glfwPollEvents();
         glfwSwapBuffers(window);
         double currentTime = glfwGetTime();
@@ -367,6 +444,14 @@ int main(void) {
             lastTime += 1.0;
         }
         i++;
+        
+        bubbleExporter.update(i, sim.getBubbleTracker());
+        bubbleExporter.exportSnapshot(i, "bubbles_" + std::to_string(i) + ".mx");
+
+        if (i > 600) {
+          bubbleExporter.exportBubbles("bubbles.mx");
+          break;
+        }
     } // Check if the ESC key was pressed or the window was closed
     while (!glfwWindowShouldClose(window));
 

@@ -133,7 +133,7 @@ void ParticleTracker::feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distanc
     float dist = distance->getLerp(pos.x, pos.y, pos.z);
     
     // bubble if                  (air particle) (in water)  (not touching surface)
-    if (distance->isValid(cell) && p->phi > 0 && dist < 0 && fabs(dist) > radius) {
+    if (distance->isValid(cell) && p->phi > 0 && dist < 0 && fabs(dist) > radius && radius > 0.04) {
       glm::vec3 velocity = velocities->getLerp(pos);
       bt->spawnBubble(pos, radius*10.0, velocity);
     }
