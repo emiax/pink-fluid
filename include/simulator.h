@@ -6,6 +6,9 @@ class Grid;
 class State;
 struct PressureSolver;
 struct VelocityGrid;
+class ParticleTracker;
+class BubbleTracker;
+
 #include <glm/glm.hpp>
 #include <util.h>
 
@@ -31,6 +34,7 @@ public:
   void calculateNegativeDivergence(State const* readFrom, OrdinalGrid<float> *toDivergenceGrid);
   
   void gradientSubtraction(State *state, float dt);
+  void initializeExtrapolation(State *stateFrom);
   void extrapolateVelocity(State *stateFrom, State *stateTo);
 
   OrdinalGrid<double>* resetPressureGrid();
@@ -48,4 +52,8 @@ private:
   PressureSolver *pressureSolver, *jacobiSolver;
   float deltaT;
   float gridSize;
+
+  static constexpr unsigned int PARTICLES_PER_CELL = 64;
+  ParticleTracker *pTracker;
+  BubbleTracker *bTracker;
 };

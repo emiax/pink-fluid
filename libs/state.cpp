@@ -82,6 +82,12 @@ void State::setVelocityGrid(VelocityGrid const* const velocity){
   }
 }
 
+/**
+ * Get velocity grid 
+ */
+VelocityGrid const *const State::getVelocityGrid() const{
+  return velocityGrid;
+};
 
 /**
  * Get width

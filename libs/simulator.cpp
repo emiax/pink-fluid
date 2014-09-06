@@ -9,6 +9,8 @@
 #include <levelSet.h>
 #include <jacobiIteration.h>
 #include <micSolver.h>
+#include <particleTracker.h>
+#include <bubbleTracker.h>
 
 Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale) {
 
@@ -28,6 +30,9 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   pressureGridTo = new OrdinalGrid<double>(w, h, d);
   // pressureSolver = new JacobiIteration(100);
   pressureSolver = new MICSolver(w*h*d);
+  
+  pTracker = new ParticleTracker(w, h, d, PARTICLES_PER_CELL);
+  bTracker = new BubbleTracker(w, h, d);
 }
 
 /**
@@ -37,6 +42,8 @@ Simulator::~Simulator() {
   delete divergenceGrid;
   delete pressureGridFrom;
   delete pressureGridTo;
+  delete pTracker;
+  delete bTracker;
 }
 
 /**
@@ -47,10 +54,32 @@ void Simulator::step(float dt) {
 
   glm::vec3 gravity = glm::vec3(0, -0.5, 0);
 
-  stateFrom->levelSet->reinitialize();
+  // stateFrom->levelSet->reinitialize();
   extrapolateVelocity(stateFrom, stateFrom);
 
   advect(stateFrom, stateTo, dt);
+
+  // PLS + bubble stack
+  // 1. evolve particles + bubbles
+  pTracker->advect(stateFrom->velocityGrid, dt);
+  bTracker->advect(
+    stateFrom->getVelocityGrid(),
+    stateFrom->levelSet->distanceGrid,
+    pressureGridTo,
+    gravity,
+    dt
+  );
+  // 2. first correction
+  pTracker->correct(stateTo->levelSet->distanceGrid);
+  // 3. reinit levelset
+  stateTo->levelSet->reinitialize();
+  // 4. make bubbles
+  pTracker->feedEscaped(bTracker, stateTo->levelSet->distanceGrid, stateTo->velocityGrid);
+  // 5. recorrect
+  pTracker->correct(stateTo->levelSet->distanceGrid);
+  // 6. Radii adjustment
+  pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
+
   applyGravity(stateTo, gravity, dt);
   stateTo->levelSet->updateCellTypes();
 
@@ -237,96 +266,329 @@ void Simulator::gradientSubtraction(State *state, float dt) {
     }
 
 
+void Simulator::initializeExtrapolation(State *stateFrom) {
+
+  const Grid<CellType> *cellTypeGrid = stateFrom->getCellTypeGrid();
+  VelocityGrid *velocityGrid = stateFrom->velocityGrid;
+
+  // u velocities
+  for (unsigned k = 0; k < d; ++k) {
+    for (unsigned j = 0; j < h; ++j) {
+      for (unsigned i = 0; i <= w; ++i) {
+        
+        GridCoordinate leftCell = GridCoordinate(i - 1, j, k);
+        GridCoordinate rightCell = GridCoordinate(i, j, k);
+
+        if (cellTypeGrid->clampGet(leftCell) == CellType::EMPTY && 
+          cellTypeGrid->clampGet(rightCell) == CellType::EMPTY) {
+
+          GridCoordinate farLeft = GridCoordinate(i - 2, j, k);
+          GridCoordinate upLeft = GridCoordinate(i - 1, j - 1, k);
+          GridCoordinate downLeft = GridCoordinate(i - 1, j + 1, k);
+          GridCoordinate frontLeft = GridCoordinate(i - 1, j, k - 1);
+          GridCoordinate backLeft = GridCoordinate(i - 1, j, k + 1);
+
+          GridCoordinate farRight = GridCoordinate(i + 1, j, k);
+          GridCoordinate upRight = GridCoordinate(i, j - 1, k);
+          GridCoordinate downRight = GridCoordinate(i, j + 1, k);
+          GridCoordinate frontRight = GridCoordinate(i, j - 1, k - 1);
+          GridCoordinate backRight = GridCoordinate(i, j + 1, k + 1);
+
+          float u = 0;
+          unsigned int nContributions = 0;
+
+          // left cell
+          if (cellTypeGrid->clampGet(farLeft) == CellType::FLUID) {
+            u += velocityGrid->u->get(i - 1, j, k);
+            ++nContributions;
+          }
+
+          // right cell
+          if (cellTypeGrid->clampGet(farRight) == CellType::FLUID) {
+            u += velocityGrid->u->get(i + 1, j, k);
+            ++nContributions;
+          }
+          
+          // up cells
+          if (cellTypeGrid->clampGet(upLeft) == CellType::FLUID ||
+              cellTypeGrid->clampGet(upRight) == CellType::FLUID) {
+            u += velocityGrid->u->get(i, j - 1, k);
+            ++nContributions;
+          }
+
+          // down cells
+          if (cellTypeGrid->clampGet(downLeft) == CellType::FLUID ||
+              cellTypeGrid->clampGet(downRight) == CellType::FLUID) {
+            u += velocityGrid->u->get(i, j + 1, k);
+            ++nContributions;
+          }
+
+          //front cells
+          if (cellTypeGrid->clampGet(frontLeft) == CellType::FLUID ||
+              cellTypeGrid->clampGet(frontRight) == CellType::FLUID) {
+            u += velocityGrid->u->get(i, j, k - 1);
+            ++nContributions;
+          }
+
+          //back cells
+          if (cellTypeGrid->clampGet(backLeft) == CellType::FLUID ||
+              cellTypeGrid->clampGet(backRight) == CellType::FLUID) {
+            u += velocityGrid->u->get(i, j, k + 1);
+            ++nContributions;
+          }
+
+          if (nContributions > 0) {
+            velocityGrid->u->set(i, j, k, u/(float)nContributions);
+          } else {
+            velocityGrid->u->set(i, j, k, 0.0);
+          }
+        }
+      }
+    }
+  }
+
+  // v velocities
+  for (unsigned k = 0; k < d; ++k) {
+    for (unsigned j = 0; j <= h; ++j) {
+      for (unsigned i = 0; i < w; ++i) {
+        GridCoordinate upCell = GridCoordinate(i, j - 1, k);
+        GridCoordinate downCell = GridCoordinate(i, j, k);
+
+        if (cellTypeGrid->clampGet(upCell) == CellType::EMPTY && 
+          cellTypeGrid->clampGet(downCell) == CellType::EMPTY) {
+
+          GridCoordinate farUp = GridCoordinate(i, j - 2, k);
+          GridCoordinate leftUp = GridCoordinate(i - 1, j - 1, k);
+          GridCoordinate rightUp = GridCoordinate(i + 1, j - 1, k);
+          GridCoordinate frontUp = GridCoordinate(i, j - 1, k - 1);
+          GridCoordinate backUp = GridCoordinate(i, j - 1, k + 1);
+
+          GridCoordinate farDown = GridCoordinate(i, j + 1, k);
+          GridCoordinate leftDown = GridCoordinate(i - 1 , j, k);
+          GridCoordinate rightDown = GridCoordinate(i + 1, j, k);
+          GridCoordinate frontDown = GridCoordinate(i, j, k - 1);
+          GridCoordinate backDown = GridCoordinate(i, j, k + 1);
+
+          float v = 0;
+          unsigned int nContributions = 0;
+
+          // up cells
+          if (cellTypeGrid->clampGet(farUp) == CellType::FLUID) {
+            v += velocityGrid->v->get(i, j - 1, k);
+            ++nContributions;
+          }
+
+          // down cells
+          if (cellTypeGrid->clampGet(farDown) == CellType::FLUID) {
+            v += velocityGrid->v->get(i, j + 1, k);
+            ++nContributions;
+          }
+          
+          // left cells
+          if (cellTypeGrid->clampGet(leftUp) == CellType::FLUID ||
+              cellTypeGrid->clampGet(leftDown) == CellType::FLUID) {
+            v += velocityGrid->v->get(i - 1, j, k);
+            ++nContributions;
+          }
+
+          // right cells
+          if (cellTypeGrid->clampGet(rightUp) == CellType::FLUID ||
+              cellTypeGrid->clampGet(rightDown) == CellType::FLUID) {
+            v += velocityGrid->v->get(i + 1, j, k);
+            ++nContributions;
+          }
+
+          //front cells
+          if (cellTypeGrid->clampGet(frontUp) == CellType::FLUID ||
+              cellTypeGrid->clampGet(frontDown) == CellType::FLUID) {
+            v += velocityGrid->v->get(i, j, k - 1);
+            ++nContributions;
+          }
+
+          //back cells
+          if (cellTypeGrid->clampGet(backUp) == CellType::FLUID ||
+              cellTypeGrid->clampGet(backDown) == CellType::FLUID) {
+            v += velocityGrid->v->get(i, j, k + 1);
+            ++nContributions;
+          }
+
+          if (nContributions > 0) {
+            velocityGrid->v->set(i, j, k, v/(float)nContributions);
+          } else {
+            velocityGrid->v->set(i, j, k, 0.0);
+          }
+        }
+      }
+    }
+  }
+
+  // w velocities
+  for (unsigned k = 0; k <= d; ++k) {
+    for (unsigned j = 0; j < h; ++j) {
+      for (unsigned i = 0; i < w; ++i) {
+        GridCoordinate frontCell = GridCoordinate(i, j, k - 1);
+        GridCoordinate backCell = GridCoordinate(i, j, k);
+
+        if (cellTypeGrid->clampGet(frontCell) == CellType::EMPTY && 
+          cellTypeGrid->clampGet(backCell) == CellType::EMPTY) {
+
+          GridCoordinate farFront = GridCoordinate(i, j, k - 2);
+          
+          GridCoordinate leftFront = GridCoordinate(i - 1, j, k - 1);
+          GridCoordinate rightFront = GridCoordinate(i + 1, j, k - 1);
+          GridCoordinate upFront = GridCoordinate(i, j - 1, k - 1);
+          GridCoordinate downFront = GridCoordinate(i, j + 1, k - 1);
+
+          GridCoordinate farBack = GridCoordinate(i, j, k + 1);
+          
+          GridCoordinate leftBack = GridCoordinate(i - 1, j, k);
+          GridCoordinate rightBack = GridCoordinate(i + 1, j, k);
+          GridCoordinate upBack = GridCoordinate(i, j - 1, k);
+          GridCoordinate downBack = GridCoordinate(i, j + 1, k);
+
+          float velocity = 0;
+          unsigned int nContributions = 0;
+
+          // front cell
+          if (cellTypeGrid->clampGet(farFront) == CellType::FLUID) {
+            velocity += velocityGrid->w->get(i, j, k - 1);
+            ++nContributions;
+          }
+
+          // back cell
+          if (cellTypeGrid->clampGet(farBack) == CellType::FLUID) {
+            velocity += velocityGrid->w->get(i, j, k + 1);
+            ++nContributions;
+          }
+          
+          // left cells
+          if (cellTypeGrid->clampGet(leftFront) == CellType::FLUID ||
+              cellTypeGrid->clampGet(leftBack) == CellType::FLUID) {
+            velocity += velocityGrid->w->get(i - 1, j, k);
+            ++nContributions;
+          }
+
+          // right cells
+          if (cellTypeGrid->clampGet(rightFront) == CellType::FLUID ||
+              cellTypeGrid->clampGet(rightBack) == CellType::FLUID) {
+            velocity += velocityGrid->w->get(i + 1, j, k);
+            ++nContributions;
+          }
+
+          // up cells
+          if (cellTypeGrid->clampGet(upFront) == CellType::FLUID ||
+              cellTypeGrid->clampGet(upBack) == CellType::FLUID) {
+            velocity += velocityGrid->w->get(i, j - 1, k);
+            ++nContributions;
+          }
+
+          // down cells
+          if (cellTypeGrid->clampGet(downFront) == CellType::FLUID ||
+              cellTypeGrid->clampGet(downBack) == CellType::FLUID) {
+            velocity += velocityGrid->w->get(i, j + 1, k);
+            ++nContributions;
+          }
+
+          if (nContributions > 0) {
+            velocityGrid->w->set(i, j, k, velocity/(float)nContributions);
+          } else {
+            velocityGrid->w->set(i, j, k, 0.0);
+          }
+        }
+      }
+    }
+  }
+}
+
 /**
  * Method to extrapolate velocity values from the water region to the air/empty region.
  * @param stateFrom
  * @param stateTo
  */
 void Simulator::extrapolateVelocity(State *stateFrom, State *stateTo) {
+  initializeExtrapolation(stateFrom);
   const Grid<glm::vec3> *closestPointGrid = stateFrom->levelSet->getClosestPointGrid();
 
   VelocityGrid *fromVelocityGrid = stateFrom->velocityGrid;
   VelocityGrid *toVelocityGrid = stateTo->velocityGrid;
   const Grid<CellType> *cellTypeGrid = stateFrom->getCellTypeGrid();
-
+  
   unsigned int w = stateFrom->w;
   unsigned int h = stateFrom->h;
   unsigned int d = stateFrom->d;
 
-
   // u velocities
-  toVelocityGrid->u->setForEach([&](int i, int j, int k) {
-      glm::vec3 currentPoint = glm::vec3(i - 0.5, j, k);
-      GridCoordinate leftCell = GridCoordinate(i - 1, j, k);
-      GridCoordinate rightCell = GridCoordinate(i, j, k);
+  toVelocityGrid->u->setForEach([&](unsigned i, unsigned j, unsigned k) {
+    glm::vec3 currentPoint = glm::vec3(i - 0.5, j, k);
+    GridCoordinate leftCell = GridCoordinate(i - 1, j, k);
+    GridCoordinate rightCell = GridCoordinate(i, j, k);
 
-      if (cellTypeGrid->clampGet(leftCell) != CellType::EMPTY ||
-          cellTypeGrid->clampGet(rightCell) != CellType::EMPTY) {
-        return fromVelocityGrid->u->get(i, j, k);
-      }
+    if (cellTypeGrid->clampGet(leftCell) != CellType::EMPTY || 
+      cellTypeGrid->clampGet(rightCell) != CellType::EMPTY) {
+      return fromVelocityGrid->u->get(i, j, k);
+    }
 
-      glm::vec3 leftClosestPoint = closestPointGrid->clampGet(leftCell);
-      glm::vec3 rightClosestPoint = closestPointGrid->clampGet(rightCell);
+    glm::vec3 leftClosestPoint = closestPointGrid->clampGet(leftCell);
+    glm::vec3 rightClosestPoint = closestPointGrid->clampGet(rightCell);
 
-      float dLeft = glm::distance(currentPoint, leftClosestPoint);
-      float dRight = glm::distance(currentPoint, rightClosestPoint);
+    float dLeft = glm::distance(currentPoint, leftClosestPoint);
+    float dRight = glm::distance(currentPoint, rightClosestPoint);
 
-      float uLeft = fromVelocityGrid->u->getNearest(leftClosestPoint.x + 0.5, leftClosestPoint.y, leftClosestPoint.z);
-      float uRight = fromVelocityGrid->u->getNearest(rightClosestPoint.x + 0.5, rightClosestPoint.y, rightClosestPoint.z);
+    float uLeft = fromVelocityGrid->u->getLerp(leftClosestPoint.x + 0.5, leftClosestPoint.y, leftClosestPoint.z);
+    float uRight = fromVelocityGrid->u->getLerp(rightClosestPoint.x + 0.5, rightClosestPoint.y, rightClosestPoint.z);
 
-      float t = dLeft/(dLeft + dRight);
-      return t*uRight + (1.0f - t)*uLeft;
-
-    });
-  
+    float t = dLeft/(dLeft + dRight);
+    return t*uRight + (1.0f - t)*uLeft;
+  });
 
   // v velocities
-  toVelocityGrid->v->setForEach([&](int i, int j, int k) {
-      glm::vec3 currentPoint = glm::vec3(i, j - 0.5, k);
-      GridCoordinate upCell = GridCoordinate(i, j - 1, k);
-      GridCoordinate downCell = GridCoordinate(i, j, k);
+  toVelocityGrid->v->setForEach([&](unsigned i, unsigned j, unsigned k) {
+    glm::vec3 currentPoint = glm::vec3(i, j - 0.5, k);
+    GridCoordinate upCell = GridCoordinate(i, j - 1, k);
+    GridCoordinate downCell = GridCoordinate(i, j, k);
 
-      if (cellTypeGrid->clampGet(upCell) != CellType::EMPTY ||
-          cellTypeGrid->clampGet(downCell) != CellType::EMPTY) {
-        return fromVelocityGrid->v->get(i, j, k);
-      }
+    if (cellTypeGrid->clampGet(upCell) != CellType::EMPTY || 
+        cellTypeGrid->clampGet(downCell) != CellType::EMPTY) {
+      return fromVelocityGrid->v->get(i, j, k);
+    }
 
-      glm::vec3 upClosestPoint = closestPointGrid->clampGet(upCell);
-      glm::vec3 downClosestPoint = closestPointGrid->clampGet(downCell);
+    glm::vec3 upClosestPoint = closestPointGrid->clampGet(upCell);
+    glm::vec3 downClosestPoint = closestPointGrid->clampGet(downCell);
 
-      float dUp = glm::distance(currentPoint, upClosestPoint);
-      float dDown = glm::distance(currentPoint, downClosestPoint);
+    float dUp = glm::distance(currentPoint, upClosestPoint);
+    float dDown = glm::distance(currentPoint, downClosestPoint);
 
-      float vUp = fromVelocityGrid->v->getNearest(upClosestPoint.x, upClosestPoint.y + 0.5, upClosestPoint.z);
-      float vDown = fromVelocityGrid->v->getNearest(downClosestPoint.x, downClosestPoint.y + 0.5, downClosestPoint.z);
+    float vUp = fromVelocityGrid->v->getLerp(upClosestPoint.x, upClosestPoint.y + 0.5, upClosestPoint.z);
+    float vDown = fromVelocityGrid->v->getLerp(downClosestPoint.x, downClosestPoint.y + 0.5, downClosestPoint.z);
 
-      float t = dUp/(dUp + dDown);
-      return t*vDown + (1.0f - t)*vUp;
-    });
-    
+    float t = dUp/(dUp + dDown);
+    return t*vDown + (1.0f - t)*vUp;
+  });
+
   // w velocities
-  toVelocityGrid->w->setForEach([&](int i, int j, int k) {
-      glm::vec3 currentPoint = glm::vec3(i, j, k - 0.5);
-      GridCoordinate frontCell = GridCoordinate(i, j, k - 1);
-      GridCoordinate backCell = GridCoordinate(i, j, k);
+  toVelocityGrid->w->setForEach([&](unsigned i, unsigned j, unsigned k) {
+    glm::vec3 currentPoint = glm::vec3(i, j, k - 0.5);
+    GridCoordinate frontCell = GridCoordinate(i, j, k - 1);
+    GridCoordinate backCell = GridCoordinate(i, j, k);
 
-      if (cellTypeGrid->clampGet(frontCell) != CellType::EMPTY ||
-          cellTypeGrid->clampGet(backCell) != CellType::EMPTY) {
-        return fromVelocityGrid->w->get(i, j, k);
-      }
+    if (cellTypeGrid->clampGet(frontCell) != CellType::EMPTY || 
+        cellTypeGrid->clampGet(backCell) != CellType::EMPTY) {
+      return fromVelocityGrid->w->get(i, j, k);
+    }
 
-      glm::vec3 frontClosestPoint = closestPointGrid->clampGet(frontCell);
-      glm::vec3 backClosestPoint = closestPointGrid->clampGet(backCell);
+    glm::vec3 frontClosestPoint = closestPointGrid->clampGet(frontCell);
+    glm::vec3 backClosestPoint = closestPointGrid->clampGet(backCell);
 
-      float dFront = glm::distance(currentPoint, frontClosestPoint);
-      float dBack = glm::distance(currentPoint, backClosestPoint);
+    float dFront = glm::distance(currentPoint, frontClosestPoint);
+    float dBack = glm::distance(currentPoint, backClosestPoint);
 
-      float wFront = fromVelocityGrid->v->getNearest(frontClosestPoint.x, frontClosestPoint.y, frontClosestPoint.z + 0.5);
-      float wBack = fromVelocityGrid->v->getNearest(backClosestPoint.x, backClosestPoint.y, backClosestPoint.z + 0.5);
+    float wFront = fromVelocityGrid->w->getLerp(frontClosestPoint.x, frontClosestPoint.y, frontClosestPoint.z + 0.5);
+    float wBack = fromVelocityGrid->w->getLerp(backClosestPoint.x, backClosestPoint.y, backClosestPoint.z + 0.5);
 
-      float t = dFront/(dFront + dBack);
-      return t*wBack + (1.0f - t)*wFront;
-      });
+    float t = dFront/(dFront + dBack);
+    return t*wBack + (1.0f - t)*wFront;
+  });
+  // std::cin.get();
 }
 
 
