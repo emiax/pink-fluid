@@ -137,6 +137,7 @@ set(ext_libs
   ${CMAKE_SOURCE_DIR}/external/glfw/include/
   ${CMAKE_SOURCE_DIR}/external/glew/include/
   ${PROJECT_EXT_DIR}/pcgsolver/
+  ${PROJECT_EXT_DIR}/marchingcubes/
   ${GLM_INCLUDE_DIR}
 )
 
