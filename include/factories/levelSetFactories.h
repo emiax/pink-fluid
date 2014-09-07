@@ -99,6 +99,35 @@ namespace factory{
         });
     }
 
+    LevelSet* fourthContainerBoxInFluid(unsigned int w, unsigned int h, unsigned int d){
+      return new LevelSet(w, h, d,
+              [=](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
+                  return (j > h/6 && j < 5*h/6 && k > d/4+3 && k < 3*d/4+3 && i > w/8 && i < 3*w/8) || (j < h/3)  ? -0.5 : 0.5;
+
+              }, [=](unsigned int i, unsigned int j, unsigned int k){
+                  CellType bt = CellType::EMPTY;
+
+                  if(i == 0){
+                      bt = CellType::SOLID;
+                  }
+                  else if(j == 0){
+                      bt = CellType::SOLID;
+                  }
+                  else if(k == 0){
+                      bt = CellType::SOLID;
+                  }
+                  else if(i == w - 1){
+                      bt = CellType::SOLID;
+                  }
+                  else if(j == h - 1){
+                      bt = CellType::SOLID;
+                  }
+                  else if(k == d - 1){
+                      bt = CellType::SOLID;
+                  }
+                  return bt;
+              });
+    }
     LevelSet* twoPillars(unsigned int w, unsigned int h, unsigned int d){
       return new LevelSet(w, h, d,
         [=](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
