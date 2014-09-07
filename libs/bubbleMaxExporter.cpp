@@ -21,7 +21,7 @@ void BubbleMaxExporter::exportBubbles(std::string filename) {
       int i = it->first;
 
       f << "s" << i << " = sphere visibility:false radius:" << bl.radius <<
-        " pos = " << serialize(bl.positions[0]) << " wirecolor:yellow;" << std::endl;
+        " pos:" << serialize(bl.positions[0]) << " wirecolor:yellow;" << std::endl;
       
       // hide and position bubble before spawning
       f << "at time " << (bl.spawnFrame - 1) << "(" << std::endl; 
@@ -51,7 +51,7 @@ void BubbleMaxExporter::exportBubbles(std::string filename) {
       // update position of bubble every timeframe
       for (int j = 0; j < bl.positions.size(); j++) {
         f << "at time " << (bl.spawnFrame + j) << "(" << std::endl; 
-        f << "s" << i << ".pos = " << serialize(bl.positions[j]) << ";" << std::endl;
+        f << "s" << i << ".pos:" << serialize(bl.positions[j]) << ";" << std::endl;
         f << ")" << std::endl;
         }
     }
