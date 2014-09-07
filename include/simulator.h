@@ -43,6 +43,7 @@ public:
   glm::vec3 maxVelocity(VelocityGrid const *const velocity);
   float calculateDeltaT(glm::vec3 maxV, glm::vec3 gravity);
   float getDeltaT();
+  const BubbleTracker* const getBubbleTracker() const;
 
 private:
   unsigned int w,h,d;

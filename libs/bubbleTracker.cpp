@@ -30,9 +30,10 @@ void BubbleTracker::spawnBubble(glm::vec3 p, float r, glm::vec3 v) {
     b->radius = r;
     b->velocity = v;
     b->alive = true;
+    b->id = nextBubbleId++;
     deadBubbles->pop();
   } else {
-    b = new Bubble(p, r, v);
+    b = new Bubble(p, r, v, nextBubbleId++);
     bubbles->push_back(b);
   }
 }
