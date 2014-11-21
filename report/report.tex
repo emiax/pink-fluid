@@ -1,0 +1,740 @@
+%File: formatting-instruction.tex
+\documentclass[twocolumn]{article}
+\setlength{\columnsep}{30pt}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage{amsmath}
+\usepackage{esint}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[super]{natbib}
+\usepackage{float}
+\usepackage{adjustbox}
+\inputencoding{utf8}
+\newcommand{\BigO}[1]{\ensuremath{\operatorname{O}\left(#1\right)}}
+
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{lightgray}{rgb}{.99,.99,.99}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{purple}{rgb}{0.65, 0.12, 0.82}
+
+\lstset{
+    language=C++,
+    backgroundcolor=\color{lightgray},
+    extendedchars=true,
+    basicstyle=\footnotesize\ttfamily,
+    showstringspaces=false,
+    showspaces=false,
+    tabsize=2,
+    breaklines=true,
+    showtabs=false,
+    captionpos=b
+}
+\newcommand{\code}[1]{\texttt{#1}}
+
+
+\frenchspacing %space me like one of your french girls
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+\setlength{\parindent}{0pt}
+
+\pdfinfo{
+/Title (TN1008 - Computational Fluid Dynamics with improved semi-Lagrangian advection and bubble generation using a particle level set)
+/Author (Emil Axelsson, Karl Johan Krantz, Jonas Zeitler)}
+\setcounter{secnumdepth}{3}
+ \begin{document}
+\title{Computational Fluid Dynamics with improved semi-Lagrangian advection and bubble generation using a particle level set}
+\author{
+    Emil Axelsson - emiax775@student.liu.se\\
+    Karl Johan Krantz - karkr654@student.liu.se\\
+    Jonas Zeitler - jonze168@student.liu.se
+}
+
+\twocolumn[
+\begin{@twocolumnfalse}
+\maketitle
+\begin{abstract}
+\noindent This report describes a fluid simulation project in the course TN1008 at Linköping University. The aims of the project was to produce a visually convincing water simulation in both 2D and 3D. The foundation of our fluid solver is a grid based simulation using semi-Lagrangian advection. Along the way, a number of integration and interpolation schemes were implemented and evaluated. The surface of the water is tracked using a Particle Level Set to maintain small surface details, which are important to achieve a visually realistic result. The particle level set is also used to create bubbles when air is trapped inside the water. The bubbles are then affected by the pressure and velocity field of the fluid.
+\end{abstract}
+\end{@twocolumnfalse}
+]
+\pagenumbering{gobble}
+\clearpage
+\twocolumn[
+\begin{@twocolumnfalse}
+\tableofcontents
+\end{@twocolumnfalse}
+]
+
+% \listoffigures
+% \listoftables
+ \pagenumbering{gobble}
+\clearpage
+\pagenumbering{arabic}
+\section{Introduction}
+Physics based simulations of liquid fluids are increasingly common in feature films and computer games. The fact that fluids, especially water, are common in nature as well makes photorealistic simulation challenging as we can easily tell if a blob of water does not behave as expected. The field of fluid dynamics has been extensively studied in physics and provides a broad foundation for this project. This also means that there are a lot of improvements available on top of the very basic equations. 
+\\\\
+In this report, we present an implementation of a water simulation using a particle level set method similar to the one proposed by Enright et al. \cite{particleLevelSet} and using it to create bubbles using methods described by Greenwood and House \cite{betterWithBubbles}. Our fluid solver is built to produce visually convincing results when rendered using computer graphics, but may not yield satisfactory results for other industries where the requirements of physical accuracy are higher.
+
+\subsection{Background}
+There are a few well defined concepts and conventions when simulating fluids. Here we will briefly present the basic concepts of computational fluid dynamics.
+
+\subsubsection{The Incompressible Navier-Stokes equations}
+The Navier-Stokes equations (\ref{eqn:navier-stokes}) are the fundamental tools in simulating fluids. 
+
+\begin{subequations}
+\begin{equation}
+    \frac{\partial \mathbf{q}}{\partial t} + \mathbf{u} \cdot \nabla \mathbf{u} + \frac{1}{\rho} \nabla p = \mathbf{g} + \mu \nabla \cdot \nabla \mathbf{u}
+\label{eqn:navier-stokes-de}
+\end{equation}
+\begin{equation}
+    \nabla \cdot \mathbf{u} = 0
+\label{eqn:navier-stokes-incompressibility}
+\end{equation}
+\label{eqn:navier-stokes}
+\end{subequations}
+
+In these equations, $\mathbf{u}$ is the fluid velocity, $\rho$ is the density and $p$ denotes the pressure inside the fluid. The term $\frac{\partial \mathbf{q}}{\partial t} + \mathbf{u} \cdot \nabla \mathbf{u}$ is responsible for \emph{advection}. This is the act of moving a quantity, $\mathbf{q}$, through the velocity field, $\mathbf{u}$ of a fluid.
+\\\\
+On the right hand side of (\ref{eqn:navier-stokes-de}) we have $\mathbf{g}$, denoting the gravitational acceleration, and the last term, $\mu$, which is the fluid's viscosity.
+\\\\
+The second equation (\ref{eqn:navier-stokes-incompressibility}) is the \emph{incompressibility condition}, it states that there should not be any divergence in the velocity field $\mathbf{u}$. A non-zero divergence would implicate volume loss or gain.
+\\\\
+In this report, we will only account for inviscid fluids. This constraint will allow us to get rid of the viscosity term resulting in a simplified version of (\ref{eqn:navier-stokes}), called the \emph{Euler equations}.
+
+\begin{subequations}
+\begin{equation}
+    \frac{\partial \mathbf{q}}{\partial t} + \mathbf{u} \cdot \nabla \mathbf{u} + \frac{1}{\rho} \nabla p = \mathbf{g}
+\label{eqn:euler-de}
+\end{equation}
+\begin{equation}
+    \nabla \cdot \mathbf{u} = 0
+\label{eqn:euler-incompressibility}
+\end{equation}
+\label{eqn:euler}
+\end{subequations}
+
+The removal of the viscosity term will not have such an impact on the simulation as we would perhaps assume. A common issue in fluid simulations is \emph{numerical diffusion}, which is an error that will make the fluid appear slightly more viscous when visualized. Since water is not a particularly viscous fluid, this lucky coincidence introduces enough viscosity for our purposes.
+
+\subsubsection{Solving Navier-Stokes equations}
+The Euler equations can be \emph{split} into three smaller differential equations, where advection (\ref{eqn:advection}), external forces (\ref{eqn:ext-forces}) and pressure/incompressibility (\ref{eqn:pressure-incompressibility}) are treated separately. 
+
+\begin{subequations}
+  \begin{equation}
+    \frac{\partial \mathbf{q}}{\partial t} + \mathbf{u} \cdot \nabla \mathbf{u} = 0
+  \label{eqn:advection}
+  \end{equation}
+  \begin{equation}
+    \frac{\partial \mathbf{u}}{\partial t} = \mathbf{g}
+  \label{eqn:ext-forces}
+  \end{equation}
+  \begin{equation}
+    \frac{\partial \mathbf{u}}{\partial t} + \frac{1}{\rho} \nabla p = 0, \mbox{}
+    \text{ where } \nabla \cdot \mathbf{u} = 0
+  \label{eqn:pressure-incompressibility}
+  \end{equation}
+\label{eqn:equler-split}
+\end{subequations}
+
+In the case of advection, we are able to advect any quantity of the fluid, including the velocity field itself. Other quantities could be an ink-blob inside the fluid or (as will be presented below) a water surface. Hence, we denote this quantity with a general notation $q$.
+
+
+\subsubsection{Discretizing the equations}
+When dealing with fluid simulation in a digital environment, the Navier Stokes-equations need to be discretized in both time and space. Some existing fluid solvers take uniform time steps while others vary the step size depending on the current complexity of the scene to use the computation power where it is needed. If the output of the simulation is a video rendered using computer graphics, it may make sense to use a constant time step, to match the frame rate of the video. 
+\\\\
+There are several approaches to space discretization. So-called Lagrangian methods represent the fluid as a set of particles and track each individual particle's position and velocity as it interacts with other particles. Eulerian methods divide the volume into a grid and store quantities at fixed positions.
+
+
+
+\section{Method}
+\label{sec:method}
+
+\subsection{MAC grid}
+\label{sec:mac}
+Our fluid simulation uses a grid based (Eulerian) data structure to store fluid pressures and velocities. As we will see later, pressure needs to be calculated using velocity gradients. While a standard cell-centered grid is easy to implement, there are however negative consequences when approximating derivatives of such a grid. When calculating central differences, as in equation \ref{eqn:derivatives-cell}, the data located in the center ($y_i$) is ignored, decreasing the potential sample rate by a factor 2. 
+
+\begin{equation}
+y'_i = \frac{y_{i-1}+y_{i+1}}{2\Delta x}
+\label{eqn:derivatives-cell}
+\end{equation}
+
+Using a MAC-Grid (Marker and Cell grid) can improve the accuracy. Whereas traditional cell-centered grids store velocities in the center of the cell, MAC-Grids store the velocities on the edges of the cells, allowing for central differences to be calculated with half the step size, as in equation \ref{eqn:derivatives-mac}.
+
+\begin{equation}
+y'_i = \frac{y_{i-\frac{1}{2}}+y_{i+\frac{1}{2}}}{\Delta x}
+\label{eqn:derivatives-mac}
+\end{equation}
+
+\begin{figure}[h!]
+  \centering
+    \includegraphics[width=0.46\textwidth]{mac}
+  \caption{The Marker and Cell grid in two dimensions}
+  \label{fig:mac-grid}
+\end{figure}
+
+Figure \ref{fig:mac-grid} illustrates where the pressure and velocity values are stored in the grid data structure.
+
+A simple implementation of a 3D MAC-grid data structure can be seen in listing \ref{lst:mac-grid-impl}
+
+\begin{lstlisting}[caption={MAC-Grid implementation},label={lst:mac-grid-impl}]
+  struct MacGrid{
+      float p[size][size][size];
+      float u[size+1][size][size];
+      float v[size][size+1][size];
+      float w[size][size][size+1];
+    }; 
+\end{lstlisting}
+
+\subsection{Ordering of Operations}Our fluid simulation is carried out in uniform time steps (frames) where a number of actions are performed in a specified order. The operations that are performed every frame include solving the three equations derived from splitting the Navier Stokes equations (\ref{eqn:advection} - \ref{eqn:pressure-incompressibility}), as well as updating data structures that support the simulation and simulating bubbles. 
+
+
+
+\begin{enumerate}
+    \item Extrapolate Velocities
+    \item Advect velocities and level set
+    \item Update particles
+    \item Update bubbles
+    \item Use particles to correct level set
+    \item Reinitialize Level Set
+    \item Spawn bubbles from escaped particles
+    \item Use particles to correct level set again   
+    \item Apply external forces
+    \item Calculate the divergence of the velocities
+    \item Solve pressure equation using divergences
+    \item Modify velocities to enforce incompressibility
+\end{enumerate}
+
+Each of these steps will be described below, but in a different order that makes more sense when introducing the concepts.
+
+\subsection{Advection}
+Advecting the fluid is the act of transporting the quantities stored in the grid to new positions. In our simulation, the quantities that need to be advected are level set values (which will be introduced later) and velocities. The act of using the velocity field itself to advect velocities is called \emph{self-advection}.
+\\\\
+Advection is done using a semi-Lagrangian approach, meaning that every time a new velocity component needs to be calculated, an imaginary particle is placed in the sample point. The particle is back-tracked in the current velocity field using Runge-Kutta integration of the second order (\ref{eqn:RK2}). The velocity component at the previous position is written to the new one.
+
+\begin{equation}
+p_0=p_1-\mathbf{u}(p- \mathbf{u}(p)\cdot \frac{\Delta t}{2})\cdot \Delta t
+\label{eqn:RK2}
+\end{equation}
+
+Equation \ref{eqn:RK2} describes a mid-point back-tracking scheme, where $p_1$ denotes the position to where a particle should be advected, $p_0$ is the sample point found by back-tracking and $\mathbf{u}(p)$ is the velocity vector field.
+
+\subsection{External Forces}
+Applying external forces to the velocity field is an important step in simulating the real world. Most commonly gravity, but can also be wind and other vector fields. The application of the external vector field is done using forward Euler in equation \ref{eqn:forward-euler}.
+\begin{equation}
+  y_{i+1} = \Delta t * y_i' + y_i 
+    \label{eqn:forward-euler}
+\end{equation}
+
+Equation \ref{eqn:forward-euler} can be applied on each velocity component separately.
+
+\subsection{Projection}
+
+After applying advection and external forces, the velocity field will generally end up having non-zero divergences. Using these new velocities in the next advection step would potentially result in changing the volume of the fluid. The projection step is required to enforce the incompressibility condition (\ref{eqn:navier-stokes-incompressibility}) of Navier-Stokes equations. 
+\\\\
+To retrieve a incompressible field, the first step is to calculate the pressure of the fluid after the advection step. We can then subtract the gradient (\ref{eqn:gradient-sub-anal}) of the resulting pressure field from the advected velocity field, $\mathbf{u}^{*}$, to re-acquire a new, divergence free, velocity field, $\mathbf{u}^{n+1}$. This is called projection.
+
+\begin{subequations}
+\begin{equation}
+  \mathbf{u}^{n+1} = \mathbf{u}^{*} - \Delta t \frac{1}{\rho} \nabla p
+    \label{eqn:gradient-sub-anal}
+\end{equation}
+\begin{equation}
+\begin{split}
+  u_{i+\frac{1}{2}, j}^{n+1} = u_{i+\frac{1}{2}, j}^{*} - \Delta t \frac{1}{\rho} \frac{p_{i+1, j} - p_{i, j}}{\Delta x}\\
+    v_{i, j+\frac{1}{2}}^{n+1} = v_{i, j+\frac{1}{2}}^{*} - \Delta t \frac{1}{\rho} \frac{p_{i, j+1} - p_{i, j}}{\Delta y}
+    \label{eqn:gradient-sub-discr}
+\end{split}
+\end{equation}
+\label{eqn:gradient-sub}
+\end{subequations}
+
+The equations in (\ref{eqn:gradient-sub-discr}) are the discretized two dimensional versions of (\ref{eqn:gradient-sub-anal}). Here we make use of the MAC grid again to get  accurate, unbiased, derivatives. We will continue to describe the projection step in 2D. However the same theory applies when extending the model to three dimensions.
+
+\subsubsection{Jacobi Iteration}
+To be able to perform the calculations in (\ref{eqn:gradient-sub}) we need to calculate the pressure values, $p$. This is done through the Poisson equation (\ref{eqn:poisson}). Poisson's equation can be solved through \emph{Jacobi iteration} (\ref{eqn:jacobi-iteration}). This is a simple way of solving the Poisson equation and will be used here to describe the concept.
+
+%This is an easily parallelizable algorithm which can be implemented in e.g. a shader on the GPU.
+
+\begin{equation}
+  \nabla^2 \mathbf{p} = \nabla \cdot \mathbf{u}^*
+\label{eqn:poisson}
+\end{equation}
+
+\begin{equation}
+  (\nabla \cdot \mathbf{u}^*)_{i, j} \approx
+    \frac{u_{i+\frac{1}{2}, j} - u_{i-\frac{1}{2}, j}}{\Delta x} +
+    \frac{v_{i, j+\frac{1}{2}} - v_{i, j-\frac{1}{2}}}{\Delta y}
+\label{eqn:divergence-discr}
+\end{equation}
+
+Where $\nabla \cdot \mathbf{u}^*$ is the divergence of the advected velocity field, this is discretized in (\ref{eqn:divergence-discr}).
+\\\\
+If we consider (\ref{eqn:discrete-incompressibility}), we notice that this is a discretized version of the incompressibility condition (\ref{eqn:navier-stokes-incompressibility}). If we substitute (\ref{eqn:gradient-sub-discr}) into (\ref{eqn:discrete-incompressibility}) and solve for $p_{i, j}$, we get (\ref{eqn:jacobi-iteration}), which is equivalent to a Jacobi iteration of one pressure component. Applying this equation iteratively for each grid cell, the pressure will converge towards values which we can use to solve (\ref{eqn:gradient-sub}). In equation (\ref{eqn:jacobi-iteration}) the superscript $^{(k)}$ denotes the $k$:th iteration. We also note that we can write this on matrix form (\ref{eqn:jacobi-iteration-matrix}) to look more like the Poisson equation we began with.
+
+\if{false}
+\\\\
+If we look at the definition of (\ref{eqn:poisson}) for one pressure component, we get equation (\ref{eqn:jacobi-iteration-matrix}). If we solve this for $p_{i, j}$, we get (\ref{eqn:jacobi-iteration}).
+\fi
+
+\begin{equation}
+  \frac{u_{i+\frac{1}{2}, j}^{n+1} - u_{i-\frac{1}{2}, j}^{n+1}}{\Delta x} + \frac{v_{i, j+\frac{1}{2}}^{n+1} - v_{i, j-\frac{1}{2}}^{n+1}}{\Delta y} = 0
+\label{eqn:discrete-incompressibility}
+\end{equation}
+\begin{subequations}
+\begin{equation}
+  p^{(k+1)}_{i, j} = \frac{1}{4}
+    (p^{(k)}_{i-1, j} + p^{(k)}_{i+1, j} + p^{(k)}_{i, j-1} + p^{(k)}_{i, j+1} - \frac{\rho \Delta x^2}{\Delta t} \nabla \cdot \mathbf{u}^*_{i, j})
+\label{eqn:jacobi-iteration}
+\end{equation}
+\begin{equation}
+\begin{split}
+  \frac{\Delta t}{\rho \Delta x^2}
+    \begin{bmatrix}
+        1 & 1 & -4 & 1 & 1
+    \end{bmatrix}
+    \begin{bmatrix}
+      p_{i+1, j}\\
+      p_{i-1, j}\\
+      p_{i, j}\\
+      p_{i, j-1}\\
+      p_{i, j+1}\\
+    \end{bmatrix} =
+    \nabla \cdot \mathbf{u}^*_{i, j}
+\end{split}
+\label{eqn:jacobi-iteration-matrix}
+\end{equation}
+\label{eqn:pressure}
+\end{subequations}
+
+There are, however, some loose ends. First, we have no initial pressure values. These could be estimated from previous time steps but an estimation would only make sense when the fluid is very calm (in roughly the same place every time step). While this could be applicable for some simulations, we are more interested in simulations where the fluid is actually doing something. With this in mind, we simply set the initial pressure values to $0$.
+\\\\
+We also have to decide an appropriate number of iterations. Since we can not approximate initial pressure values very well, we compensate with more iterations. A reasonable value was found to be between 60 and 100 iterations.
+
+\subsubsection{Conjugate Gradient}
+A more efficient way of solving the pressure values is the \emph{conjugate gradient} method. This approach uses the same Poisson equation (\ref{eqn:poisson}) as above. The difference between the two methods is that while Jacobi iteration solves pressure values independently, conjugate gradient attempts to use previous pressure solutions, e.g. using $p_{i-1, j}^{(k)}$, when solving $p_{i, j}^{(k)}$. This approach makes the solution converge faster than a plain Jacobi iteration, but is in return harder to parallelize.
+\\\\
+To adapt our equations for conjugate gradient, we replace the Laplace operator, $\nabla^2$, with a matrix, $A$. This matrix will contain the equivalent of a Laplace operator (the coefficient vectors in (\ref{eqn:pressure})) in each row, one row for every cell in the simulation grid.
+
+\begin{equation}
+  A \mathbf{p} = \nabla \cdot \mathbf{u}^*
+\end{equation}
+
+This matrix equation can be solved for $\mathbf{p}$ using \emph{modified incomplete Cholesky conjugate gradient level zero, MICCG(0)}\cite{fluidBook}. The solution can then be used in the gradient subtraction equation (\ref{eqn:gradient-sub}).
+\\\\
+Both Jacobi Iteration and Conjugate Gradient methods were evaluated, and our fluid simulation uses the latter .
+
+
+\subsubsection{Boundary conditions}
+We introduced (\ref{eqn:jacobi-iteration}) as the solution of a pressure component based on equation (\ref{eqn:divergence-discr}). However, we have not mentioned how these equations behave at boundaries between fluid and air or fluid and solid.
+\\\\
+As an example, let $p_{i, j}$ be a fluid cell and $p_{i-1, j}$ an air cell. Here, we want to permit fluid flow into the air region. Since the air pressure is much lower than any fluid pressure, we simply set $p_{i-1, j} = 0$. Furthermore, let $p_{i+1, j}$ be a solid grid cell. As described by (\ref{eqn:boundary-neumann}) no fluid should be able to flow into (or out of) the solid. This is called the \emph{Neumann boundary condition}.
+
+\begin{equation}
+  u_{i+1, j} - u_{i, j} = 0
+\label{eqn:boundary-neumann}
+\end{equation}
+\begin{equation}
+  p_{i+1, j} = p_{i, j} + \frac{\rho \Delta x}{\Delta t}
+    (u_{i+\frac{1}{2}, j}^* - u_{solid})
+\label{eqn:gradient-sub-neumann}
+\end{equation}
+
+Enforcing this condition in (\ref{eqn:gradient-sub-discr}) results in (\ref{eqn:gradient-sub-neumann}) considering that we always want the resulting velocity, $u_{i+\frac{1}{2}, j}^{n+1}$, to equal the velocity of the solid. Finally we substitute this equation into (\ref{eqn:pressure}) which results in the following:
+
+\begin{equation}
+\begin{split}
+  \frac{\Delta t}{\rho \Delta x^2}
+    \begin{bmatrix}
+        0 & 1 & -3 & 1 & 1
+    \end{bmatrix}
+    \begin{bmatrix}
+      p_{i+1, j}\\
+      p_{i-1, j}\\
+      p_{i, j}\\
+      p_{i, j-1}\\
+      p_{i, j+1}\\
+    \end{bmatrix} =\\
+    \nabla \cdot \mathbf{u}^*_{i, j} +
+    \frac{u_{i+\frac{1}{2}} - u_{solid}}{\Delta x}
+\end{split}
+\label{eqn:jacobi-matrix-neumann}
+\end{equation}
+
+This approach will work for moving boundaries as well as for setting $u_{solid} = 0$. However, if we enforce non-moving solids, we can drop the last term of on the right hand side of (\ref{eqn:jacobi-matrix-neumann}).
+
+
+\subsection{Velocity Extrapolation}
+Considering that we focus on simulating water and that, to be interesting, the water cannot fill the entire grid we realise that there will be a lot of empty, or ``air'', cells in the simulation. The air is not part of the fluid simulation we describe here and is actually not simulated in any physical manner at all. Recalling that the advection step uses a backwards stepping algorithm it becomes apparent that velocities need to be present in air cells for water to move there.
+\\\\
+This is solved by transferring velocities from the water surface to the air region. The result is an extension of the water's velocity field where each velocity sample in the air region copies the closest velocity value from the water.
+\\\\
+Figure \ref{fig:velocity-extrapolation} shows a comparison between two simulations where velocity extrapolation has been toggled on and off.
+
+\begin{figure*}
+  \centering
+    \begin{subfigure}[b]{.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{vel-ext-base}
+        \caption{Frame 0. Before any advection of the fluid.}
+        \label{fig:vel-ext-base}
+    \end{subfigure}
+    \begin{subfigure}[b]{.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{vel-ext-on}
+        \caption{Frame 90. With velocity extrapolation.}
+        \label{fig:vel-ext-on}
+    \end{subfigure}
+    \begin{subfigure}[b]{.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{vel-ext-off}
+        \caption{Frame 90. Without velocity extrapolation.}
+        \label{fig:vel-ext-off}
+    \end{subfigure}
+    \caption{Simulating two falling pillars with and without velocity extrapolation.}\label{fig:velocity-extrapolation}
+\end{figure*}
+
+\subsection{Interpolation}
+Whilst the Marker-and-cell grid in section \ref{sec:mac} improves the accuracy of the derivatives in the middle of the cells, a common use case is to not only access the values on the cells or edges but also access arbitrary points in the cell. This problem can be solved by different interpolation schemes. An example of a linear interpolation scheme can be seen in equation \ref{eqn:linear-interpolation}.
+\begin{equation}
+  y(x) = y\lfloor x \rfloor + (y\lceil x \rceil - y\lfloor x \rfloor) \frac{x-\lfloor x \rfloor}{\lceil x \rceil -\lfloor x \rfloor}
+  \label{eqn:linear-interpolation}
+\end{equation}
+\subsubsection{Catmull–Rom Interpolation}
+\label{sec:catmull-rom}
+The interpolation scheme described in equation \ref{eqn:linear-interpolation} is enough for basic quantities but is only $C^0$ continuous and if $C^1$ continuity is needed we need to look elsewhere. Catmull-Rom is an improved interpolation scheme, that's a special case of Cardinal spline interpolation (See figure \ref{fig:catmull-rom}).
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{catmullrom}
+  \caption{Catmull-Rom Interpolation}
+  \label{fig:catmull-rom}
+\end{figure}
+A Catumull Rom spline in 1D can be described using the vector and matrix multiplications in equation \ref{eqn:catmull-rom-spline}.
+\begin{equation}
+\begin{split}
+q(x) &= 0.5 *
+    \begin{bmatrix}
+        1 & t & t^2 & t^3
+    \end{bmatrix}
+    \begin{bmatrix}
+       0 & 2 & 0 & 0 \\
+      -1 & 0 & 1 & 0 \\
+       2 & -5 & 4 & -1 \\
+       -1 & 3 & -3 & 1 \\
+    \end{bmatrix}
+    \begin{bmatrix}
+        P_0 \\ P_1 \\ P_2 \\ P_3
+    \end{bmatrix}
+\end{split}
+\label{eqn:catmull-rom-spline}
+\end{equation}
+
+While Catmull-Rom interpolation improves the accuracy of the standard linear interpolation, it also has a significant performance cost. A linear interpolation in 3D (Also called a trilinear interpolation), uses eight ($2^3$) accesses to memory, while a 3D Catmull-Rom interpolation uses 64 ($4^3$) accesses to memory. As the number of cells grows cubicly, Catmull-Rom interpolation gives major performance implications, resulting in a strive towards limiting the number of quantities using Catmull-Rom interpolation.
+
+\subsection{Surface tracking}
+
+
+\subsubsection{Level set methods}
+We have not yet covered how to tell air and fluid cells apart, and how to keep track of the fluid surface.
+Level set methods make use of a so-called Signed Distance Function (SDF) to store the closest distance to the surface in each grid cell. 
+Negative values are used to indicate that the grid point is inside the fluid. The same velocity field used in the advection step is used to transport the signed distances. When advecting the level set, normal linear interpolation schemes are not sufficient to accurately represent sharp spikes, ripples or other detailed features of the surface. In this case we use Catmull-Rom interpolation as described above.
+
+\begin{figure}[h]
+  \centering
+    \includegraphics[width=0.46\textwidth]{reinit}
+  \caption{Reinitialization}
+  \label{fig:reinitialization}
+\end{figure}
+\subsubsection{Reinitialization techniques}
+ To maintain a valid signed distance field, the level set must be reinitialized after being advected. This is done using the so-called fast march algorithm. A reinitalization begins by discarding all distances that are not direct neighbors to the fluid surface. Points on the fluid surface are reconstructed between all neighboring cells that are divided by the surface. Calculating the distance to a surface point generated by two horizontal cell neighbors can be done using equation \ref{eqn:surface-distance}
+ 
+\begin{equation}
+    d_{i,j} = |\frac{y_{i,j}}{y_{i+1,j} - y_{i,j}}|
+\label{eqn:surface-distance}
+\end{equation}
+ 
+Here $d_{i,j}$ is the distance to the reconstructed surface from the cell at $(i, j)$, while y is the value of the signed distance function.
+The coordinate of the closest surface point is registered for each surface neighbor cell (marked in green in figure \ref{fig:reinitialization}c). After the first layer of closest surface points has been initialized, the correct surface distance need to be propagated out to cells that are farther away.
+\\\\
+Here, a priority queue data structure was implemented. All cells with known surface distance are inserted into the queue, sorted by growing surface distance. Until the queue is empty, the grid cell with shortest surface distance is removed from the priority queue and all its neighbors' distances are updated with respect to the removed cell's closest surface point. The neighbors themselves are then inserted into the queue. Figure \ref{fig:reinitialization}d displays the state of the propagation after a few iterations.
+\\\\
+However, the level set does not have to be a valid signed distance function everywhere. It is sufficient to only reinitialize a narrow band of cells from the surface, approximately five grid cells wide. This allow for valuable optimization. The reinitalization of the level set easily becomes a performance bottleneck since it is  difficult to parallelize.
+
+
+\subsubsection{Particle Level Set method}
+Until now, we have been describing a method of simulating fluids using a grid, back-tracking velocities to move quantities between static grid cells. A problem with basing the surface tacking only on advecting a distance field is that details are lost. Data is stored in fixed size voxels which means that more fine grained structures are lost every time the level set is reinitialized. 
+\\\\
+Another method for simulating fluids is to use a particle system where each particle stores information about velocicy, color, density etc. The particles are then advected using a forward scheme instead of backtracking them. This results in a Lagrangian advection where we explicitly move every particle along with all of their quantities. The result is a simpler and more accurate advection scheme, but the model is less efficient for solving pressure.
+\\\\
+This opens up for hybrid simulation models which attempts to use the strengths of both models. These are called particle in cell methods, or PIC for short. A PIC model still uses grids to solve the pressure equations and store all quantities but advects the quantities using particles. This implies a lot of interpolation when transferring quantities between particles and grids which again introduces the smoothing we tried to avoid. An extended method, called FLIP (fluid implicit particle), tries to solve this problem by only transferring the change of a quantity from its grid to the particles.
+\\\\
+In this implementation, a third method called PLS (particle level set) is used. This method is not a PIC method and still uses grid based advection. PLS instead seeds marker particles close to the surface of a level set to specifically track its boundaries. Each particle samples the distance grid where they spawn. We can think of this as a signed radius, $r$, of a particle, where some point at the surface of a particle is in contact with the closest point on the fluid surface. The particles are then advected, along with the underlying level set, to provide a ``second opinion'' on where a boundary should end up after advection.
+\\\\
+More specifically this surface refinement operation uses something called \emph{escaped particles} as presented by Fedkiw et. al\cite{particleLevelSet}. An escaped particle (\ref{eqn:escaped-particle}) is defined as a particle that is no longer in contact with the fluid surface. Additionally, an escaped particle should have a sign that differs from the surrounding level set.
+
+\begin{equation}
+\begin{split}
+    |r_{p}| > |\phi(\mathbf{x}_p)| \\
+    r_{p}*\phi(\mathbf{x}_p) < 0
+\label{eqn:escaped-particle}
+\end{split}
+\end{equation}
+
+Particles that pass the criteria in (\ref{eqn:escaped-particle}) will be the particles that disagree the most with the level set and will be used for refinement.
+\\\\
+For each escaped particle, a local level set value is calculated for each of the (2D: four, 3D: eight) surrounding level set values.
+
+\begin{equation}
+  \phi_p(\mathbf{x}) = sgn_p(r_p - |\mathbf{x} - \mathbf{x}_p|)
+\label{eqn:particle-level-set}
+\end{equation}
+
+Where $\mathbf{x}$ is the position of a grid cell containing a level set value. We then initialize a new distance grid, $\phi_+$, with the values from $\phi$. The values in $\phi_+$ are then corrected using the local (particle) level sets $\phi_{p^+}$.
+
+\begin{equation}
+  \phi_+ = max(\phi_{p^+}, \phi_+)
+\label{eqn:pos-particle-correction}
+\end{equation}
+
+We evaluate (\ref{eqn:pos-particle-correction}) for each of the escaped positive particles. A similar correction (\ref{eqn:neg-particle-correction}) is used for the negative escaped particles.
+
+\begin{equation}
+  \phi_- = min(\phi_{p^-}, \phi_-)
+\label{eqn:neg-particle-correction}
+\end{equation}
+
+Finally, $\phi_+$ and $\phi_-$ are then merged into a corrected level set.
+
+\begin{equation}
+  \phi = \begin{cases}
+    \phi_+, & |\phi_+| \le |\phi_-| \\
+                \phi_-, & |\phi_+| > |\phi_-| \\
+                \end{cases}
+\label{eqn:pls-merge}
+\end{equation}
+
+To be effective, this procedure needs to be applied twice every simulation step. Marker particles also need to be reseeded every simulation step. The entire PLS correction is summarized below.
+
+\begin{enumerate}
+  \item Seed marker particles around the level set interface.
+    \item Sample the level set in each particle's position and store as signed radius.
+    \item Advect grid quantities and particles using the velocity field.
+    \item Find escaped marker particles and correct the level set using (\ref{eqn:particle-level-set}) - (\ref{eqn:pls-merge}).
+    \item Reinitialize level set and recorrect, again using (\ref{eqn:particle-level-set}) - (\ref{eqn:pls-merge}).
+\end{enumerate}
+
+\subsubsection{Bubbles}
+A positive side effect of advecting PLS marker particles is that they can be used for bubble generation. When the procedure above detects an escaped \emph{positive} particle, we might argue that it represents air being trapped inside the fluid. The larger the radius of the particle, the more air being trapped, thus giving an indication of a potential bubble radius.
+\\\\
+At the end of each PLS correction/recorrection step we spawn bubbles from the escaped positive particles. During the next simulation step the bubbles are simulated along with the rest of the system. Remembering that these bubbles are not simulated as a real gas inside the fluid, we borrow the pressure inside the fluid to model pressure force (\ref{eqn:bubble-pressure}) on the bubbles as well as the fluid velocity to model force from viscosity. As shown by Greenwood and House\cite{betterWithBubbles}, bubble motion can be modeled as in (\ref{eqn:bubble-velocity}) for bubbles inside a fluid blob.
+
+\begin{equation}
+  F^p_i = - K_p \nabla p_iV_i
+    \label{eqn:bubble-pressure}
+\end{equation}
+
+\begin{equation}
+  v_i = \frac{1}{K_v}(K_vu_i + F^p_i)
+    \label{eqn:bubble-velocity}
+\end{equation}
+
+In equation \ref{eqn:bubble-pressure}, $F^p_i$ is pressure force from the water on the bubble, $\nabla p_i$ is the pressure gradient at the position of the bubble, $V_i$ is the bubble volume and $K_p$ is a user defined constant to adjust the contribution from pressure. In equation \ref{eqn:bubble-velocity}, $u_i$ denotes fluid velocity, $v_i$ is the resulting velocity of the bubble and $K_v$ is another user defined parameter to model fluid viscosity.
+\\\\
+In the implementation of bubbles, only bubbles fully submerged in fluid were modeled.
+
+\section{Implementation}
+During this section, we will briefly look over the implementation of this simulation and some of the design decisions that have gone into the simulation.
+\subsection{Overview}
+Because of the requirements for both precision and performance of the simulation, the implementation was done in C++. While other high level languages were available to use with similar requirements, none allowed the simulation to be run fast on the CPU \emph{and} on the GPU. 
+
+\begin{figure*}
+  \centering
+    \begin{subfigure}[b]{.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{bubbles-cavity}
+        \caption{Air about to be trapped by surrounding fluid.}
+        \label{fig:bubbles-cavity}
+    \end{subfigure}
+    \begin{subfigure}[b]{.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{bubbles-generated}
+        \caption{Bubbles generated from the trapped air.}
+        \label{fig:bubbles-generated}
+    \end{subfigure}
+    \caption{Bubbles generated from trapped air.}\label{fig:bubble-combined}
+\end{figure*}
+
+\subsection{CPU Cache}
+A large part in optimizing performance for the high-performance requirement of Fluid Simulations is to access the memory in sequence and not in random positions. A large performance increase can be seen by using the CPU's cache to its full potential.
+The cache works by grabbing a chunk of surrounding memory at each access, which has the affect of improving performance when working with data with high data locality, as more relevant data then can be fit into the cache. 
+\\\\
+If multiple nested for-loops are built with the wrong ordered nesting they can often be optimized so by setting the compiler to a sufficient optimization level (Such as -O3 or -Ofast in GCC).
+
+\subsection{Multithreading}
+When simulating large grids in fluid-simulations, there quickly comes a point where the grid size makes the rendering and simulation become unmanageably slow. A solution to this problem is to use the multiple cores that most modern computers are equipped with. 
+\\
+Since the methods chosen were mostly based on calculations on the grid, they were parallelizable too such a degree where each cell could be independently calculated. A high degree of multi-threading was then achievable, which allowed the simulation to run a significant factor faster.
+\subsubsection{GPGPU}
+As was mentioned in the section above, most of the methods used in this report are such that can be easily translated into extremely parallelizable code. One of the largest performance boost an application can have is from using the graphics card in order to offload some of the parallelizable computations from the CPU, which is busy doing translations between the CPU and the GPU and other tasks that simply can't be parallelized.
+\\
+Methods using GPGPU were investigated for this project, and while the performance of such methods are usually extremely good, there exists a large latency when moving the data from the graphics card and onto the main ram. Something that was needed for this project when doing the more advanced pressure equation solving, the latency quickly became the largest bottleneck in the simulation. After this discovery, the GPGPU part that had been programmed were thrown away in order to work on the CPU based simulation system only.
+
+\subsection{Rendering}
+Although the main scope of the project was to work with computational fluid dynamics rather than visualization of fluids, we developed simple renderers for 2D and 3D fluids that could be used to inspect the behaviour of the simulation without exporting the data to external rendering software.
+
+\subsubsection{2D renderer}
+Our 2D renderer was used to generate figure \ref{fig:velocity-extrapolation} and  \ref{fig:velocity-extrapolation}. This was our most useful utility when debugging the behaviour of the simulation. Since the level set grid is always kept in RAM, it is a simple operation to move this texture to the graphics card and render it using a  GLSL program that paints negative level set values blue.
+
+\subsubsection{Ray-Casting}
+In order to visualize a scalar-field such as the level set in 3D, a GPU based ray-casting solution was developed. Similarly to the 2D render a texture containing the level set is loaded onto the GPU. A GLSL program casts a ray into the volume for each pixel and renders the surface whenever it reaches a negative level set value. The rendering of the grid does not take long and is not the main bottleneck of the simulation.
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{raycaster}
+  \caption{Simple raycaster rendering $16^3$ grid }
+  \label{fig:raycaster}
+\end{figure}
+
+\subsubsection{Marching Cubes}
+In order to be able to offload the rendering to more capable 3D-rendering software (such as 3DS MAX or Maya), a library for marching-cubes was integrated into the project. This library allows us to export Wavefront .obj files, which can be read into software as a sequence of meshes that can then be rendered using any material/lighting.
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{wireframe}
+  \caption{Resulting wireframe after marching cubes on a $64^3$ grid.}
+  \label{fig:wireframe}
+\end{figure}
+
+\section{Results} 
+\subsection{Visualizations}
+These images were rendered using Autodesk 3DS Max Design 2014, using the Mental Ray raytracer.
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{water_box}
+  \caption{$64^3$ grid after 222 frames with a water ball}
+  \label{fig:watergrid}
+\end{figure}
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{waterfall}
+  \caption{A simulated waterfall with a $32^3$ grid.}
+  \label{fig:waterfall}
+\end{figure}
+
+\if(false)
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{boxinwater}
+  \caption{Dropping a box of water into an already existing pool}
+  \label{fig:boxinwater}
+\end{figure}
+\fi
+
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{water-box}
+  \caption{Simulation of a $64^3$ grid}
+  \label{fig:box-of-water}
+\end{figure}
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=0.46\textwidth]{water-caustics}
+  \caption{Advanced lighting of a $64^3$ grid with extra caustics for the water}
+  \label{fig:water-caustics}
+\end{figure}
+
+\subsection{Performance}
+Table \ref{tbl:perfgridsize} shows rendering times of a scene in different resolutions. The time specified is the simulation time required to produce 10 frames.
+
+\twocolumn[
+\begin{@twocolumnfalse}
+\captionof{table}{Total time of simulation against the grid size} \label{tbl:perfgridsize}
+\begin{center}
+\begin{adjustbox}{width=\textwidth,totalheight=\textheight,keepaspectratio}
+\begin{tabular}{l|l|l|l|l|l}
+Grid Size & Total simulation time / 10 frames & Advect & Level Set & Particle Tracker & Pressure Solver \\
+\hline
+$64^3$ & $18506ms$ & $4509ms$ & $2914ms$ & $8787ms$ & $1158ms$ \\ 
+$32^3$ & $3205ms$ & $575ms$ & $215ms$ & $2175ms$ & $105ms$ \\
+$16^3$ & $645ms$ & $85ms$ & $19ms$ & $513ms$ & $8ms$\\
+$8^3$ &  $95ms$ & $9ms$ & $<1ms$ & $83ms$ & $<1ms$ \\
+\end{tabular}
+\end{adjustbox}
+\end{center}
+\end{@twocolumnfalse}
+]
+
+\section{Discussion}
+\subsection{Bubbles}
+\subsubsection{Rendering}
+Unfortunately for the 3D-rendering of our simulation, bubbles are not able to be properly rendered. Even in a more advanced 3D-renderer, the appearance of bubble inside a 3D-mesh is complex and not without issues. Greenwood and House describes how a custom-built raytracer would render bubbles inside the fluid, however, building a raytracer was outside the scope of the project.
+
+\subsubsection{Generating bubbles}
+Our method for generating bubbles finds escaped air particles and spawns bubbles if they are completely surrounded by fluid. Greenwood and House describe one additional scenario when bubbles are formed, namely when empty air pockets are detected inside the fluid. This has not been implemented in our simulation, possibly yielding a less convincing result when a large volume of air is surrounded by water. However, in our  experiments we have seen that these cases usually create enough turbulence in the velocity field to generate escaped particles that will make our simulation spawn bubbles.
+\\\\
+However, a natural extension to our project would be to implement a flood fill algorithm that searches the grid for cavities and spawns bubbles there, in order to be able to evaluate the visual improvement caused by this technique. 
+
+\subsubsection{Foam}
+In our simulation, bubbles are simulated independently from each other. Greenwood and House propose adding attracting and repelling forces to avoid bubbles to become ``swallowed'' by others as well as support for foam generation. Together with improved techniques customized for rendering complex bubble structures, these kinds of forces could improve the visual output of the simulation.
+
+\subsubsection{Two way coupling}
+While generating bubbles from marker particles can give convincing results, there is no simulation of a gas inside the surrounding fluid. In our simulation there is a \emph{one way coupling} between water and bubbles meaning that the water affects the bubbles but \emph{not} vise versa.
+\\\\
+Two way coupled bubbles can be achieved by simulating the air as a fluid as well. As presented by Fedkiw et. al\cite{two-way-bubbles}, simulating the air allows the bubbles to change topology, i.e. deforming and splitting while the bubbles in our implementation are constrained to be perfect spheres with varying radius.
+
+\subsection{Surface of Fluid}
+While the simulation manages to create a valid surface, in many cases the fluid quickly loses volume and large strands in the air can disappear completely. Against the walls and roof of the simulation, long strands of fluid can remain for unrealistic amounts of time.
+\\\\
+All of the above are things that could be improved by using better techniques for moving the fluid and tracking the surface of the fluid.
+
+\subsubsection{Surface Tracking}
+Currently in the simulation, the Particle Level Set method is used in order to decrease the loss of volume. This is however only one possible way of removing this problem and there are other hybrid models which uses techniques from Lagrangian methods that help in volume conservation.
+\\\\
+Examples of such methods are PIC (Particle in Cell) or FLIP (Fluid-Implicit Particle), both of which could have been investigated for further improvement of the surface tracking algorithm.
+
+\subsubsection{Solid Boundary Conditions}
+A large problem in our fluid simulation is the fact that fluid cannot escape walls, since the perpendicular velocity composant is contrained to be zero when a collision occurs.
+
+This is a general problem in CFD, which according to Bridson\cite{fluidBook} is not currently solved even in research. Bridson mentions in passing multiple methods for decreasing this effect, including methods where instead of assuring that $u = 0$, constraining $u$ to only point outwards. However, this would require some mechanism for adding ``bouncing'' forces to water reaching walls, which is not trivial.
+
+\begin{thebibliography}{9}
+    \bibitem{fluidBook}
+        R. Bridson
+        \emph{Fluid Simulation for Computer Graphics},
+        Wellesley, MA, USA, 2008. A K Peters, Ltd.
+
+    \bibitem{particleLevelSet}
+        Douglas Enright, Frank Losasso, Ronald Fedkiw
+        \emph{A Fast and Accurate Semi-Lagrangian Particle Level Set Method},
+        Computers and Structures archive
+        Volume 83 Issue 6-7, February, 2005 
+        Pages 479-490 
+
+
+    \bibitem{betterWithBubbles}
+        S. T. Greenwood, D. H. House
+        \emph{Better with Bubbles: Enhancing the Visual Realism of Simulated Fluid},
+        Eurographics/ACM SIGGRAPH Symposium on Computer Animation (2004)
+        
+    \bibitem{two-way-bubbles}
+      S. Patkar, M. Aanjaneya, D. Karpman, R. Fedkiw
+        \emph{A Hybrid Lagrangian-Eulerian Formulation for Bubble Generation and Dynamics}
+         ACM SIGGRAPH/Eurographics Symposium on Computer Animation (SCA), (2013).
+        
+\end{thebibliography}
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
