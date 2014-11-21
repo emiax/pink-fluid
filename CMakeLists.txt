@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 2.8.8)
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(PROJECT_NAME_STR pink-fluid)
 project(${PROJECT_NAME_STR} C CXX)
 
@@ -193,7 +195,30 @@ target_link_libraries(${PROJECT_NAME_STR}
   ${ALL_LIBS}
 )
 
+#----------------------------
+# Maya Plugin
+#----------------------------
+find_package(Maya)
 
+set(PROJECT_MAYA_NAME ${PROJECT_NAME_STR}_maya.bundle)
+include_directories(${COMMON_INCLUDES})
+
+file(GLOB MAYA_SRC_FILES ${PROJECT_SOURCE_DIR}/maya/main.cpp)
+add_library(${PROJECT_MAYA_NAME} MODULE ${PROJECT_SOURCE_DIR}/maya/main.cpp)
+
+add_definitions(-D_BOOL -DOSMac_ -DREQUIRE_IOSTREAM)
+
+include_directories(${MAYA_INCLUDE_DIRS})
+
+set_target_properties(${PROJECT_MAYA_NAME}
+                      PROPERTIES COMPILE_FLAGS ${PROJECT_EXEC_FLAGS})
+target_link_libraries(${PROJECT_MAYA_NAME}
+                      ${ALL_LIBS}
+                      ${MAYA_OpenMaya_LIBRARY}
+)
+
+#If something breaks and if you are using mac, try this awesomeness:
+#link_directories(/Applications/Autodesk/maya2015/Maya.app/Contents/MacOS)
 
 
 #----------------------------
