@@ -129,24 +129,27 @@ add_subdirectory(
   ${PROJECT_EXT_DIR}/glfw/
 )
 
-#Get glm
-add_subdirectory(
-  ${PROJECT_EXT_DIR}/glm
-)
 
+#Get glm
+set(glm_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/glm")
+set(glm_CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${glm_INSTALL_DIR} ")
+
+externalProject_Add(glm
+  SOURCE_DIR ${PROJECT_EXT_DIR}/glm
+  CMAKE_ARGS -DENABLE_CPP11=NO ${glm_CMAKE_ARGS})
 
 set(ext_libs 
   ${CMAKE_SOURCE_DIR}/external/glfw/include/
   ${CMAKE_SOURCE_DIR}/external/glew/include/
   ${PROJECT_EXT_DIR}/pcgsolver/
   ${PROJECT_EXT_DIR}/marchingcubes/
-  ${GLM_INCLUDE_DIR}
+  ${glm_INSTALL_DIR}/include/
 )
 
 # Disables warnings under gcc and clang for GLM.
 # GLM Emits a lot of warnings under higher compiler warnings
 add_definitions(
-  "-isystem ${GLM_INCLUDE_DIR}"
+  "-isystem ${glm_INSTALL_DIR}"
 )
 
 include_directories(
