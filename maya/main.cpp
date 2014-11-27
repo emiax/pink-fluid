@@ -1,12 +1,31 @@
-#include <maya/MSimple.h>
-#include <maya/MGlobal.h>
-#include <maya/MIOStream.h>
+#include "setGridResolutionCmd.h"
+#include "loadStateCmd.h"
+#include "launchGuiCmd.h"
+#include "pluginState.h"
 
-DeclareSimpleCommand( helloWorld, "Pink Fluid", "0.1");
+MStatus initializePlugin(MObject obj) {
+  MFnPlugin pluginFn(obj, "PinkFluid", "0.1");
+  MGlobal::displayInfo(MString("Loaded PinkFluid from: ") + pluginFn.loadPath());
+  PluginStateManager::instance()->setExecutionPath(pluginFn.loadPath().asChar());
 
-MStatus helloWorld::doIt( const MArgList& )
-{
-  MGlobal::displayInfo("hello!");
+  MStatus status;
+  status = pluginFn.registerCommand("pfSetGridResolution", SetGridResolutionCmd::creator);
+  status = pluginFn.registerCommand("pfLoadState", LoadStateCmd::creator);
+  status = pluginFn.registerCommand("pfGUI", LaunchGuiCmd::creator);
 
-  return MS::kSuccess;
+  MGlobal::executeCommand("pfGUI");
+
+  return status;
+}
+
+MStatus uninitializePlugin(MObject obj) {
+  MFnPlugin pluginFn(obj);
+  MStatus status;
+  status = pluginFn.deregisterCommand("pfSetGridResolution");
+  status = pluginFn.deregisterCommand("pfLoadState");
+  status = pluginFn.deregisterCommand("pfGUI");
+
+  MGlobal::executeCommand("deleteUI $win");
+
+  return status;
 }

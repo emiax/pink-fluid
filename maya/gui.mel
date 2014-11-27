@@ -1,0 +1,27 @@
+global proc addSlider() {
+  global string $mySlider;
+  $mySlider = `floatSliderGrp
+    -value 0
+    -min 0
+    -max 5
+    -dragCommand "print 1"
+    -field true`;
+}
+
+global proc loadState(string $filename, string $type) {
+  print("Attemting to load state from " + $type + " file: " + $filename + "\n");
+  pfLoadState($filename);
+}
+
+global proc openFileBrowser() {
+  string $result[] = `fileDialog2 -fileMode 1 -fileFilter "Pink Fluid (*.pf)" -rf true`;
+  loadState($result[0], $result[1]);
+}
+
+global string $win;
+$win = `window -title "fluid simulation" -widthHeight 300 200`;
+  columnLayout;
+    text "Welcome to Pink Fluid, the dynamic fluid simulator.";
+    button -label "Load Fluid State..." -command "openFileBrowser";
+    // addSlider();
+showWindow;
