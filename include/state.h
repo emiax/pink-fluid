@@ -34,6 +34,7 @@ public:
   unsigned int getD() const;
 
   std::ostream& write(std::ostream &stream);
+  std::istream& read(std::istream &stream);
 
 private:
   void resetVelocityGrids();

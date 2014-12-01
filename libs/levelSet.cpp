@@ -303,3 +303,16 @@ std::ostream& LevelSet::write(std::ostream& stream){
   stream.write(reinterpret_cast<char*>(&targetVolume), sizeof(targetVolume));
   return stream;
 }
+
+std::istream& LevelSet::read(std::istream& stream){
+  distanceGrid->read(stream);
+  cellTypeGrid->read(stream);
+  stream.read(reinterpret_cast<char*>(&w), sizeof(w));
+  stream.read(reinterpret_cast<char*>(&h), sizeof(h));
+  stream.read(reinterpret_cast<char*>(&d), sizeof(d));
+
+  stream.read(reinterpret_cast<char*>(&targetVolume), sizeof(targetVolume));
+
+  reinitialize();
+  return stream;
+}

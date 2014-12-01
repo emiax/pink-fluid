@@ -36,3 +36,10 @@ std::ostream& VelocityGrid::write(std::ostream& stream){
   w->write(stream);
   return stream;
 }
+
+std::istream& VelocityGrid::read(std::istream& stream){
+  u->read(stream);
+  v->read(stream);
+  w->read(stream);
+  return stream;
+}

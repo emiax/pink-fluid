@@ -11,4 +11,5 @@ struct VelocityGrid{
   OrdinalGrid<float> *u, *v, *w;
 
   std::ostream& write(std::ostream&);
+  std::istream& read(std::istream&);
 };

@@ -34,7 +34,8 @@ public:
   SignedDistanceFunction *initSDF;
 
 
-  std::ostream& write(std::ostream& stream);
+  std::ostream& write(std::ostream&);
+  std::istream& read(std::istream&);
   
 private:
   void updateInterfaceNeighbors();
