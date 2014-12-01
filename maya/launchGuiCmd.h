@@ -8,8 +8,8 @@ public:
   virtual MStatus doIt(const MArgList&) {
     MStatus status;
     MString path(PluginStateManager::instance()->getPluginPath().c_str());
-
     MGlobal::sourceFile(path + "/gui.mel");
+
     return status;
   }
 
