@@ -184,3 +184,11 @@ Grid<glm::vec3> const *const State::getClosestPointGrid() const {
   return levelSet->getClosestPointGrid();
 }
 
+
+std::ostream& State::write(std::ostream& stream){
+  velocityGrid->write(stream);
+  stream.write(reinterpret_cast<char*>(&w), sizeof(w));
+  stream.write(reinterpret_cast<char*>(&h), sizeof(h));
+  stream.write(reinterpret_cast<char*>(&d), sizeof(d));
+  return stream;
+}

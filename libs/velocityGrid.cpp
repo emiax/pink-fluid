@@ -29,3 +29,10 @@ glm::vec3 VelocityGrid::getLerp(glm::vec3 p) const{
     w->getLerp(p.x, p.y, p.z + 0.5)
   );
 }
+
+std::ostream& VelocityGrid::write(std::ostream& stream){
+  u->write(stream);
+  v->write(stream);
+  w->write(stream);
+  return stream;
+}

@@ -33,6 +33,8 @@ public:
   unsigned int getH() const;
   unsigned int getD() const;
 
+  std::ostream& write(std::ostream &stream);
+
 private:
   void resetVelocityGrids();
   

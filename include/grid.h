@@ -145,6 +145,15 @@ class Grid {
     return d;
   }
 
+  std::ostream& write(std::ostream& stream){
+    long dataLength = w * h * d;
+    stream.write(reinterpret_cast<char*>(quantities), sizeof(T)*dataLength);
+    stream.write(reinterpret_cast<char*>(&w), sizeof(w));
+    stream.write(reinterpret_cast<char*>(&h), sizeof(h));
+    stream.write(reinterpret_cast<char*>(&d), sizeof(d));
+    return stream;
+  }
+  
  protected:
   unsigned int w, h, d;
   T *quantities;

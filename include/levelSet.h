@@ -33,6 +33,9 @@ public:
   Grid<CellType> *cellTypeGrid;
   SignedDistanceFunction *initSDF;
 
+
+  std::ostream& write(std::ostream& stream);
+  
 private:
   void updateInterfaceNeighbors();
   void updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsigned int k);
@@ -47,7 +50,7 @@ private:
 
   static bool heapCompare(GridCoordinate &a, GridCoordinate &b);
 
-  static int sgn(float &val);
+  static int sgn(const float &val);
 
   void initializeDistanceGrid(SignedDistanceFunction sdf);
   void clampInfiniteCells();

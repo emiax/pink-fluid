@@ -288,6 +288,18 @@ Grid<glm::vec3> const *const LevelSet::getClosestPointGrid() const{
  * @param  val value
  * @return     inside(-1)/outside(1) fluid
  */
-int LevelSet::sgn(float &val) {
+int LevelSet::sgn(const float &val) {
   return (0.0f < val) - (0.0f >= val);
+}
+
+std::ostream& LevelSet::write(std::ostream& stream){
+  closestPointGrid->write(stream);
+  distanceGrid->write(stream);
+  cellTypeGrid->write(stream);
+  stream.write(reinterpret_cast<char*>(&w), sizeof(w));
+  stream.write(reinterpret_cast<char*>(&h), sizeof(h));
+  stream.write(reinterpret_cast<char*>(&d), sizeof(d));
+
+  stream.write(reinterpret_cast<char*>(&targetVolume), sizeof(targetVolume));
+  return stream;
 }

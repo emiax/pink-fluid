@@ -358,6 +358,10 @@ int main(void) {
         }
 
         printObjToFile("exported_" + std::to_string(i) + ".obj", vertexList, faceIndices);
+        std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
+        newState->write(fileStream);
+        fileStream.close();
+
 
         // activate and upload texture to gpu
         tex3D(GL_TEXTURE1);
