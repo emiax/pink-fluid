@@ -15,6 +15,9 @@ MStatus initializePlugin(MObject obj) {
 
   MGlobal::executeCommand("pfGUI");
 
+  MString path(PluginStateManager::instance()->getPluginPath().c_str());
+  MGlobal::sourceFile(path + "/objSequenceImporter.mel");
+
   return status;
 }
 

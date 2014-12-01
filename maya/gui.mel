@@ -23,5 +23,19 @@ $win = `window -title "fluid simulation" -widthHeight 300 200`;
   columnLayout;
     text "Welcome to Pink Fluid, the dynamic fluid simulator.";
     button -label "Load Fluid State..." -command "openFileBrowser";
-    // addSlider();
+    button -label "Open OBJ sequence importer" -command "craOBJSequences";
+    // text "Grid Resolution:"
+    // floatField
+    //   -label "x"
+    //   -extraLabel "cells"
+    //   -value 16;
+    // floatField
+    //   -label "y"
+    //   -extraLabel "cells"
+    //   -value 16;
+    // floatField
+    //   -label "z"
+    //   -extraLabel "cells"
+    //   -value 16;
+    addSlider();
 showWindow;
