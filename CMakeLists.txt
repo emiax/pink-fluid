@@ -129,7 +129,6 @@ add_subdirectory(
   ${PROJECT_EXT_DIR}/glfw/
 )
 
-
 #Get glm
 set(glm_INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/external/glm")
 set(glm_CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${glm_INSTALL_DIR} ")
@@ -182,19 +181,41 @@ add_dependencies(INT_LIBS
     ${EXT_DEPS}
 )
 
+#----------------------------
+# Main Executable
+#----------------------------
 
-file(GLOB PROJECT_CXX_FILES ${PROJECT_CXX_DIR}/*.cpp)
+set(EXECUTABLE "${PROJECT_NAME_STR}")
 
-add_executable(${PROJECT_NAME_STR}
-  ${PROJECT_CXX_FILES}
+add_executable(${EXECUTABLE}
+  "${PROJECT_CXX_DIR}/${EXECUTABLE}.cpp"
 )
   
-set_target_properties(${PROJECT_NAME_STR}
+set_target_properties(${EXECUTABLE}
   PROPERTIES COMPILE_FLAGS ${PROJECT_EXEC_FLAGS})  
   
-add_dependencies(${PROJECT_NAME_STR} ${EXT_DEPS})
+add_dependencies(${EXECUTABLE} ${EXT_DEPS})
 
-target_link_libraries(${PROJECT_NAME_STR}
+target_link_libraries(${EXECUTABLE}
+  ${ALL_LIBS}
+  )
+
+#----------------------------
+# Headless Executable
+#----------------------------
+
+set(HEADLESS_EXECUTABLE "${EXECUTABLE}-headless")
+
+add_executable(${HEADLESS_EXECUTABLE}
+  "${PROJECT_CXX_DIR}/${HEADLESS_EXECUTABLE}.cpp"
+)
+  
+set_target_properties(${HEADLESS_EXECUTABLE}
+  PROPERTIES COMPILE_FLAGS ${PROJECT_EXEC_FLAGS})  
+  
+add_dependencies(${HEADLESS_EXECUTABLE} ${EXT_DEPS})
+
+target_link_libraries(${HEADLESS_EXECUTABLE}
   ${ALL_LIBS}
 )
 
