@@ -86,20 +86,34 @@ void BubbleTracker::advect(
   }
 }
 
-std::vector<Bubble*> const *const BubbleTracker::getBubbles() const {
-  std::vector<Bubble*> *validBubbles = new std::vector<Bubble*>();
+std::vector<Bubble> BubbleTracker::getBubbles() const {
+  std::vector<Bubble> validBubbles;
   int nAliveBubbles = bubbles->size() - deadBubbles->size();
   
   try {
-    validBubbles->reserve(nAliveBubbles);
+    validBubbles.reserve(nAliveBubbles);
   } catch (...) {
     // tja
   }
 
   for (auto &b : *bubbles) {
     if (b->alive) {
-      validBubbles->push_back(b);
+      validBubbles.push_back(*b);
     }
   }
   return validBubbles;
+}
+
+void BubbleTracker::setBubbles(std::vector<Bubble> pBubbles){
+  for(auto &b : *this->bubbles){
+    delete b;
+  }
+  bubbles->clear();
+
+  //STL is silly and does not provide clear on stacks
+  delete deadBubbles;
+  deadBubbles = new std::stack<Bubble*>();
+  for(auto &b : pBubbles){
+    bubbles->push_back(new Bubble(b));
+  }
 }

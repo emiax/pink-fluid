@@ -26,7 +26,7 @@ class BubbleMaxExporter {
   void exportBubbles(std::string filename);
   void exportSnapshot(int frame, std::string filename, float threshold=0);
   void update(int frame, const BubbleTracker* p);
-  void updateBubble(int frame, const Bubble* p);
+  void updateBubble(int frame, const Bubble p);
  private:
   std::string serialize(glm::vec3);
   std::map<int, BubbleLife> bubbleLives;

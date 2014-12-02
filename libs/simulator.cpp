@@ -33,6 +33,13 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   
   pTracker = new ParticleTracker(w, h, d, PARTICLES_PER_CELL);
   bTracker = new BubbleTracker(w, h, d);
+
+  st->setBubbleTracker(bTracker);
+  sf->setBubbleTracker(bTracker);
+
+  st->setParticleTracker(pTracker);
+  sf->setParticleTracker(pTracker);
+  
 }
 
 /**

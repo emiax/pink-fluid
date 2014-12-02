@@ -102,17 +102,25 @@ int main(void) {
 
     VelocityGrid *velocities = new VelocityGrid(w, h, d);
     prevState->setVelocityGrid(velocities);
-
+    
 
     // init level set
     LevelSet *ls = factory::levelSet::ball(w, h, d);
     prevState->setLevelSet(ls);
     newState->setLevelSet(ls);
 
+
+    
     delete ls;
 
     // init simulator
     Simulator sim(prevState, newState, 0.1f);
+    std::ifstream inputFileStream("states/exportedState_" + std::to_string(70) + ".pf", std::ios::binary);
+    if(inputFileStream.is_open()){
+      std::cout << "Read state" << std::endl;
+      prevState->read(inputFileStream);
+      inputFileStream.close();
+    }
     BubbleMaxExporter bubbleExporter;
     
     // Dark black background
@@ -380,11 +388,11 @@ int main(void) {
         ////////////////// Start drawing bubbles //////////////////////
         
         // Draw bubbles
-        const std::vector<Bubble*> *bubbles = sim.getBubbleTracker()->getBubbles();
+        const std::vector<Bubble> bubbles = sim.getBubbleTracker()->getBubbles();
         g_bubble_buffer_data.clear();
-        std::cout << "frame=" << i << ", nBubbles=" << bubbles->size() << std::endl;
-        for (int i = 0; i < bubbles->size(); i++) {
-          Bubble b = *bubbles->at(i);
+        std::cout << "frame=" << i << ", nBubbles=" << bubbles.size() << std::endl;
+        for (int i = 0; i < bubbles.size(); i++) {
+          Bubble b = bubbles.at(i);
 
           //          std::cout << "bubble pos " << b.position.x << ", " << b.position.y << std::endl << b.radius << std::endl;
             

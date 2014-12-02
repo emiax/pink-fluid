@@ -192,6 +192,11 @@ std::ostream& State::write(std::ostream& stream){
   velocityGrid->write(stream);
   inkGrid->write(stream);
   levelSet->write(stream);
+  // Write bubble state to the stream
+  auto bubbles = bubbleTracker->getBubbles();
+  int nBubbles = bubbles.size();
+  stream.write(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
+  stream.write(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
   return stream;
 }
 
@@ -202,5 +207,23 @@ std::istream& State::read(std::istream& stream){
   velocityGrid->read(stream);
   inkGrid->read(stream);
   levelSet->read(stream);
+
+  //Read bubbles from stream
+  int nBubbles;
+  stream.read(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
+  std::vector<Bubble> bubbles(nBubbles);
+  stream.read(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
+
+  bubbleTracker->setBubbles(bubbles);
+  
   return stream;
+}
+
+void State::setBubbleTracker(BubbleTracker *bTracker){
+  this->bubbleTracker = bTracker;
+}
+
+void State::setParticleTracker(ParticleTracker *pTracker){
+  this->particleTracker = pTracker;
+  
 }

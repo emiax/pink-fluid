@@ -26,7 +26,6 @@ public:
   void correct(OrdinalGrid<float> *distance);
 
   std::vector<Particle> getParticles() const;
-
 private:
 
   void insertParticle(glm::vec3 pos, float radius);

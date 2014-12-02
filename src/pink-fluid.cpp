@@ -379,11 +379,11 @@ int main(void) {
         ////////////////// Start drawing bubbles //////////////////////
         
         // Draw bubbles
-        const std::vector<Bubble*> *bubbles = sim.getBubbleTracker()->getBubbles();
+        const std::vector<Bubble> bubbles = sim.getBubbleTracker()->getBubbles();
         g_bubble_buffer_data.clear();
-        std::cout << "frame=" << i << ", nBubbles=" << bubbles->size() << std::endl;
-        for (int i = 0; i < bubbles->size(); i++) {
-          Bubble b = *bubbles->at(i);
+        std::cout << "frame=" << i << ", nBubbles=" << bubbles.size() << std::endl;
+        for (int i = 0; i < bubbles.size(); i++) {
+          Bubble b = bubbles.at(i);
 
           //          std::cout << "bubble pos " << b.position.x << ", " << b.position.y << std::endl << b.radius << std::endl;
             

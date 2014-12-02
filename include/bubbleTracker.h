@@ -9,14 +9,17 @@ template<typename T>
 class OrdinalGrid;
 
 struct Bubble {
-  Bubble(glm::vec3 p, float r, glm::vec3 v, int id) {
+  Bubble(glm::vec3 p, float r, glm::vec3 v, int id, bool pAlive = true) {
     this->position = p;
     this->radius = r;
     this->velocity = v;
-    this->alive = true;
+    this->alive = pAlive;
     this->id = id;
   };
 
+  Bubble() : Bubble(glm::vec3(0.0f), 0.0, glm::vec3(0.0f), 0) {};
+  Bubble(const Bubble &b) : Bubble(b.position, b.radius, b.velocity, b.id, b.alive){};
+  
   ~Bubble() {};
 
   glm::vec3 position;
@@ -40,8 +43,8 @@ public:
     glm::vec3 g,
     float dt
   );
-  std::vector<Bubble*> const *const getBubbles() const;
-
+  std::vector<Bubble> getBubbles() const;
+  void setBubbles(std::vector<Bubble>);
 private:
   int nextBubbleId = 0;
   float width, height, depth;

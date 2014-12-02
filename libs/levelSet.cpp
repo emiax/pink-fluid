@@ -293,7 +293,6 @@ int LevelSet::sgn(const float &val) {
 }
 
 std::ostream& LevelSet::write(std::ostream& stream){
-  closestPointGrid->write(stream);
   distanceGrid->write(stream);
   cellTypeGrid->write(stream);
   stream.write(reinterpret_cast<char*>(&w), sizeof(w));

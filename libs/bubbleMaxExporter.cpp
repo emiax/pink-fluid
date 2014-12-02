@@ -4,8 +4,8 @@
 #include <sstream>
 
 void BubbleMaxExporter::update(int frame, const BubbleTracker* bt) {
-  const std::vector<Bubble*> *bubbles = bt->getBubbles();
-  for (const Bubble *b : *bubbles) {
+  std::vector<Bubble> bubbles = bt->getBubbles();
+  for (Bubble b : bubbles) {
     updateBubble(frame, b);
   }
 }
@@ -80,17 +80,17 @@ void BubbleMaxExporter::exportSnapshot(int frame, std::string filename, float th
 
 
 
-void BubbleMaxExporter::updateBubble(int frame, const Bubble *b) {
-  int id = b->id;
+void BubbleMaxExporter::updateBubble(int frame, const Bubble b) {
+  int id = b.id;
 
   if (bubbleLives.count(id) == 0) {
     // bubble does not exist.
-    BubbleLife bf(frame, b->radius);
+    BubbleLife bf(frame, b.radius);
     bubbleLives.insert(std::pair<int, BubbleLife>(id, bf));
   }
   BubbleLife *bl = &bubbleLives.at(id);
   
-  bl->positions.push_back(b->position);
+  bl->positions.push_back(b.position);
   bl->popFrame = frame + 1;
 }
 

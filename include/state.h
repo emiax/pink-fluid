@@ -1,6 +1,9 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <vector>
+#include <particleTracker.h>
+#include <bubbleTracker.h>
+
 template<typename T>
 class OrdinalGrid;
 template<typename T>
@@ -36,6 +39,9 @@ public:
   std::ostream& write(std::ostream &stream);
   std::istream& read(std::istream &stream);
 
+  void setBubbleTracker(BubbleTracker*);
+  void setParticleTracker(ParticleTracker*);
+
 private:
   void resetVelocityGrids();
   
@@ -43,6 +49,9 @@ private:
   VelocityGrid *velocityGrid;
   unsigned int w, h, d;
   LevelSet *levelSet;
+
+  BubbleTracker *bubbleTracker;
+  ParticleTracker *particleTracker;
 
   friend class Simulator;
 };
