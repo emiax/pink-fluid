@@ -8,6 +8,12 @@ VelocityGrid::VelocityGrid(unsigned int w, unsigned int h, unsigned int d){
   this->w = new OrdinalGrid<float>(w, h, d + 1);
 }
 
+VelocityGrid::VelocityGrid(const VelocityGrid& origin){
+  this->u = new OrdinalGrid<float>(*origin.u);
+  this->v = new OrdinalGrid<float>(*origin.v);
+  this->w = new OrdinalGrid<float>(*origin.w);
+}
+
 VelocityGrid::~VelocityGrid(){
   delete u;
   delete v;

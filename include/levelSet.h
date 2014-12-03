@@ -10,8 +10,9 @@ class VelocityGrid;
 class GridHeap;
 
 class LevelSet{
-public:
+ public:
   LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanceFunction sdf, Grid<CellType> const* const boundaries);
+  LevelSet(const LevelSet& origin);
   LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFunc sdf, std::function<CellType (unsigned int i, unsigned int j, unsigned int k)>);
 
   ~LevelSet();
@@ -24,7 +25,6 @@ public:
 
   void setCellTypeGrid(Grid<CellType> const* const);
 
-
   void reinitialize();
   void updateCellTypes();
   float getVolumeError();
@@ -33,11 +33,10 @@ public:
   Grid<CellType> *cellTypeGrid;
   SignedDistanceFunction *initSDF;
 
-
   std::ostream& write(std::ostream&);
   std::istream& read(std::istream&);
-  
-private:
+
+ private:
   void updateInterfaceNeighbors();
   void updateInterfaceNeighborCell(unsigned int i, unsigned int j, unsigned int k);
   void updateNeighborsFrom(GridCoordinate from);

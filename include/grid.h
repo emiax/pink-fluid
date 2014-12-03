@@ -24,7 +24,18 @@ class Grid {
       quantities[i] = T(0);
     }
   };
-  
+
+  Grid(const Grid& origin) {
+    this->w = origin.w;
+    this->h = origin.h;
+    this->d = origin.d;
+
+    quantities = new T[w*h*d];
+    for (auto i = 0u; i < size(); i++) {
+      quantities[i] = origin.quantities[i];
+    }
+  };
+
   ~Grid(){
     delete[] quantities;
   }

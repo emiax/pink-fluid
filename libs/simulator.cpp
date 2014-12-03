@@ -12,19 +12,16 @@
 #include <particleTracker.h>
 #include <bubbleTracker.h>
 
-Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo(st), gridSize(scale) {
+Simulator::Simulator(const State& initialState, float scale) : gridSize(scale) {
+  stateFrom = new State(initialState);
+  stateTo = new State(initialState);
+  
 
-  // grid dims must be equal
-  assert(sf->getW() == st->getW());
-  assert(sf->getH() == st->getH());
-  assert(sf->getD() == st->getD());
-
-  w = sf->getW();
-  h = sf->getH();
-  d = sf->getD();
+  w = initialState.getW();
+  h = initialState.getH();
+  d = initialState.getD();
 
   // init non-state grids
-
   divergenceGrid = new OrdinalGrid<float>(w, h, d);
   pressureGridFrom = new OrdinalGrid<double>(w, h, d);
   pressureGridTo = new OrdinalGrid<double>(w, h, d);
@@ -34,24 +31,33 @@ Simulator::Simulator(State *sf, State *st, float scale) : stateFrom(sf), stateTo
   pTracker = new ParticleTracker(w, h, d, PARTICLES_PER_CELL);
   bTracker = new BubbleTracker(w, h, d);
 
-  st->setBubbleTracker(bTracker);
-  sf->setBubbleTracker(bTracker);
+  stateFrom->setBubbleTracker(bTracker);
+  stateTo->setBubbleTracker(bTracker);
 
-  st->setParticleTracker(pTracker);
-  sf->setParticleTracker(pTracker);
-  
+  stateFrom->setParticleTracker(pTracker);
+  stateTo->setParticleTracker(pTracker);
 }
 
 /**
  * Destructor.
  */
 Simulator::~Simulator() {
+  delete stateFrom;
+  delete stateTo;
   delete divergenceGrid;
   delete pressureGridFrom;
   delete pressureGridTo;
   delete pTracker;
   delete bTracker;
 }
+
+/**
+ * Return the current state.
+ */
+State* Simulator::getCurrentState() {
+  return stateFrom;
+}
+
 
 /**
  * Simulator step function. Iterates the simulation one time step, dt.

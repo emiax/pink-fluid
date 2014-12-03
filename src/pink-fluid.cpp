@@ -96,23 +96,20 @@ int main(void) {
     glBindVertexArray(VertexArrayID);
 
     //Set up the initial state.
-    unsigned int w = 64, h = 64, d = 64;
+    unsigned int w = 32, h = 32, d = 32;
     State *prevState = new State(w, h, d);
-    State *newState = new State(w, h, d);
 
     VelocityGrid *velocities = new VelocityGrid(w, h, d);
     prevState->setVelocityGrid(velocities);
 
-
     // init level set
     LevelSet *ls = factory::levelSet::ball(w, h, d);
     prevState->setLevelSet(ls);
-    newState->setLevelSet(ls);
 
     delete ls;
 
     // init simulator
-    Simulator sim(prevState, newState, 0.1f);
+    Simulator sim(*prevState, 0.1f);
     BubbleMaxExporter bubbleExporter;
     
     // Dark black background
@@ -259,8 +256,7 @@ int main(void) {
         GLuint textureLocation = glGetUniformLocation(rayCasterProg, "backfaceTexture");
         glUniform1i(textureLocation, 0);
 
-        // ping pong states
-        std::swap(prevState, newState);
+        State *currentState = sim.getCurrentState();
 
         std::vector<glm::vec3> vertexList;
         std::vector<std::vector<int> > faceIndices;
@@ -270,9 +266,9 @@ int main(void) {
                 for (unsigned int i = 0; i < w; ++i) {
 
                     // velocity
-                    //tex3D.set(i,j,k,0, 0.5 + 0.5*newState.getVelocityGrid()->u->get(i,j,k));
-                    //tex3D.set(i,j,1, 0.5 + 0.5*newState.getVelocityGrid()->v->get(i,j));
-                    //tex3D.set(i,j,2, 0.5 + newState.getCellTypeGrid()->get(i, j));
+                    //tex3D.set(i,j,k,0, 0.5 + 0.5*currentState.getVelocityGrid()->u->get(i,j,k));
+                    //tex3D.set(i,j,1, 0.5 + 0.5*currentState.getVelocityGrid()->v->get(i,j));
+                    //tex3D.set(i,j,2, 0.5 + currentState.getCellTypeGrid()->get(i, j));
                     //tex3D.set(i,j,2, 0.5);
                     //tex3D.set(i,j,3, 1.0f);
 
@@ -283,18 +279,18 @@ int main(void) {
                     //tex3D.set(i,j,3, 1.0f);
 
                     // type
-                    // tex3D.set(i,j,k, 0, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
-                    // tex3D.set(i,j,k, 1, newState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
-                    // tex3D.set(i,j,k, 2, newState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
+                    // tex3D.set(i,j,k, 0, currentState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
+                    // tex3D.set(i,j,k, 1, currentState.getCellTypeGrid()->get(i,j, k) == CellType::FLUID ? 1.0 : 0.0);
+                    // tex3D.set(i,j,k, 2, currentState.getCellTypeGrid()->get(i,j, k) == CellType::SOLID ? 1.0 : 0.0);
                     // tex3D.set(i,j,k, 3, 1.0f);
 
-                    if(newState->getSignedDistanceGrid()->isValid(i+1,j,k) &&
-                        newState->getSignedDistanceGrid()->isValid(i,j+1,k) &&
-                        newState->getSignedDistanceGrid()->isValid(i+1,j+1,k) &&
-                        newState->getSignedDistanceGrid()->isValid(i,j,k+1) &&
-                        newState->getSignedDistanceGrid()->isValid(i+1,j,k+1) &&
-                        newState->getSignedDistanceGrid()->isValid(i,j+1,k+1) &&
-                        newState->getSignedDistanceGrid()->isValid(i+1,j+1,k+1)){
+                    if(currentState->getSignedDistanceGrid()->isValid(i+1,j,k) &&
+                        currentState->getSignedDistanceGrid()->isValid(i,j+1,k) &&
+                        currentState->getSignedDistanceGrid()->isValid(i+1,j+1,k) &&
+                        currentState->getSignedDistanceGrid()->isValid(i,j,k+1) &&
+                        currentState->getSignedDistanceGrid()->isValid(i+1,j,k+1) &&
+                        currentState->getSignedDistanceGrid()->isValid(i,j+1,k+1) &&
+                        currentState->getSignedDistanceGrid()->isValid(i+1,j+1,k+1)){
 
                         marchingCubes::GRIDCELL gridcell;
                         gridcell.p[0] = glm::vec3(i,j,k);
@@ -306,14 +302,14 @@ int main(void) {
                         gridcell.p[6] = glm::vec3(i+1,j+1,k+1);
                         gridcell.p[7] = glm::vec3(i+1,j,k+1);
 
-                        gridcell.val[0] = newState->getSignedDistanceGrid()->get(i, j, k);
-                        gridcell.val[1] = newState->getSignedDistanceGrid()->get(i, j+1, k);
-                        gridcell.val[2] = newState->getSignedDistanceGrid()->get(i+1, j+1, k);
-                        gridcell.val[3] = newState->getSignedDistanceGrid()->get(i+1, j, k);
-                        gridcell.val[4] = newState->getSignedDistanceGrid()->get(i, j, k+1);
-                        gridcell.val[5] = newState->getSignedDistanceGrid()->get(i, j+1, k+1);
-                        gridcell.val[6] = newState->getSignedDistanceGrid()->get(i+1, j+1, k+1);
-                        gridcell.val[7] = newState->getSignedDistanceGrid()->get(i+1, j, k+1);
+                        gridcell.val[0] = currentState->getSignedDistanceGrid()->get(i, j, k);
+                        gridcell.val[1] = currentState->getSignedDistanceGrid()->get(i, j+1, k);
+                        gridcell.val[2] = currentState->getSignedDistanceGrid()->get(i+1, j+1, k);
+                        gridcell.val[3] = currentState->getSignedDistanceGrid()->get(i+1, j, k);
+                        gridcell.val[4] = currentState->getSignedDistanceGrid()->get(i, j, k+1);
+                        gridcell.val[5] = currentState->getSignedDistanceGrid()->get(i, j+1, k+1);
+                        gridcell.val[6] = currentState->getSignedDistanceGrid()->get(i+1, j+1, k+1);
+                        gridcell.val[7] = currentState->getSignedDistanceGrid()->get(i+1, j, k+1);
 
                         //std::cout << gridcell.val[0] << std::endl;
 
@@ -340,8 +336,8 @@ int main(void) {
                         delete[] triangles;
                     }
                     //signed dist
-                    float dist = newState->getSignedDistanceGrid()->get(i, j, k);
-                    float solid = newState->getCellTypeGrid()->get(i, j, k) == CellType::SOLID ? 1.0f : 0.0f;
+                    float dist = currentState->getSignedDistanceGrid()->get(i, j, k);
+                    float solid = currentState->getCellTypeGrid()->get(i, j, k) == CellType::SOLID ? 1.0f : 0.0f;
                     dist = (glm::clamp(dist + solid, -1.0f, 1.0f) + 1) / 2;
 
                     tex3D.set(i, j, k, 0, solid);
@@ -349,8 +345,8 @@ int main(void) {
                     tex3D.set(i, j, k, 2, dist);
                     tex3D.set(i, j, k, 3, 1.0f);
                     //closest point
-                    // tex3D.set(i,j,0, newState.getClosestPointGrid()->get(i,j).x / 70.0);
-                    // tex3D.set(i,j,1, newState.getClosestPointGrid()->get(i,j).y / 70.0);
+                    // tex3D.set(i,j,0, currentState.getClosestPointGrid()->get(i,j).x / 70.0);
+                    // tex3D.set(i,j,1, currentState.getClosestPointGrid()->get(i,j).y / 70.0);
                     // tex3D.set(i,j,2, 0.0f);
                     // tex3D.set(i,j,3, 1.0f);
                 }
@@ -359,7 +355,7 @@ int main(void) {
 
         printObjToFile("exported_" + std::to_string(i) + ".obj", vertexList, faceIndices);
         std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
-        newState->write(fileStream);
+        currentState->write(fileStream);
         fileStream.close();
 
 

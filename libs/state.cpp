@@ -11,9 +11,23 @@ State::State(unsigned int width, unsigned int height, unsigned int depth) :
   w(width), h(height), d(depth) {
 
   velocityGrid = new VelocityGrid(w, h, d);
-  inkGrid = new OrdinalGrid<glm::vec3>(w, h, d);
 
   resetVelocityGrids();
+}
+
+
+State::State(const State& origin) {
+  w = origin.w;
+  h = origin.h;
+  d = origin.d;
+
+  velocityGrid = new VelocityGrid(*origin.velocityGrid);
+  levelSet = new LevelSet(*origin.levelSet);
+
+  // TODO: copy bubble data and particle data
+  // rather than copying the pointer to the trackers.
+  bubbleTracker = origin.bubbleTracker;
+  particleTracker = origin.particleTracker;
 }
 
 /**
@@ -21,7 +35,6 @@ State::State(unsigned int width, unsigned int height, unsigned int depth) :
  */
 State::~State() {
   delete velocityGrid;
-  delete inkGrid;
   if (levelSet) {
     delete levelSet;
   }
@@ -119,20 +132,6 @@ void State::setCellTypeGrid(Grid<CellType>const* const ctg) {
 }
 
 /**
- * Set ink grid
- * @param ink grid to copy concentration values from
- */
-void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
-  for (unsigned k = 0; k < d; ++k) {
-    for (unsigned int j = 0; j < h; ++j) {
-      for (unsigned int i = 0; i < w; ++i) {
-        this->inkGrid->set(i, j, k, ink->get(i, j, k));
-      }
-    } 
-  }
-}
-
-/**
  * Set signed distance grid 
  * @param sdg grid to copy signed distance from
  */
@@ -159,13 +158,6 @@ Grid<CellType> const *const State::getCellTypeGrid() const {
   return levelSet->getCellTypeGrid();
 }
 
-/**
- * Get ink grid
- * @return const pointer to ink grid.
- */
-OrdinalGrid<glm::vec3> const *const State::getInkGrid() const {
-  return inkGrid;
-}
 
 /**
  * Get signed distance grid
@@ -190,7 +182,6 @@ std::ostream& State::write(std::ostream& stream){
   stream.write(reinterpret_cast<char*>(&h), sizeof(h));
   stream.write(reinterpret_cast<char*>(&d), sizeof(d));
   velocityGrid->write(stream);
-  inkGrid->write(stream);
   levelSet->write(stream);
   // Write bubble state to the stream
   auto bubbles = bubbleTracker->getBubbles();
@@ -205,7 +196,6 @@ std::istream& State::read(std::istream& stream){
   stream.read(reinterpret_cast<char*>(&h), sizeof(h));
   stream.read(reinterpret_cast<char*>(&d), sizeof(d));
   velocityGrid->read(stream);
-  inkGrid->read(stream);
   levelSet->read(stream);
 
   //Read bubbles from stream

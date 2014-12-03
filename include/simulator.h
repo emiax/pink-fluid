@@ -14,11 +14,11 @@ class BubbleTracker;
 
 class Simulator{
 public:
-  Simulator(State *sf, State *st, float scale = 1.0f);
+  Simulator(const State& initialState, float scale = 1.0f);
   ~Simulator();
 
-  void step(State * const readFrom, State* writeTo, float dt);
   void step(float dt);
+  State* getCurrentState();
 
   // advection
   // glm::vec3 backTrackU(State const * readFrom, GridCoordinate x, float dt);

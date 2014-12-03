@@ -12,7 +12,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanc
   distanceGrid = new OrdinalGrid<float>(w, h, d);
   oldDistanceGrid = new OrdinalGrid<float>(w, h, d);
   cellTypeGrid = new Grid<CellType>(w, h, d);
-  this->initSDF = new SignedDistanceFunction(sdf.getFunction());
+  initSDF = new SignedDistanceFunction(sdf.getFunction());
 
   gridHeap = new GridHeap(w, h, d, distanceGrid);
   closestPointGrid = new Grid<glm::vec3>(w, h, d);
@@ -29,12 +29,11 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFun
   this->h = h;
   this->d = d;
 
-
   doneGrid = new Grid<bool>(w, h, d);
   distanceGrid = new OrdinalGrid<float>(w, h, d);
   oldDistanceGrid = new OrdinalGrid<float>(w, h, d);
   cellTypeGrid = new Grid<CellType>(w, h, d);
-  this->initSDF = new SignedDistanceFunction(sdf);
+  initSDF = new SignedDistanceFunction(sdf);
 
   gridHeap = new GridHeap(w,h,d, distanceGrid);
   closestPointGrid = new Grid<glm::vec3>(w, h, d);
@@ -46,12 +45,30 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFun
   // std::cout << "targetVolume = " << targetVolume << std::endl;
 }
 
+LevelSet::LevelSet(const LevelSet& origin) {
+  w = origin.w;
+  h = origin.h;
+  d = origin.d;
+
+  doneGrid = new Grid<bool>(w, h, d);
+  cellTypeGrid = new Grid<CellType>(*origin.cellTypeGrid);
+
+  distanceGrid = new OrdinalGrid<float>(*origin.distanceGrid);
+  oldDistanceGrid = new OrdinalGrid<float>(w, h, d);
+
+  gridHeap = new GridHeap(w,h,d, distanceGrid);
+  closestPointGrid = new Grid<glm::vec3>(w, h, d);
+
+  targetVolume = origin.targetVolume;
+  currentVolume = origin.currentVolume;
+}
+
 
 LevelSet::~LevelSet() {
   delete doneGrid;
   delete distanceGrid;
   delete cellTypeGrid;
-  delete this->initSDF;
+  delete initSDF;
   delete gridHeap;
   delete closestPointGrid;
 }

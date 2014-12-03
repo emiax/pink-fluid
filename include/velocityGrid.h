@@ -4,6 +4,7 @@
 #include <util.h>
 struct VelocityGrid{
   VelocityGrid(unsigned int w, unsigned int h, unsigned int d);
+  VelocityGrid(const VelocityGrid& velocityGrid);
   ~VelocityGrid();
   
   glm::vec3 getCell(unsigned int i, unsigned int j, unsigned int k) const;

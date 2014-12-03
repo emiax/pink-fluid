@@ -38,26 +38,24 @@ int main(int argc, char* argv[]) {
 
   //Set up the initial state.
   unsigned int w = 32, h = 32, d = 32;
-  State *prevState = new State(w, h, d);
-  State *newState = new State(w, h, d);
+  State initialState(w, h, d);
 
   VelocityGrid *velocities = new VelocityGrid(w, h, d);
-  prevState->setVelocityGrid(velocities);
+  initialState.setVelocityGrid(velocities);
 
   // init level set
   LevelSet *ls = factory::levelSet::fourthContainerBoxInFluid(w, h, d);
-  prevState->setLevelSet(ls);
-  newState->setLevelSet(ls);
+  initialState.setLevelSet(ls);
 
   delete ls;
 
   // init simulator
-  Simulator sim(prevState, newState, 0.1f);
+  Simulator sim(initialState, 0.1f);
 
   std::ifstream inputFileStream("states/exportedState_" + std::to_string(70) + ".pf", std::ios::binary);
   if(inputFileStream.is_open()){
     std::cout << "Read state" << std::endl;
-    prevState->read(inputFileStream);
+    initialState.read(inputFileStream);
     inputFileStream.close();
   }
 
@@ -78,14 +76,15 @@ int main(int argc, char* argv[]) {
 
   int i = 0;
   while (true) {
+
     // common for both render passes.
     sim.step(deltaT);
-    std::swap(prevState, newState);
-
+    State *currentState = sim.getCurrentState();
+    
     std::string file = std::string(dir) + "exported_" + std::to_string(i) + ".obj";
-    objExporter.exportState(file, newState);
+    objExporter.exportState(file, currentState);
     // std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
-    // newState->write(fileStream);
+    // currentState->write(fileStream);
     // fileStream.close();
 
     // bubbleExporter.update(i, sim.getBubbleTracker());
