@@ -12,7 +12,7 @@ class GridHeap;
 class LevelSet{
 public:
   LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanceFunction sdf, Grid<CellType> const* const boundaries);
-  LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFunc sdf, std::function<CellType (unsigned int i, unsigned int j, unsigned int k)>);
+  LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistFunc sdf = [](int,int,int){return 1.0;}, std::function<CellType (unsigned int i, unsigned int j, unsigned int k)> = [](int,int,int){return CellType::FLUID;});
 
   ~LevelSet();
   // LevelSet(unsigned int w, unsigned int h, Grid<CellType> const* const ctg);

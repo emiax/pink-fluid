@@ -12,7 +12,7 @@ State::State(unsigned int width, unsigned int height, unsigned int depth) :
 
   velocityGrid = new VelocityGrid(w, h, d);
   inkGrid = new OrdinalGrid<glm::vec3>(w, h, d);
-
+  levelSet = new LevelSet(w, h, d);
   resetVelocityGrids();
 }
 
@@ -22,9 +22,7 @@ State::State(unsigned int width, unsigned int height, unsigned int depth) :
 State::~State() {
   delete velocityGrid;
   delete inkGrid;
-  if (levelSet) {
-    delete levelSet;
-  }
+  delete levelSet;
 }
 
 /**
@@ -149,6 +147,9 @@ void State::setInkGrid(OrdinalGrid<glm::vec3> const* const ink) {
  * @param levelSet pointer to LevelSet object
  */
 void State::setLevelSet(LevelSet *ls) {
+  if(levelSet){
+    delete levelSet;
+  }
   levelSet = new LevelSet(w, h, d, *(ls->initSDF), ls->getCellTypeGrid() );
 };
 
@@ -193,10 +194,17 @@ std::ostream& State::write(std::ostream& stream){
   inkGrid->write(stream);
   levelSet->write(stream);
   // Write bubble state to the stream
-  auto bubbles = bubbleTracker->getBubbles();
-  int nBubbles = bubbles.size();
+  bubbleState.clear();
+  int nBubbles = 0;
+    
+  if(bubbleTracker){
+    bubbleState = bubbleTracker->getBubbles();
+    nBubbles = bubbleState.size();
+  }
+  
   stream.write(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
-  stream.write(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
+  stream.write(reinterpret_cast<char*>(bubbleState.data()), sizeof(Bubble)*nBubbles);
+
   return stream;
 }
 
@@ -204,17 +212,30 @@ std::istream& State::read(std::istream& stream){
   stream.read(reinterpret_cast<char*>(&w), sizeof(w));
   stream.read(reinterpret_cast<char*>(&h), sizeof(h));
   stream.read(reinterpret_cast<char*>(&d), sizeof(d));
+  
+  delete velocityGrid;
+  velocityGrid = new VelocityGrid(w,h,d);
   velocityGrid->read(stream);
+  
+  delete inkGrid;
+  inkGrid = new OrdinalGrid<glm::vec3>(w,h,d);
   inkGrid->read(stream);
+
+  delete levelSet;
+  levelSet = new LevelSet(w,h,d);
   levelSet->read(stream);
 
   //Read bubbles from stream
   int nBubbles;
+  bubbleState.clear();
   stream.read(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
-  std::vector<Bubble> bubbles(nBubbles);
-  stream.read(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
-
-  bubbleTracker->setBubbles(bubbles);
+  bubbleState.reserve(nBubbles);
+  stream.read(reinterpret_cast<char*>(bubbleState.data()), sizeof(Bubble)*nBubbles);
+  
+  if(bubbleTracker){
+    bubbleTracker->setBubbles(bubbleState);
+  }
+  
   
   return stream;
 }

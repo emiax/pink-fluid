@@ -2,6 +2,7 @@
 #include "loadStateCmd.h"
 #include "launchGuiCmd.h"
 #include "pluginState.h"
+#include "mayaVelocityGrid.h"
 
 MStatus initializePlugin(MObject obj) {
   MFnPlugin pluginFn(obj, "PinkFluid", "0.1");

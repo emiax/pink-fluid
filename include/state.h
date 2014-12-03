@@ -53,5 +53,7 @@ private:
   BubbleTracker *bubbleTracker;
   ParticleTracker *particleTracker;
 
+  std::vector<Bubble> bubbleState;
+  
   friend class Simulator;
 };
