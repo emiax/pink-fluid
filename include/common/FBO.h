@@ -42,7 +42,7 @@ public:
   
   operator const GLuint() const {
     return framebufferId;
-  }
+  };
 
   static void deactivateFramebuffers() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -55,7 +55,15 @@ public:
 
   void download() {
     texture->download();
-  }
+  };
+
+  int getWidth() {
+    return w;
+  };
+
+  int getHeight() {
+    return h;
+  };
 
 private:
   GLuint w, h;
