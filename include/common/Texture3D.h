@@ -49,7 +49,15 @@ public:
     glBindTexture(GL_TEXTURE_3D, textureID);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, w, h, d, 0, GL_RGBA, GL_FLOAT, data);
   }
-  
+  int getWidth() {
+    return w;
+  }
+  int getHeight() {
+    return h;
+  }
+  int getDepth() {
+    return d;
+  }      
 private:
   GLuint w, h, d, nChannels;
   GLuint textureID; 
