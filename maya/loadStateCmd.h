@@ -3,6 +3,7 @@
 #include <maya/MFnMesh.h>
 #include <maya/MPointArray.h>
 #include <maya/MFnParticleSystem.h>
+#include <maya/MDGModifier.h>
 #include <objExporter.h>
 #include <fstream>
 #include <state.h>
@@ -65,10 +66,15 @@ public:
 
         fnMesh.addPolygon(polygon);
       }
-      fnMesh.generateSmoothMesh();
 
       importBubbles(state);
       
+      MObject smoothMesh = fnMesh.generateSmoothMesh();
+
+      //Delete the original mesh
+      MDGModifier modifier;
+      modifier.deleteNode(fnMesh.object());
+      modifier.doIt();
     }
     else{
       MGlobal::displayInfo(MString("Could not load state file: ") + statePath);

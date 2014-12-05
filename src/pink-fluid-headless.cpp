@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
       rayCaster->render(currentState, matrix);
     }
 
-    std::cout << "nBubble: " << currentState->getBubbles().size() << std::endl;
+    std::cout << "nBubbles: " << currentState->getBubbles().size() << std::endl;
 
     std::string file = std::string(outputDirectory) + "exported_" + std::to_string(i) + ".obj";
     objExporter.exportState(file, currentState);
