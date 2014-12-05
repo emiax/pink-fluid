@@ -1,12 +1,5 @@
-global proc addSlider() {
-  global string $mySlider;
-  $mySlider = `floatSliderGrp
-    -value 0
-    -min 0
-    -max 5
-    -dragCommand "print 1"
-    -field true`;
-}
+global string $win;
+global string $bubbleList;
 
 global proc loadState(string $filename, string $type) {
   print("Attemting to load state from " + $type + " file: " + $filename + "\n");
@@ -18,24 +11,61 @@ global proc openFileBrowser() {
   loadState($result[0], $result[1]);
 }
 
-global string $win;
-$win = `window -title "fluid simulation" -widthHeight 300 200`;
+global proc addBubbles() {
+  global string $bubbleList;
+  string $selectionShapes[] = `ls -sl -dag -lf`;
+  string $selectionNames[] = `ls -sl`;
+  if (size($selectionShapes) == 1 && `nodeType $selectionShapes[0]` == "particle") {
+    string $particlesName = $selectionNames[0];
+    string $frame = `currentTime -q`;
+    $listEntry = $particlesName + "\t" + $frame;
+    $list = `textScrollList -edit -append $listEntry $bubbleList`;
+    print ($particlesName + " added as bubbles in frame " + $frame + "\n");
+  }else {
+    print("A particle system must be selected\n");
+  }
+}
+
+global proc removeBubbles() {
+  global string $bubbleList;
+  int $selectedItems[] = `textScrollList -query -selectIndexedItem $bubbleList`;
+  int $nItems = size($selectedItems);
+  if ($nItems > 0) {
+    for ($i = $nItems - 1; $i > -1; --$i) {
+      $item = $selectedItems[$i];
+      $status = `textScrollList -edit -removeIndexedItem $item $bubbleList`;
+    }
+  }else {
+    print("A list item must be selected\n");
+  }
+}
+
+global proc appendBubbleList() {
+  global string $bubbleList;
+  $bubbleList = `textScrollList
+    -numberOfRows 5
+    -allowMultiSelection true
+    -width 150`;
+}
+
+$win = `window -title "fluid simulation" -widthHeight 175 300`;
   columnLayout;
-    text "Welcome to Pink Fluid, the dynamic fluid simulator.";
     button -label "Load Fluid State..." -command "openFileBrowser";
     button -label "Open OBJ sequence importer" -command "craOBJSequences";
-    // text "Grid Resolution:"
-    // floatField
-    //   -label "x"
-    //   -extraLabel "cells"
-    //   -value 16;
-    // floatField
-    //   -label "y"
-    //   -extraLabel "cells"
-    //   -value 16;
-    // floatField
-    //   -label "z"
-    //   -extraLabel "cells"
-    //   -value 16;
-    addSlider();
+
+    text "Bubbles:";
+    appendBubbleList();
+    button -label "+" -command "addBubbles";
+    button -label "-" -command "removeBubbles";
+
+    text "Simulate frames:";
+    intField
+      -minValue 0
+      -width 40
+      -value 0;
+    intField
+      -minValue 1
+      -width 40
+      -value 100;
+    button -label "Start simulation";
 showWindow;
