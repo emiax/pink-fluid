@@ -231,14 +231,15 @@ file(GLOB MAYA_SRC_FILES ${PROJECT_SOURCE_DIR}/maya/main.cpp)
 add_library(${PROJECT_MAYA_NAME} MODULE ${PROJECT_SOURCE_DIR}/maya/main.cpp)
 
 add_definitions(-D_BOOL -DOSMac_ -DREQUIRE_IOSTREAM)
-
+message(${MAYA_INCLUDE_DIRS})
 include_directories(${MAYA_INCLUDE_DIRS})
 
 set_target_properties(${PROJECT_MAYA_NAME}
-                      PROPERTIES COMPILE_FLAGS ${PROJECT_EXEC_FLAGS})
+  PROPERTIES COMPILE_FLAGS ${PROJECT_EXEC_FLAGS})
+
 target_link_libraries(${PROJECT_MAYA_NAME}
                       ${ALL_LIBS}
-                      ${MAYA_OpenMaya_LIBRARY}
+                      "${MAYA_LIBRARIES}"
 )
 
 #If something breaks and if you are using mac, try this awesomeness:

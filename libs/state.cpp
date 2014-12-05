@@ -179,7 +179,16 @@ Grid<glm::vec3> const *const State::getClosestPointGrid() const {
   return levelSet->getClosestPointGrid();
 }
 
+/**
+ * Get bubbles
+ */
+std::vector<Bubble> State::getBubbles() const {
+  return bubbleTracker->getBubbles();
+}
 
+/**
+ * Write to stream
+ */
 std::ostream& State::write(std::ostream& stream){
   stream.write(reinterpret_cast<char*>(&w), sizeof(w));
   stream.write(reinterpret_cast<char*>(&h), sizeof(h));
@@ -191,7 +200,7 @@ std::ostream& State::write(std::ostream& stream){
   int nBubbles = 0;
     
   if(bubbleTracker){
-    bubbleState = bubbleTracker->getBubbles();
+    bubbleState = getBubbles();
     nBubbles = bubbleState.size();
   }
   
@@ -201,6 +210,9 @@ std::ostream& State::write(std::ostream& stream){
   return stream;
 }
 
+/**
+ * Read from stream
+ */
 std::istream& State::read(std::istream& stream){
   stream.read(reinterpret_cast<char*>(&w), sizeof(w));
   stream.read(reinterpret_cast<char*>(&h), sizeof(h));

@@ -6,12 +6,10 @@
 #include <ctime>
 #include <cmath>
 
-#include <utility>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
-
 // Include GLM
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
 // io
 #include <iostream>
@@ -30,21 +28,47 @@
 #include <time.h>
 #include <bubbleTracker.h>
 #include <objExporter.h>
+#include <rayCaster.h>
 
 // #include <bubbleMaxExporter.h>
 
 int main(int argc, char* argv[]) {
+
+  bool realtimeRendering = false;
+  std::string outputDirectory = "";
+  
+  for (int i = 0; i < argc; i++) {
+    std::string v = argv[i];
+    if (v == "-r") {
+      realtimeRendering = true;
+    }
+    if (v == "-o") {
+      if (++i < argc) {
+        outputDirectory = std::string(argv[i]) + "/";
+        mkdir(argv[1], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        std::cout << "exporting OBJ files to directory: " << outputDirectory << std::endl;
+      } else {
+        std::cout << "no directory provided after -o.";
+      }
+    }
+  }
+
+  if (outputDirectory == "") {
+    std::cout << "exporting OBJ files to current directory" << std::endl;
+  }
+  
   srand(time(NULL));
 
   //Set up the initial state.
   unsigned int w = 32, h = 32, d = 32;
   State initialState(w, h, d);
 
+
   VelocityGrid *velocities = new VelocityGrid(w, h, d);
   initialState.setVelocityGrid(velocities);
 
   // init level set
-  LevelSet *ls = factory::levelSet::fourthContainerBoxInFluid(w, h, d);
+  LevelSet *ls = factory::levelSet::twoPillars(w, h, d);
   initialState.setLevelSet(ls);
 
   delete ls;
@@ -63,29 +87,36 @@ int main(int argc, char* argv[]) {
   int nbFrames = 0;
   float deltaT = 0.1; //First time step
 
-  std::string dir = "";
-  if (argc > 1) {
-    dir = std::string(argv[1]) + "/";
-    mkdir(argv[1], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    std::cout << "exporting OBJ files to directory: " << dir << std::endl;
-  } else {
-    std::cout << "exporting OBJ files to current directory" << std::endl;
-  }
-
   ObjExporter objExporter;
+  RayCaster *rayCaster = nullptr;
 
+  if (realtimeRendering) {
+    rayCaster = new RayCaster();
+  }
+  
+  
   int i = 0;
   while (true) {
 
     // common for both render passes.
     sim.step(deltaT);
     State *currentState = sim.getCurrentState();
+
+
+    if (rayCaster != nullptr) {
+      glm::mat4 matrix = glm::mat4(1.0f);
+      matrix = glm::translate(matrix, glm::vec3(0.0f, 0.0f, 2.0f));
+      matrix = glm::rotate(matrix, -3.1415926535f / 4.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+      matrix = glm::rotate(matrix, 0.1f * i, glm::vec3(0.0f, 1.0f, 0.0f));
+      rayCaster->render(currentState, matrix);
+    }
     
-    std::string file = std::string(dir) + "exported_" + std::to_string(i) + ".obj";
+
+    std::string file = std::string(outputDirectory) + "exported_" + std::to_string(i) + ".obj";
     objExporter.exportState(file, currentState);
-    // std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
-    // currentState->write(fileStream);
-    // fileStream.close();
+    std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
+    currentState->write(fileStream);
+    fileStream.close();
 
     // bubbleExporter.update(i, sim.getBubbleTracker());
     // bubbleExporter.exportSnapshot(i, "bubbles_" + std::to_string(i) + ".mx");

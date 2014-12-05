@@ -24,6 +24,7 @@ public:
   ~State();
   Grid<CellType>const *const getCellTypeGrid() const;
   VelocityGrid const *const getVelocityGrid() const;
+  std::vector<Bubble> getBubbles() const;
 
   OrdinalGrid<float> const *const getSignedDistanceGrid() const;
   Grid<glm::vec3> const *const getClosestPointGrid() const;
@@ -49,8 +50,8 @@ private:
   unsigned int w, h, d;
   LevelSet *levelSet;
 
-  BubbleTracker *bubbleTracker;
-  ParticleTracker *particleTracker;
+  BubbleTracker *bubbleTracker = nullptr;
+  ParticleTracker *particleTracker = nullptr;
 
   std::vector<Bubble> bubbleState;
   
