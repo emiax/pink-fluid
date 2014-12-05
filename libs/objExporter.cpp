@@ -8,6 +8,11 @@ void ObjExporter::exportState(std::string filename, State *state) {
   std::vector<glm::vec3> vertexList;
   std::vector<std::vector<int> > faceIndices;
 
+  triangulateLevelSet(state, vertexList, faceIndices);
+  printObjToFile(filename, vertexList, faceIndices);
+}
+
+void ObjExporter::triangulateLevelSet(State *state, std::vector<glm::vec3> &vertexList, std::vector<std::vector<int> > &faceIndices){
   const OrdinalGrid<float> *sdf = state->getSignedDistanceGrid();
   int w = sdf->getW();
   int h = sdf->getH();
@@ -47,7 +52,7 @@ void ObjExporter::exportState(std::string filename, State *state) {
           marchingCubes::TRIANGLE *triangles = new marchingCubes::TRIANGLE[5];
           int numTriangles = marchingCubes::PolygoniseCube(gridcell, 0.0, triangles);
           for(int i = 0; i < numTriangles; i++){
-            int startIndex = vertexList.size()+1;
+            int startIndex = vertexList.size();
             vertexList.push_back(triangles[i].p[0]);
             vertexList.push_back(triangles[i].p[1]);
             vertexList.push_back(triangles[i].p[2]);
@@ -66,8 +71,8 @@ void ObjExporter::exportState(std::string filename, State *state) {
       }
     }
   }
-  printObjToFile(filename, vertexList, faceIndices);
 }
+                         
 
 
 void ObjExporter::printObjToFile(std::string filename, std::vector<glm::vec3> vertices, std::vector<std::vector<int> > faces) {
@@ -78,7 +83,7 @@ void ObjExporter::printObjToFile(std::string filename, std::vector<glm::vec3> ve
   for(auto face : faces) {
     outputFile << "f ";
     for (auto faceIndex : face) {
-      outputFile << faceIndex << " ";
+      outputFile << faceIndex+1 << " ";
     }
     outputFile << std::endl;
   }
