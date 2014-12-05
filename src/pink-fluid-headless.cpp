@@ -110,7 +110,8 @@ int main(int argc, char* argv[]) {
       matrix = glm::rotate(matrix, 0.1f * i, glm::vec3(0.0f, 1.0f, 0.0f));
       rayCaster->render(currentState, matrix);
     }
-    
+
+    std::cout << "nBubbles: " << currentState->getBubbles().size() << std::endl;
 
     std::string file = std::string(outputDirectory) + "exported_" + std::to_string(i) + ".obj";
     objExporter.exportState(file, currentState);

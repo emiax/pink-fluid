@@ -1,4 +1,4 @@
-#include <bubbleMaxExporter.h>
+/*#include <bubbleMaxExporter.h>
 #include <bubbleTracker.h>
 #include <fstream>
 #include <sstream>
@@ -100,3 +100,4 @@ std::string BubbleMaxExporter::serialize(glm::vec3 pos) {
   s << "[" << pos.x << "," << pos.y << "," << pos.z << "]";
   return s.str();
 }
+*/
