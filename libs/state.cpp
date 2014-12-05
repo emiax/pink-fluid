@@ -3,6 +3,7 @@
 #include <ordinalGrid.h>
 #include <iostream>
 #include <levelSet.h>
+#include <bubble.h>
 
 /**
  * Constructor.
@@ -12,6 +13,9 @@ State::State(unsigned int width, unsigned int height, unsigned int depth) :
   velocityGrid = new VelocityGrid(w, h, d);
   levelSet = new LevelSet(w, h, d);
   resetVelocityGrids();
+
+  bubbles = std::vector<Bubble>();
+  deadBubbleIndices = std::stack<int>();
 }
 
 
@@ -22,11 +26,6 @@ State::State(const State& origin) {
 
   velocityGrid = new VelocityGrid(*origin.velocityGrid);
   levelSet = new LevelSet(*origin.levelSet);
-
-  // TODO: copy bubble data and particle data
-  // rather than copying the pointer to the trackers.
-  bubbleTracker = origin.bubbleTracker;
-  particleTracker = origin.particleTracker;
 }
 
 /**
@@ -183,8 +182,39 @@ Grid<glm::vec3> const *const State::getClosestPointGrid() const {
  * Get bubbles
  */
 std::vector<Bubble> State::getBubbles() const {
-  return bubbleTracker->getBubbles();
+  std::vector<Bubble> validBubbles;
+  int nAliveBubbles = bubbles.size() - deadBubbleIndices.size();
+  
+  try {
+    validBubbles.reserve(nAliveBubbles);
+  } catch (...) {
+    // tja
+  }
+
+  for (auto &b : bubbles) {
+    if (b.alive) {
+      validBubbles.push_back(b);
+    }
+  }
+  return validBubbles;
 }
+
+
+void State::setBubbles(std::vector<Bubble> pBubbles){
+  bubbles.clear();
+  //STL is silly and does not provide clear on stacks
+  deadBubbleIndices = std::stack<int>();
+  for (int idx = 0; idx < pBubbles.size(); idx++) {
+    Bubble b = pBubbles[idx];
+    
+    bubbles.push_back(b);
+    if (!b.alive) {
+      deadBubbleIndices.push(idx);
+    }
+  }
+}
+
+
 
 /**
  * Write to stream
@@ -196,17 +226,13 @@ std::ostream& State::write(std::ostream& stream){
   velocityGrid->write(stream);
   levelSet->write(stream);
   // Write bubble state to the stream
-  bubbleState.clear();
-  int nBubbles = 0;
-    
-  if(bubbleTracker){
-    bubbleState = getBubbles();
-    nBubbles = bubbleState.size();
-  }
+  int nBubbles = bubbles.size();
   
   stream.write(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
-  stream.write(reinterpret_cast<char*>(bubbleState.data()), sizeof(Bubble)*nBubbles);
+  stream.write(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
 
+  stream.write(reinterpret_cast<char*>(&nextBubbleId), sizeof(nextBubbleId));
+  
   return stream;
 }
 
@@ -228,24 +254,19 @@ std::istream& State::read(std::istream& stream){
 
   //Read bubbles from stream
   int nBubbles;
-  bubbleState.clear();
+  bubbles.clear();
   stream.read(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
-  bubbleState.reserve(nBubbles);
-  stream.read(reinterpret_cast<char*>(bubbleState.data()), sizeof(Bubble)*nBubbles);
-  
-  if(bubbleTracker){
-    bubbleTracker->setBubbles(bubbleState);
+  bubbles.reserve(nBubbles);
+  stream.read(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
+
+  deadBubbleIndices = std::stack<int>();
+  for (int i = 0; i < nBubbles; i++) {
+    if (!bubbles[i].alive) {
+      deadBubbleIndices.push(i);
+    }
   }
-  
+
+  stream.read(reinterpret_cast<char*>(&nextBubbleId), sizeof(nextBubbleId));
   
   return stream;
-}
-
-void State::setBubbleTracker(BubbleTracker *bTracker){
-  this->bubbleTracker = bTracker;
-}
-
-void State::setParticleTracker(ParticleTracker *pTracker){
-  this->particleTracker = pTracker;
-  
 }

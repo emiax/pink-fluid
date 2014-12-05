@@ -11,6 +11,7 @@ template<typename T>
 class Grid;
 struct VelocityGrid;
 class BubbleTracker;
+class State;
 
 class ParticleTracker {
 public:
@@ -21,7 +22,7 @@ public:
   void reinitializeParticles(OrdinalGrid<float> const* distance);
   void advect(VelocityGrid const* velocities, float dt);
 
-  void feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distance, VelocityGrid const* velocities);
+  void feedEscaped(BubbleTracker* bt, State *state);
 
   void correct(OrdinalGrid<float> *distance);
 
