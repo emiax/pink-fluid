@@ -1,9 +1,14 @@
 #include <maya/MGlobal.h>
 #include <maya/MSimple.h>
+#include <maya/MFnMesh.h>
+#include <maya/MPointArray.h>
+#include <objExporter.h>
 #include <fstream>
 #include <state.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <face.h>
+#include <sdfTessellation.h>
 
 class LoadStateCmd : public MPxCommand {
 public:
@@ -20,10 +25,29 @@ public:
     }
 
     std::ifstream inputFileStream(statePath.asChar(), std::ios::binary);
+
     if(inputFileStream.good()){
       state->read(inputFileStream);
       inputFileStream.close();
       MGlobal::displayInfo("State Loaded");
+      MFnMesh fnMesh;
+      
+      SdfTessellation sdfTess(state->getSignedDistanceGrid());
+      std::vector<glm::vec3> vertexList = sdfTess.getVertices();
+      std::vector<Face> faceIndices = sdfTess.getFaces();
+      
+      for(int i = 0; i < faceIndices.size(); i++ ){
+        Face &face = faceIndices[i];
+        MPointArray polygon;
+
+        polygon.append(MPoint(vertexList[face[0]][0], vertexList[face[0]][1], vertexList[face[0]][2]));
+        polygon.append(MPoint(vertexList[face[1]][0], vertexList[face[1]][1], vertexList[face[1]][2]));
+        polygon.append(MPoint(vertexList[face[2]][0], vertexList[face[2]][1], vertexList[face[2]][2]));
+        
+
+        fnMesh.addPolygon(polygon);
+      }
+      fnMesh.generateSmoothMesh();
     }
     else{
       MGlobal::displayInfo(MString("Could not load state file: ") + statePath);

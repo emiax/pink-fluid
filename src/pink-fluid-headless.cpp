@@ -114,9 +114,9 @@ int main(int argc, char* argv[]) {
 
     std::string file = std::string(outputDirectory) + "exported_" + std::to_string(i) + ".obj";
     objExporter.exportState(file, currentState);
-    // std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
-    // currentState->write(fileStream);
-    // fileStream.close();
+    std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
+    currentState->write(fileStream);
+    fileStream.close();
 
     // bubbleExporter.update(i, sim.getBubbleTracker());
     // bubbleExporter.exportSnapshot(i, "bubbles_" + std::to_string(i) + ".mx");

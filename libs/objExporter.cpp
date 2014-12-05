@@ -11,9 +11,10 @@ void ObjExporter::exportState(std::string filename, State *state) {
   std::vector<glm::vec3> vertexList;
   std::vector<Face > faceIndices;
 
+  const OrdinalGrid<float> *sdf = state->getSignedDistanceGrid();
+
   Mesh m;
 
-  const OrdinalGrid<float> *sdf = state->getSignedDistanceGrid();
   SdfTessellation sdfTess(sdf);
   m.addData(sdfTess.getVertices(), sdfTess.getFaces());
 
@@ -23,7 +24,6 @@ void ObjExporter::exportState(std::string filename, State *state) {
     m.addData(bt.getVertices(), bt.getFaces());
   }
   
-  printObjToFile(filename, vertexList, faceIndices);
   printMeshToFile(filename, m);
 }
 

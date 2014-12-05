@@ -50,8 +50,8 @@ private:
   unsigned int w, h, d;
   LevelSet *levelSet;
 
-  BubbleTracker *bubbleTracker;
-  ParticleTracker *particleTracker;
+  BubbleTracker *bubbleTracker = nullptr;
+  ParticleTracker *particleTracker = nullptr;
 
   std::vector<Bubble> bubbleState;
   
