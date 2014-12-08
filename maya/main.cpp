@@ -18,6 +18,7 @@ MStatus initializePlugin(MObject obj) {
 
   MString path(PluginStateManager::instance()->getPluginPath().c_str());
   MGlobal::sourceFile(path + "/objSequenceImporter.mel");
+  MGlobal::sourceFile(path + "/connectStates.mel");
 
   return status;
 }

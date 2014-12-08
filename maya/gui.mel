@@ -8,14 +8,13 @@ global proc addSlider() {
     -field true`;
 }
 
-global proc loadState(string $filename, string $type) {
-  print("Attemting to load state from " + $type + " file: " + $filename + "\n");
+global proc loadState(string $filename[]) {
   pfLoadState($filename);
 }
 
 global proc openFileBrowser() {
-  string $result[] = `fileDialog2 -fileMode 1 -fileFilter "Pink Fluid (*.pf)" -rf true`;
-  loadState($result[0], $result[1]);
+  string $result[] = `fileDialog2 -fileMode 4 -fileFilter "Pink Fluid (*.pf)"`;
+  loadState($result);
 }
 
 global string $win;
