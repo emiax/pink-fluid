@@ -20,6 +20,7 @@ global proc addBubbles() {
     string $frame = `currentTime -q`;
     $listEntry = $particlesName + "\t" + $frame;
     $list = `textScrollList -edit -append $listEntry $bubbleList`;
+    // pfSetBubbles();
     print ($particlesName + " added as bubbles in frame " + $frame + "\n");
   }else {
     print("A particle system must be selected\n");
