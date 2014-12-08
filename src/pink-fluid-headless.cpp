@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     if (v == "-b") {
       // load bubble config from file.
       if (++i < argc) {
-        bubbleConfigFile = std::string(argv[1]);
+        bubbleConfigFile = std::string(argv[i]);
         std::cout << "Using bubble config in: " << bubbleConfigFile << std::endl;
       } else {
         std::cout << "No config file specified after -b" << std::endl;
