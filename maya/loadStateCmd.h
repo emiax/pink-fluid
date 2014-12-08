@@ -42,21 +42,29 @@ public:
     }
 
     std::vector<std::string> meshNames;
+    MString numMeshesString = std::to_string(pathArray.length()).c_str();
+    std::string createProgressCommand = "progressWindow  -status \"Importing OBJ Sequence...\" -maxValue " + std::to_string(pathArray.length()) + " -title \"Importing\" -isInterruptable true;";
+    MGlobal::executeCommand(createProgressCommand.c_str());
     for(int i = 0; i < pathArray.length(); i++){
-      std::cout << pathArray[i].asChar() << std::endl;
       std::ifstream inputFileStream(pathArray[i].asChar(), std::ios::binary);
-      
+      int result;
+      MGlobal::executeCommand("progressWindow -query -isCancelled", result);
+      if(result){
+        break;
+      }
       if(inputFileStream.good()){
         state->read(inputFileStream);
         inputFileStream.close();
-        MGlobal::displayInfo("State Loaded");
         std::string singleMeshName = loadSingleState(state, i);
+        MGlobal::displayInfo("State Loaded");
         meshNames.push_back(singleMeshName);
       }
       else{
         MGlobal::displayInfo(MString("Could not load state file: ") + pathArray[i]);
       }
+      MGlobal::executeCommand("progressWindow -e -step 1;");
     }
+    MGlobal::executeCommand("progressWindow -endProgress;");
     MGlobal::clearSelectionList();
     std::string groupMeshCommand = "group -em -name pfFluidGroup";
     std::string selectMeshCommand = "select -r";
@@ -76,7 +84,7 @@ public:
 
   std::string loadSingleState(State * state, int frame = -1){
     MFnMesh fnMesh;
-      
+
     SdfTessellation sdfTess(state->getSignedDistanceGrid());
     std::vector<glm::vec3> vertexList = sdfTess.getVertices();
     std::vector<Face> faceIndices = sdfTess.getFaces();
