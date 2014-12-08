@@ -36,6 +36,8 @@ int main(int argc, char* argv[]) {
 
   bool realtimeRendering = false;
   std::string outputDirectory = "";
+  bool readBubbleConfig = false;
+  std::string bubbleConfigFile = "";
   
   for (int i = 0; i < argc; i++) {
     std::string v = argv[i];
@@ -46,10 +48,19 @@ int main(int argc, char* argv[]) {
       if (++i < argc) {
         outputDirectory = std::string(argv[i]) + "/";
         mkdir(argv[1], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        std::cout << "exporting OBJ files to directory: " << outputDirectory << std::endl;
+        std::cout << "Exporting OBJ files to directory: " << outputDirectory << std::endl;
       } else {
-        std::cout << "no directory provided after -o.";
+        std::cout << "No directory provided after -o." << std::endl;
       }
+    }
+    if (v == "-b") {
+      // load bubble config from file.
+      if (++i < argc) {
+        bubbleConfigFile = std::string(argv[i]);
+        std::cout << "Using bubble config in: " << bubbleConfigFile << std::endl;
+      } else {
+        std::cout << "No config file specified after -b" << std::endl;
+      } 
     }
   }
 
