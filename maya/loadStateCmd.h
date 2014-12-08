@@ -2,6 +2,7 @@
 #include <maya/MSimple.h>
 #include <maya/MFnMesh.h>
 #include <maya/MPointArray.h>
+#include <maya/MFnParticleSystem.h>
 #include <maya/MDGModifier.h>
 #include <maya/MFnAttribute.h>
 #include <maya/MFnTransform.h>
@@ -15,6 +16,21 @@
 
 class LoadStateCmd : public MPxCommand {
 public:
+  void importBubbles(State *state) {
+    /*    MFnParticleSystem ps;
+          MPointArray points;
+          std::vector<Bubble> bubbles = state->getBubbles();
+          for (Bubble bubble : bubbles) {
+          glm::vec3 pos = bubble.position;
+          points.append(pos.x, pos.y, pos.z);
+          }
+          points.append(0, 0, 0);
+
+          ps.create();
+          ps.emit(points);
+          ps.create();*/
+  }
+
   virtual MStatus doIt(const MArgList& args) {
     MStatus status;
     unsigned int index = 0;
@@ -76,6 +92,9 @@ public:
 
       fnMesh.addPolygon(polygon);
     }
+
+    importBubbles(state);
+      
     MObject smoothMesh = fnMesh.generateSmoothMesh();
 
     //Delete the original mesh

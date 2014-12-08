@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <particleTracker.h>
-#include <bubbleTracker.h>
+#include <bubble.h>
 
 template<typename T>
 class OrdinalGrid;
@@ -32,6 +32,7 @@ public:
   void setCellTypeGrid(Grid<CellType> const* const);
   void setVelocityGrid(VelocityGrid const* const);
   void setLevelSet(LevelSet *ls);
+  void setBubbles(std::vector<Bubble>);
   
   unsigned int getW() const;
   unsigned int getH() const;
@@ -40,8 +41,6 @@ public:
   std::ostream& write(std::ostream &stream);
   std::istream& read(std::istream &stream);
 
-  void setBubbleTracker(BubbleTracker*);
-  void setParticleTracker(ParticleTracker*);
 
 private:
   void resetVelocityGrids();
@@ -50,10 +49,10 @@ private:
   unsigned int w, h, d;
   LevelSet *levelSet;
 
-  BubbleTracker *bubbleTracker = nullptr;
-  ParticleTracker *particleTracker = nullptr;
-
-  std::vector<Bubble> bubbleState;
+  int nextBubbleId = 0;
+  std::vector<Bubble> bubbles;
+  std::stack<int> deadBubbleIndices;
   
   friend class Simulator;
+  friend class BubbleTracker;
 };

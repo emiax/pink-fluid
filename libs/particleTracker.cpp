@@ -8,6 +8,7 @@
 #include <velocityGrid.h>
 #include <bubbleTracker.h>
 #include <glm/ext.hpp>
+#include <state.h>
 
 ParticleTracker::ParticleTracker(unsigned w, unsigned h, unsigned d, unsigned int ppc) {
   interfaceParticles = new std::vector<Particle*>();
@@ -118,7 +119,10 @@ void ParticleTracker::advect(VelocityGrid const* velocities, float dt) {
   }
 }
 
-void ParticleTracker::feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distance, VelocityGrid const* velocities) {
+void ParticleTracker::feedEscaped(BubbleTracker* bt, State *state) {
+  OrdinalGrid<float> const *distances = state->getSignedDistanceGrid();
+  VelocityGrid const *velocities = state->getVelocityGrid();
+  
   // check all particles
   for (unsigned i = 0; i < interfaceParticles->size(); ++i) {
     Particle* p = interfaceParticles->at(i);
@@ -130,12 +134,12 @@ void ParticleTracker::feedEscaped(BubbleTracker* bt, OrdinalGrid<float> *distanc
     GridCoordinate cell = GridCoordinate(round(pos.x), round(pos.y), round(pos.z));
 
     float radius = fabs(p->phi);
-    float dist = distance->getLerp(pos.x, pos.y, pos.z);
+    float dist = distances->getLerp(pos.x, pos.y, pos.z);
     
     // bubble if                  (air particle) (in water)  (not touching surface)
-    if (distance->isValid(cell) && p->phi > 0 && dist < 0 && fabs(dist) > radius && radius > 0.04) {
+    if (distances->isValid(cell) && p->phi > 0 && dist < 0 && fabs(dist) > radius && radius > 0.04) {
       glm::vec3 velocity = velocities->getLerp(pos);
-      bt->spawnBubble(pos, radius*10.0, velocity);
+      bt->spawnBubble(state, pos, radius*10.0, velocity);
     }
   }
 }

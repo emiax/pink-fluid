@@ -110,7 +110,7 @@ int main(void) {
 
     // init simulator
     Simulator sim(*prevState, 0.1f);
-    BubbleMaxExporter bubbleExporter;
+    //    BubbleMaxExporter bubbleExporter;
     
     // Dark black background
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -375,7 +375,7 @@ int main(void) {
         ////////////////// Start drawing bubbles //////////////////////
         
         // Draw bubbles
-        const std::vector<Bubble> bubbles = sim.getBubbleTracker()->getBubbles();
+        const std::vector<Bubble> bubbles = currentState->getBubbles();
         g_bubble_buffer_data.clear();
         std::cout << "frame=" << i << ", nBubbles=" << bubbles.size() << std::endl;
         for (int i = 0; i < bubbles.size(); i++) {
@@ -445,13 +445,13 @@ int main(void) {
         }
         i++;
         
-        bubbleExporter.update(i, sim.getBubbleTracker());
-        bubbleExporter.exportSnapshot(i, "bubbles_" + std::to_string(i) + ".mx");
+        //        bubbleExporter.update(i, sim.getBubbleTracker());
+        //        bubbleExporter.exportSnapshot(i, "bubbles_" + std::to_string(i) + ".mx");
 
-        if (i > 600) {
+        /*        if (i > 600) {
           bubbleExporter.exportBubbles("bubbles.mx");
           break;
-        }
+          }*/
     } // Check if the ESC key was pressed or the window was closed
     while (!glfwWindowShouldClose(window));
 

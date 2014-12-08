@@ -29,13 +29,7 @@ Simulator::Simulator(const State& initialState, float scale) : gridSize(scale) {
   pressureSolver = new MICSolver(w*h*d);
   
   pTracker = new ParticleTracker(w, h, d, PARTICLES_PER_CELL);
-  bTracker = new BubbleTracker(w, h, d);
-
-  stateFrom->setBubbleTracker(bTracker);
-  stateTo->setBubbleTracker(bTracker);
-
-  stateFrom->setParticleTracker(pTracker);
-  stateTo->setParticleTracker(pTracker);
+  bTracker = new BubbleTracker();
 }
 
 /**
@@ -75,19 +69,23 @@ void Simulator::step(float dt) {
   // PLS + bubble stack
   // 1. evolve particles + bubbles
   pTracker->advect(stateFrom->velocityGrid, dt);
-  bTracker->advect(
+
+  /*bTracker->advect(
     stateFrom->getVelocityGrid(),
     stateFrom->levelSet->distanceGrid,
-    pressureGridTo,
+    prespsureGridTo,
     gravity,
     dt
-  );
+    );*/
+
+  bTracker->advect(stateFrom, stateTo, pressureGridTo, gravity, dt);
+
   // 2. first correction
   pTracker->correct(stateTo->levelSet->distanceGrid);
   // 3. reinit levelset
   stateTo->levelSet->reinitialize();
   // 4. make bubbles
-  pTracker->feedEscaped(bTracker, stateTo->levelSet->distanceGrid, stateTo->velocityGrid);
+  pTracker->feedEscaped(bTracker, stateTo);
   // 5. recorrect
   pTracker->correct(stateTo->levelSet->distanceGrid);
   // 6. Radii adjustment

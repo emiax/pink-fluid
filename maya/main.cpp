@@ -1,8 +1,11 @@
+#include "pluginState.h"
+#include "mayaVelocityGrid.h"
+
+// commands
 #include "setGridResolutionCmd.h"
 #include "loadStateCmd.h"
 #include "launchGuiCmd.h"
-#include "pluginState.h"
-#include "mayaVelocityGrid.h"
+#include "setBubblesCmd.h"
 
 MStatus initializePlugin(MObject obj) {
   MFnPlugin pluginFn(obj, "PinkFluid", "0.1");
@@ -13,6 +16,7 @@ MStatus initializePlugin(MObject obj) {
   status = pluginFn.registerCommand("pfSetGridResolution", SetGridResolutionCmd::creator);
   status = pluginFn.registerCommand("pfLoadState", LoadStateCmd::creator);
   status = pluginFn.registerCommand("pfGUI", LaunchGuiCmd::creator);
+  status = pluginFn.registerCommand("pfSetBubbles", SetBubblesCmd::creator);
 
   MGlobal::executeCommand("pfGUI");
 
@@ -29,6 +33,7 @@ MStatus uninitializePlugin(MObject obj) {
   status = pluginFn.deregisterCommand("pfSetGridResolution");
   status = pluginFn.deregisterCommand("pfLoadState");
   status = pluginFn.deregisterCommand("pfGUI");
+  status = pluginFn.deregisterCommand("pfSetBubbles");
 
   MGlobal::executeCommand("deleteUI $win");
 
