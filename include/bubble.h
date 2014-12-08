@@ -1,5 +1,8 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
+
 struct Bubble {
   Bubble(glm::vec3 p, float r, glm::vec3 v, int id, bool pAlive = true) {
     this->position = p;
