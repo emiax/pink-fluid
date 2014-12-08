@@ -214,7 +214,25 @@ void State::setBubbles(std::vector<Bubble> pBubbles){
   }
 }
 
+void State::addBubble(Bubble &b) {
+    if (b.alive) {
+      if (deadBubbleIndices.size() > 0) {
+        int idx = deadBubbleIndices.top();
+        bubbles[idx] = b;
+        // todo: find out what to do with old id?
+        b.id = nextBubbleId++;
+        deadBubbleIndices.pop();
+      } else {
+        bubbles.push_back(b);
+      }
+    }
+}
 
+void State::addBubbles(std::vector<Bubble> newBubbles) {
+  for (int i = 0; i < newBubbles.size(); i++) {
+    addBubble(newBubbles[i]);
+  }
+}
 
 /**
  * Write to stream

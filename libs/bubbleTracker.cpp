@@ -14,20 +14,8 @@ BubbleTracker::~BubbleTracker() {
 }
 
 void BubbleTracker::spawnBubble(State *state, glm::vec3 p, float r, glm::vec3 v) {
-  // u not in nirvana yet?
-  if (state->deadBubbleIndices.size() > 0) {
-    int idx = state->deadBubbleIndices.top();
-    Bubble &b = state->bubbles[idx];
-    b.position = p;
-    b.radius = r;
-    b.velocity = v;
-    b.alive = true;
-    b.id = state->nextBubbleId++;
-    state->deadBubbleIndices.pop();
-  } else {
-    Bubble b = Bubble(p, r, v, state->nextBubbleId++);
-    state->bubbles.push_back(b);
-  }
+  Bubble b = Bubble(p, r, v, state->nextBubbleId++);
+  state->addBubble(b);
 }
 
 void BubbleTracker::advect(State *stateFrom, State *stateTo, OrdinalGrid<double> *pressures, glm::vec3 g, float dt) {

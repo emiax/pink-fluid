@@ -33,6 +33,8 @@ public:
   void setVelocityGrid(VelocityGrid const* const);
   void setLevelSet(LevelSet *ls);
   void setBubbles(std::vector<Bubble>);
+  void addBubbles(std::vector<Bubble>);
+  void addBubble(Bubble &b);
   
   unsigned int getW() const;
   unsigned int getH() const;

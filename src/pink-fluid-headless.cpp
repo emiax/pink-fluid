@@ -29,6 +29,7 @@
 #include <bubbleTracker.h>
 #include <objExporter.h>
 #include <rayCaster.h>
+#include <bubbleConfig.h>
 
 // #include <bubbleMaxExporter.h>
 
@@ -36,9 +37,9 @@ int main(int argc, char* argv[]) {
 
   bool realtimeRendering = false;
   std::string outputDirectory = "";
-  bool readBubbleConfig = false;
+  bool useBubbleConfig = false;
   std::string bubbleConfigFile = "";
-  
+
   for (int i = 0; i < argc; i++) {
     std::string v = argv[i];
     if (v == "-r") {
@@ -57,17 +58,18 @@ int main(int argc, char* argv[]) {
       // load bubble config from file.
       if (++i < argc) {
         bubbleConfigFile = std::string(argv[i]);
+        useBubbleConfig = true;
         std::cout << "Using bubble config in: " << bubbleConfigFile << std::endl;
       } else {
         std::cout << "No config file specified after -b" << std::endl;
-      } 
+      }
     }
   }
 
   if (outputDirectory == "") {
     std::cout << "exporting OBJ files to current directory" << std::endl;
   }
-  
+
   srand(time(NULL));
 
   //Set up the initial state.
@@ -94,6 +96,17 @@ int main(int argc, char* argv[]) {
     inputFileStream.close();
   }
 
+
+  BubbleConfig *bubbleConfig = nullptr;
+
+  if (useBubbleConfig) {
+    std::ifstream bubbleConfigStream(bubbleConfigFile, std::ios::binary);
+    if (bubbleConfigStream.is_open()) {
+      bubbleConfig->read(bubbleConfigStream);
+      bubbleConfigStream.close();
+    }
+  }
+
   // BubbleMaxExporter bubbleExporter;
   int nbFrames = 0;
   float deltaT = 0.1; //First time step
@@ -104,8 +117,8 @@ int main(int argc, char* argv[]) {
   if (realtimeRendering) {
     rayCaster = new RayCaster();
   }
-  
-  
+
+
   int i = 0;
   while (true) {
 
@@ -113,6 +126,11 @@ int main(int argc, char* argv[]) {
     sim.step(deltaT);
     State *currentState = sim.getCurrentState();
 
+
+    if (bubbleConfig != nullptr) {
+      // Manually added bubbles.
+      currentState->addBubbles(bubbleConfig->getBubblesInFrame(i));
+    }
 
     if (rayCaster != nullptr) {
       glm::mat4 matrix = glm::mat4(1.0f);

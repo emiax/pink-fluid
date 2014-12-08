@@ -36,6 +36,8 @@ class RayCaster {
   void updateFrameBuffer();
   void updateVolume(State *state);
   void render(State* s, glm::mat4 mvp);
+  void renderBubbles(State* state, glm::mat4 mvp);
+  void renderFluid(State *s, glm::mat4 mvp);
  private:
   int windowWidth = 64;
   int windowHeight = 64;
