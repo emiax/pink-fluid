@@ -89,12 +89,12 @@ int main(int argc, char* argv[]) {
   // init simulator
   Simulator sim(initialState, 0.1f);
 
-  std::ifstream inputFileStream("states/exportedState_" + std::to_string(70) + ".pf", std::ios::binary);
+  /*std::ifstream inputFileStream("states/exportedState_" + std::to_string(70) + ".pf", std::ios::binary);
   if(inputFileStream.is_open()){
     std::cout << "Read state" << std::endl;
     initialState.read(inputFileStream);
     inputFileStream.close();
-  }
+    }*/
 
 
   BubbleConfig *bubbleConfig = nullptr;
@@ -102,6 +102,7 @@ int main(int argc, char* argv[]) {
   if (useBubbleConfig) {
     std::ifstream bubbleConfigStream(bubbleConfigFile, std::ios::binary);
     if (bubbleConfigStream.is_open()) {
+      bubbleConfig = new BubbleConfig();
       bubbleConfig->read(bubbleConfigStream);
       bubbleConfigStream.close();
     }
@@ -125,11 +126,11 @@ int main(int argc, char* argv[]) {
     // common for both render passes.
     sim.step(deltaT);
     State *currentState = sim.getCurrentState();
-
-
+    
     if (bubbleConfig != nullptr) {
       // Manually added bubbles.
-      currentState->addBubbles(bubbleConfig->getBubblesInFrame(i));
+      std::vector<Bubble> bs = bubbleConfig->getBubblesInFrame(i);
+      currentState->addBubbles(bs);
     }
 
     if (rayCaster != nullptr) {
@@ -139,8 +140,6 @@ int main(int argc, char* argv[]) {
       matrix = glm::rotate(matrix, 0.1f * i, glm::vec3(0.0f, 1.0f, 0.0f));
       rayCaster->render(currentState, matrix);
     }
-
-    std::cout << "nBubbles: " << currentState->getBubbles().size() << std::endl;
 
     std::string file = std::string(outputDirectory) + "exported_" + std::to_string(i) + ".obj";
     objExporter.exportState(file, currentState);
@@ -159,6 +158,11 @@ int main(int argc, char* argv[]) {
     ++i;
   }
 
+  
   std::cout << "Cleaning up!" << std::endl;
+
+  if (bubbleConfig != nullptr) {
+    delete bubbleConfig;
+  }
   return 0;
 }

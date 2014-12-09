@@ -63,15 +63,10 @@ void BubbleTracker::advect(State *stateFrom, State *stateTo, OrdinalGrid<double>
     b.velocity = (1/K_V)*(K_V*fluidVelocity + pressureForce);
     b.position = b.position + b.velocity*dt;
 
-    // kill bubbles outside fluid
     float dist = sdf->getLerp(pos);
-    if (dist > 0) {
-      deadBubbleIndices.push(idx);
-      b.alive = false;
-    }
     
-    // kill bubbles outside grid
-    if (pos.x > width || pos.x < 0 || pos.y > height || pos.y < 0 || pos.z > depth || pos.z < 0) {
+    // kill bubbles outside fluid and kill bubbles outside grid
+    if (dist > 0 || pos.x > width || pos.x < 0 || pos.y > height || pos.y < 0 || pos.z > depth || pos.z < 0) {
       deadBubbleIndices.push(idx);
       b.alive = false;
     }
