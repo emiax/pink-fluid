@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
     if (bubbleConfig != nullptr) {
       // Manually added bubbles.
       std::vector<Bubble> bs = bubbleConfig->getBubblesInFrame(i);
-      currentState->addBubbles(bs);
+      sim.addBubbles(bs);
     }
 
     if (rayCaster != nullptr) {

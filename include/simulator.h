@@ -11,12 +11,15 @@ class BubbleTracker;
 
 #include <glm/glm.hpp>
 #include <util.h>
+#include <vector>
+#include <bubble.h>
 
 class Simulator{
 public:
   Simulator(const State& initialState, float scale = 1.0f);
   ~Simulator();
 
+  void addBubbles(std::vector<Bubble>& bubbles);
   void step(float dt);
   State* getCurrentState();
 
