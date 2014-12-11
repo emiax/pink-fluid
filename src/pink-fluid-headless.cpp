@@ -39,11 +39,22 @@ int main(int argc, char* argv[]) {
   std::string outputDirectory = "";
   bool useBubbleConfig = false;
   std::string bubbleConfigFile = "";
+  bool useInitialState = false;
+  std::string initialStateFile = "";
 
   for (int i = 0; i < argc; i++) {
     std::string v = argv[i];
     if (v == "-r") {
       realtimeRendering = true;
+    }
+    if (v == "-i") {
+      if (++i < argc) {
+        initialStateFile = std::string(argv[i]);
+        useInitialState = true;
+        std::cout << "Using initial state in: " << initialStateFile << std::endl;
+      } else {
+        std::cout << "No state file specified after -i" << std::endl;
+      }
     }
     if (v == "-o") {
       if (++i < argc) {
@@ -77,25 +88,26 @@ int main(int argc, char* argv[]) {
   State initialState(w, h, d);
 
 
-  VelocityGrid *velocities = new VelocityGrid(w, h, d);
-  initialState.setVelocityGrid(velocities);
 
   // init level set
   LevelSet *ls = factory::levelSet::twoPillars(w, h, d);
   initialState.setLevelSet(ls);
 
   delete ls;
+  
+  VelocityGrid *velocities = new VelocityGrid(w, h, d);
+  initialState.setVelocityGrid(velocities);
 
+  if (useInitialState) {
+    std::ifstream inputFileStream(initialStateFile, std::ios::binary);
+    if(inputFileStream.is_open()){
+      initialState.read(inputFileStream);
+      inputFileStream.close();
+    }
+  }
+    
   // init simulator
   Simulator sim(initialState, 0.1f);
-
-  /*std::ifstream inputFileStream("states/exportedState_" + std::to_string(70) + ".pf", std::ios::binary);
-  if(inputFileStream.is_open()){
-    std::cout << "Read state" << std::endl;
-    initialState.read(inputFileStream);
-    inputFileStream.close();
-    }*/
-
 
   BubbleConfig *bubbleConfig = nullptr;
 
