@@ -12,30 +12,39 @@ global proc openFileBrowser() {
 
 global proc addBubbles() {
   global string $bubbleList;
+
   string $selectionShapes[] = `ls -sl -dag -lf`;
   string $selectionNames[] = `ls -sl`;
   if (size($selectionShapes) == 1 && `nodeType $selectionShapes[0]` == "particle") {
     string $particlesName = $selectionNames[0];
     string $frame = `currentTime -q`;
+    pfSetBubbles($particlesName, (int)$frame);
+
     $listEntry = $particlesName + "\t" + $frame;
     $list = `textScrollList -edit -append $listEntry $bubbleList`;
-    // pfSetBubbles();
-    print ($particlesName + " added as bubbles in frame " + $frame + "\n");
-  }else {
+
+    print($particlesName + " added as bubbles in frame " + $frame + "\n");
+  } else {
     print("A particle system must be selected\n");
   }
 }
 
 global proc removeBubbles() {
   global string $bubbleList;
-  int $selectedItems[] = `textScrollList -query -selectIndexedItem $bubbleList`;
+  string $selectedItems[] = `textScrollList -query -selectItem $bubbleList`;
+  int $selectedItemIndices[] = `textScrollList -query -selectIndexedItem $bubbleList`;
+
   int $nItems = size($selectedItems);
   if ($nItems > 0) {
     for ($i = $nItems - 1; $i > -1; --$i) {
-      $item = $selectedItems[$i];
-      $status = `textScrollList -edit -removeIndexedItem $item $bubbleList`;
+      string $item = $selectedItems[$i];
+      int $itemIndex = $selectedItemIndices[$i];
+      string $splitEntry[] = stringToStringArray($item, "\t");
+      int $frame = $splitEntry[1];
+      pfRemoveBubbles($frame);
+      $status = `textScrollList -edit -removeIndexedItem $itemIndex $bubbleList`;
     }
-  }else {
+  } else {
     print("A list item must be selected\n");
   }
 }
@@ -51,7 +60,7 @@ global proc appendBubbleList() {
 $win = `window -title "fluid simulation" -widthHeight 175 300`;
   columnLayout;
     button -label "Load Fluid State..." -command "openFileBrowser";
-    button -label "Open OBJ sequence importer" -command "craOBJSequences";
+    // button -label "Open OBJ sequence importer" -command "craOBJSequences";
 
     text "Bubbles:";
     appendBubbleList();

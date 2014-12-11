@@ -74,28 +74,28 @@ void Simulator::step(float dt) {
 
   // PLS + bubble stack
   // 1. evolve particles + bubbles
-  pTracker->advect(stateFrom->velocityGrid, dt);
+  // pTracker->advect(stateFrom->velocityGrid, dt);
 
-  /*bTracker->advect(
-    stateFrom->getVelocityGrid(),
-    stateFrom->levelSet->distanceGrid,
-    prespsureGridTo,
-    gravity,
-    dt
-    );*/
+  // /*bTracker->advect(
+  //   stateFrom->getVelocityGrid(),
+  //   stateFrom->levelSet->distanceGrid,
+  //   prespsureGridTo,
+  //   gravity,
+  //   dt
+  //   );*/
 
   bTracker->advect(stateFrom, stateTo, pressureGridTo, gravity, dt);
-
-  // 2. first correction
-  pTracker->correct(stateTo->levelSet->distanceGrid);
-  // 3. reinit levelset
-  stateTo->levelSet->reinitialize();
-  // 4. make bubbles
-  pTracker->feedEscaped(bTracker, stateTo);
-  // 5. recorrect
-  pTracker->correct(stateTo->levelSet->distanceGrid);
-  // 6. Radii adjustment
-  pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
+  
+  // // 2. first correction
+  // pTracker->correct(stateTo->levelSet->distanceGrid);
+  // // 3. reinit levelset
+  // stateTo->levelSet->reinitialize();
+  // // 4. make bubbles
+  // pTracker->feedEscaped(bTracker, stateTo);
+  // // 5. recorrect
+  // pTracker->correct(stateTo->levelSet->distanceGrid);
+  // // 6. Radii adjustment
+  // pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
 
   applyGravity(stateTo, gravity, dt);
   stateTo->levelSet->updateCellTypes();

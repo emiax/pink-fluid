@@ -26,6 +26,9 @@ State::State(const State& origin) {
 
   velocityGrid = new VelocityGrid(*origin.velocityGrid);
   levelSet = new LevelSet(*origin.levelSet);
+  bubbles = origin.bubbles;
+  deadBubbleIndices = origin.deadBubbleIndices;
+  nextBubbleId = origin.nextBubbleId;
 }
 
 /**
@@ -274,12 +277,13 @@ std::istream& State::read(std::istream& stream){
 
   //Read bubbles from stream
   int nBubbles;
-  bubbles.clear();
+
   stream.read(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
-  bubbles.reserve(nBubbles);
+  bubbles = std::vector<Bubble>(nBubbles);
   stream.read(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
 
   deadBubbleIndices = std::stack<int>();
+  
   for (int i = 0; i < nBubbles; i++) {
     if (!bubbles[i].alive) {
       deadBubbleIndices.push(i);
