@@ -13,6 +13,7 @@ class BubbleConfig {
   void write(std::ostream& stream);
   void clear();
   void addBubbles(int frame, std::vector<Bubble> bubbles);
+  void removeBubbles(int frame);
   std::vector<Bubble> getBubblesInFrame(int frame);
   std::map<int, std::vector<Bubble>> getMap();
  private:

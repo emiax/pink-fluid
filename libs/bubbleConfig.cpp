@@ -59,6 +59,14 @@ void BubbleConfig::addBubbles(int frame, std::vector<Bubble> bubbles) {
 }
 
 
+void BubbleConfig::removeBubbles(int frame) {
+  auto it = config.find(frame);
+  if (it != config.end()) {
+    config.erase(it);
+  }
+}
+
+
 std::vector<Bubble> BubbleConfig::getBubblesInFrame(int frame) {
   if (config.count(frame) > 0) {
     return config[frame];
