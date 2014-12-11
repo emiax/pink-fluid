@@ -29,6 +29,7 @@
 #include <bubbleTracker.h>
 #include <objExporter.h>
 #include <rayCaster.h>
+#include <bubbleConfig.h>
 
 // #include <bubbleMaxExporter.h>
 
@@ -36,9 +37,9 @@ int main(int argc, char* argv[]) {
 
   bool realtimeRendering = false;
   std::string outputDirectory = "";
-  bool readBubbleConfig = false;
+  bool useBubbleConfig = false;
   std::string bubbleConfigFile = "";
-  
+
   for (int i = 0; i < argc; i++) {
     std::string v = argv[i];
     if (v == "-r") {
@@ -57,17 +58,18 @@ int main(int argc, char* argv[]) {
       // load bubble config from file.
       if (++i < argc) {
         bubbleConfigFile = std::string(argv[i]);
+        useBubbleConfig = true;
         std::cout << "Using bubble config in: " << bubbleConfigFile << std::endl;
       } else {
         std::cout << "No config file specified after -b" << std::endl;
-      } 
+      }
     }
   }
 
   if (outputDirectory == "") {
     std::cout << "exporting OBJ files to current directory" << std::endl;
   }
-  
+
   srand(time(NULL));
 
   //Set up the initial state.
@@ -87,11 +89,23 @@ int main(int argc, char* argv[]) {
   // init simulator
   Simulator sim(initialState, 0.1f);
 
-  std::ifstream inputFileStream("states/exportedState_" + std::to_string(70) + ".pf", std::ios::binary);
+  /*std::ifstream inputFileStream("states/exportedState_" + std::to_string(70) + ".pf", std::ios::binary);
   if(inputFileStream.is_open()){
     std::cout << "Read state" << std::endl;
     initialState.read(inputFileStream);
     inputFileStream.close();
+    }*/
+
+
+  BubbleConfig *bubbleConfig = nullptr;
+
+  if (useBubbleConfig) {
+    std::ifstream bubbleConfigStream(bubbleConfigFile, std::ios::binary);
+    if (bubbleConfigStream.is_open()) {
+      bubbleConfig = new BubbleConfig();
+      bubbleConfig->read(bubbleConfigStream);
+      bubbleConfigStream.close();
+    }
   }
 
   // BubbleMaxExporter bubbleExporter;
@@ -104,15 +118,20 @@ int main(int argc, char* argv[]) {
   if (realtimeRendering) {
     rayCaster = new RayCaster();
   }
-  
-  
+
+
   int i = 0;
   while (true) {
 
     // common for both render passes.
     sim.step(deltaT);
     State *currentState = sim.getCurrentState();
-
+    
+    if (bubbleConfig != nullptr) {
+      // Manually added bubbles.
+      std::vector<Bubble> bs = bubbleConfig->getBubblesInFrame(i);
+      sim.addBubbles(bs);
+    }
 
     if (rayCaster != nullptr) {
       glm::mat4 matrix = glm::mat4(1.0f);
@@ -121,8 +140,6 @@ int main(int argc, char* argv[]) {
       matrix = glm::rotate(matrix, 0.1f * i, glm::vec3(0.0f, 1.0f, 0.0f));
       rayCaster->render(currentState, matrix);
     }
-
-    std::cout << "nBubbles: " << currentState->getBubbles().size() << std::endl;
 
     std::string file = std::string(outputDirectory) + "exported_" + std::to_string(i) + ".obj";
     objExporter.exportState(file, currentState);
@@ -141,6 +158,11 @@ int main(int argc, char* argv[]) {
     ++i;
   }
 
+  
   std::cout << "Cleaning up!" << std::endl;
+
+  if (bubbleConfig != nullptr) {
+    delete bubbleConfig;
+  }
   return 0;
 }

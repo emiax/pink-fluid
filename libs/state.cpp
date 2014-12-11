@@ -8,7 +8,7 @@
 /**
  * Constructor.
  */
-State::State(unsigned int width, unsigned int height, unsigned int depth) : 
+State::State(unsigned int width, unsigned int height, unsigned int depth) :
   w(width), h(height), d(depth) {
   velocityGrid = new VelocityGrid(w, h, d);
   levelSet = new LevelSet(w, h, d);
@@ -95,7 +95,7 @@ void State::setVelocityGrid(VelocityGrid const* const velocity){
 }
 
 /**
- * Get velocity grid 
+ * Get velocity grid
  */
 VelocityGrid const *const State::getVelocityGrid() const{
   return velocityGrid;
@@ -131,7 +131,7 @@ void State::setCellTypeGrid(Grid<CellType>const* const ctg) {
 }
 
 /**
- * Set signed distance grid 
+ * Set signed distance grid
  * @param sdg grid to copy signed distance from
  */
 // void State::setSignedDistanceGrid(OrdinalGrid<float> const* const sdg) {
@@ -184,11 +184,9 @@ Grid<glm::vec3> const *const State::getClosestPointGrid() const {
 std::vector<Bubble> State::getBubbles() const {
   std::vector<Bubble> validBubbles;
   int nAliveBubbles = bubbles.size() - deadBubbleIndices.size();
-  
-  try {
+
+  if (nAliveBubbles > 0) {
     validBubbles.reserve(nAliveBubbles);
-  } catch (...) {
-    // tja
   }
 
   for (auto &b : bubbles) {
@@ -200,13 +198,13 @@ std::vector<Bubble> State::getBubbles() const {
 }
 
 
-void State::setBubbles(std::vector<Bubble> pBubbles){
+void State::setBubbles(std::vector<Bubble> &pBubbles){
   bubbles.clear();
   //STL is silly and does not provide clear on stacks
   deadBubbleIndices = std::stack<int>();
   for (int idx = 0; idx < pBubbles.size(); idx++) {
     Bubble b = pBubbles[idx];
-    
+
     bubbles.push_back(b);
     if (!b.alive) {
       deadBubbleIndices.push(idx);
@@ -214,7 +212,25 @@ void State::setBubbles(std::vector<Bubble> pBubbles){
   }
 }
 
+void State::addBubble(Bubble &b) {
+  if (b.alive) {
+    if (deadBubbleIndices.size() > 0) {
+      int idx = deadBubbleIndices.top();
+      bubbles[idx] = b;
+      // todo: find out what to do with old id?
+      b.id = nextBubbleId++;
+      deadBubbleIndices.pop();
+    } else {
+      bubbles.push_back(b);
+    }
+  }
+}
 
+void State::addBubbles(std::vector<Bubble>& newBubbles) {
+  for (int i = 0; i < newBubbles.size(); i++) {
+    addBubble(newBubbles[i]);
+  }
+}
 
 /**
  * Write to stream
@@ -227,12 +243,12 @@ std::ostream& State::write(std::ostream& stream){
   levelSet->write(stream);
   // Write bubble state to the stream
   int nBubbles = bubbles.size();
-  
+
   stream.write(reinterpret_cast<char*>(&nBubbles), sizeof(nBubbles));
   stream.write(reinterpret_cast<char*>(bubbles.data()), sizeof(Bubble)*nBubbles);
 
   stream.write(reinterpret_cast<char*>(&nextBubbleId), sizeof(nextBubbleId));
-  
+
   return stream;
 }
 
@@ -243,11 +259,11 @@ std::istream& State::read(std::istream& stream){
   stream.read(reinterpret_cast<char*>(&w), sizeof(w));
   stream.read(reinterpret_cast<char*>(&h), sizeof(h));
   stream.read(reinterpret_cast<char*>(&d), sizeof(d));
-  
+
   delete velocityGrid;
   velocityGrid = new VelocityGrid(w,h,d);
   velocityGrid->read(stream);
-  
+
   delete levelSet;
   levelSet = new LevelSet(w,h,d);
   levelSet->read(stream);
@@ -267,6 +283,6 @@ std::istream& State::read(std::istream& stream){
   }
 
   stream.read(reinterpret_cast<char*>(&nextBubbleId), sizeof(nextBubbleId));
-  
+
   return stream;
 }
