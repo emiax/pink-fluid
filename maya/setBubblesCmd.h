@@ -1,5 +1,6 @@
 #pragma once
 
+// Maya
 #include <maya/MGlobal.h>
 #include <maya/MSimple.h>
 #include <maya/MSelectionList.h>
@@ -12,8 +13,20 @@
 #include <maya/MMatrix.h>
 #include <maya/MTransformationMatrix.h>
 
+// Pink-Fluid + deps
+#include <bubbleConfig.h>
+#include <fstream>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/glm.hpp>
+
+#include "pluginState.h"
+
 class SetBubblesCmd : public MPxCommand {
 public:
+  static void* creator() {
+    return new SetBubblesCmd;
+  }
+
   virtual MStatus doIt(const MArgList& args) {
     MStatus status;
 
@@ -25,7 +38,6 @@ public:
       return status;
     }
 
-
     MObject particleObj = getParticleSystemByName(particleSystemName);
     MFnParticleSystem particleShape;
     particleShape.setObject(particleObj);
@@ -35,25 +47,52 @@ public:
     particleShape.position(particlePositions);
     MDoubleArray particleRadii;
     particleShape.radius(particleRadii);
-
-    for (int i = 0; i < particleRadii.length(); ++i) {
-      MVector pos = particlePositions[i];
-      cout << "particle " << i
-           << ": radius = " << particleRadii[i]
-           << ", position = (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << endl;
-    }
-
     MMatrix invFluidTransMat = getInverseFluidTransform();
+    invFluidTransMat = invFluidTransMat.transpose(); // <-- why must I do this, Maya?
 
-    cout << "fluid inverse transform:" << endl;
+    cout << "Current Fluid Translation Matrix: " << endl;
+    float transMatData[16];
     for (int j = 0; j < 4; ++j) {
       for (int i = 0; i < 4; ++i) {
+        transMatData[j*4 + i] = invFluidTransMat(j, i);
         cout << invFluidTransMat(j, i) << "\t";
       }
       cout << endl;
     }
+    glm::mat4 glmInvTransMat = glm::make_mat4(transMatData);
+
+    // Create bubbles
+    std::vector<Bubble> bubbles;
+    bubbles.reserve(particleRadii.length());
+    for (int i = 0; i < particleRadii.length(); ++i) {
+      MVector pos = particlePositions[i];
+      double r = particleRadii[i];
+      glm::vec4 p(pos.x, pos.y, pos.z, 1.0);
+      p = glmInvTransMat*p;
+      Bubble b(glm::vec3(p), r, glm::vec3(0.0), -1);
+      bubbles.push_back(b);
+    }
+
+    // Update conf file
+    const std::string BUBBLE_CONF_FILE_NAME = PluginStateManager::instance()->getExecutionPath() + "/bubbleConf.pf";
+    cout << "file path = " << BUBBLE_CONF_FILE_NAME << endl;
+    updateBubbleFile(bubbles, frameNumber, BUBBLE_CONF_FILE_NAME);
 
     return status;
+  }
+
+private:
+  void updateBubbleFile(std::vector<Bubble> bubbles, int frameNumber, std::string filename) {
+    std::ifstream bubbleConfigInFile(filename);
+    BubbleConfig bubbleConfig;
+    if (!bubbleConfigInFile.fail()) {
+      cout << "Reading bubble config from existing file" << endl;
+      bubbleConfig.read(bubbleConfigInFile);
+    }
+
+    bubbleConfig.addBubbles(frameNumber, bubbles);
+    std::ofstream bubbleConfigOutFile(filename);
+    bubbleConfig.write(bubbleConfigOutFile);
   }
 
   MSelectionList select(MString name) {
@@ -89,9 +128,5 @@ public:
     MTransformationMatrix fluidTransMat = fluidTransform.transformation();
 
     return fluidTransMat.asMatrixInverse();
-  }
-
-  static void* creator() {
-    return new SetBubblesCmd;
   }
 };

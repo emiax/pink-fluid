@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
   initialState.setVelocityGrid(velocities);
 
   // init level set
-  LevelSet *ls = factory::levelSet::twoPillars(w, h, d);
+  LevelSet *ls = factory::levelSet::stairs(w, h, d);
   initialState.setLevelSet(ls);
 
   delete ls;
@@ -119,14 +119,13 @@ int main(int argc, char* argv[]) {
     rayCaster = new RayCaster();
   }
 
-
   int i = 0;
   while (true) {
 
     // common for both render passes.
     sim.step(deltaT);
     State *currentState = sim.getCurrentState();
-    
+
     if (bubbleConfig != nullptr) {
       // Manually added bubbles.
       std::vector<Bubble> bs = bubbleConfig->getBubblesInFrame(i);
@@ -141,9 +140,11 @@ int main(int argc, char* argv[]) {
       rayCaster->render(currentState, matrix);
     }
 
-    std::string file = std::string(outputDirectory) + "exported_" + std::to_string(i) + ".obj";
+    std::string strDir = std::string(outputDirectory);
+    std::string strFrameNumber = std::to_string(i);
+    std::string file = strDir + "exported_" + strFrameNumber + ".obj";
     objExporter.exportState(file, currentState);
-    std::ofstream fileStream("exportedState_" + std::to_string(i) + ".pf", std::ios::binary);
+    std::ofstream fileStream(strDir + "exportedState_" + strFrameNumber + ".pf", std::ios::binary);
     currentState->write(fileStream);
     fileStream.close();
 
@@ -154,11 +155,11 @@ int main(int argc, char* argv[]) {
     //   bubbleExporter.exportBubbles("bubbles.mx");
     //   break;
     // }
+
     std::cout << "Exported OBJ file: " << file << std::endl;
     ++i;
   }
 
-  
   std::cout << "Cleaning up!" << std::endl;
 
   if (bubbleConfig != nullptr) {
