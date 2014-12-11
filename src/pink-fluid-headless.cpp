@@ -134,6 +134,10 @@ int main(int argc, char* argv[]) {
   int i = 0;
   while (true) {
 
+
+    State *prev = sim.getCurrentState();
+    std::cout << "when getting current state we have " << prev->getBubbles().size() << " living bubbles." << std::endl;
+
     // common for both render passes.
     sim.step(deltaT);
     State *currentState = sim.getCurrentState();
