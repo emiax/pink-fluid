@@ -42,6 +42,7 @@ public:
     }
 
     std::vector<std::string> meshNames;
+    std::vector<int> frameNumbers;
     MString numMeshesString = std::to_string(pathArray.length()).c_str();
     std::string createProgressCommand = "progressWindow  -status \"Importing OBJ Sequence...\" -maxValue " + std::to_string(pathArray.length()) + " -title \"Importing\" -isInterruptable true;";
     MGlobal::executeCommand(createProgressCommand.c_str());
@@ -58,6 +59,7 @@ public:
         std::string singleMeshName = loadSingleState(state, i);
         MGlobal::displayInfo("State Loaded");
         meshNames.push_back(singleMeshName);
+        frameNumbers.push_back(state->getFrameNumber());
       }
       else{
         MGlobal::displayInfo(MString("Could not load state file: ") + pathArray[i]);
@@ -68,17 +70,35 @@ public:
     MGlobal::clearSelectionList();
     std::string groupMeshCommand = "group -em -name pfFluidGroup";
     std::string selectMeshCommand = "select -r";
+
+    std::string meshNamesString = "";
+    std::string frameNumberString = "";
+    
     for(auto name: meshNames){
-      MGlobal::selectByName(name.c_str());
-      groupMeshCommand += " " + name;
-      selectMeshCommand += " " + name;
+      meshNamesString += " " + name;
     }
-    groupMeshCommand += ";";
-    selectMeshCommand += ";";
+
+    for(auto frameNumber: frameNumbers){
+      frameNumberString += " " + std::to_string(frameNumber);
+    }
+
+    groupMeshCommand += meshNamesString + ";";
+    selectMeshCommand += meshNamesString + ";";
+    
     MGlobal::executeCommand(groupMeshCommand.c_str());
     MGlobal::executeCommand(selectMeshCommand.c_str());
-    MGlobal::executeCommand("connectStates pfFluidGroup");
     
+    MString resultString;
+    MGlobal::executeCommand("connectStates pfFluidGroup", resultString);
+
+    MString createFrameNumberAttr = "addAttr -dt Int32Array -ln \"frameNumbers\" -k 1 " + resultString + ";";
+    MString attributeName = resultString + ".frameNumbers";
+    MString setFrameNumberAttr = "setAttr " + attributeName + " -type Int32Array " + std::to_string(frameNumbers.size()).c_str() + frameNumberString.c_str() + ";";
+
+    MGlobal::executeCommand(createFrameNumberAttr);
+    MGlobal::executeCommand(setFrameNumberAttr);
+
+    MGlobal::executeCommand("setAttr -lock on " + attributeName);
     return status;
   }
 
@@ -115,6 +135,11 @@ public:
       
     MGlobal::select(child);
 
+    MGlobal::executeCommand("addAttr -at long -ln \"frameNumber\" -k 0 " + fnMesh.name());
+    MString attrName = fnMesh.name() + ".frameNumber";
+    MString frameNumber = std::to_string(state->getFrameNumber()).c_str();
+    MGlobal::executeCommand("setAttr " + attrName + " " + frameNumber);
+    MGlobal::executeCommand("setAttr -lock on " + attrName);
     if(frame != -1){
       MGlobal::executeCommand(createKeyframeCommand(frame+0, fnMesh.name().asChar(), false));
       MGlobal::executeCommand(createKeyframeCommand(frame+1, fnMesh.name().asChar(), true));

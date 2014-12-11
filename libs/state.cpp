@@ -13,7 +13,7 @@ State::State(unsigned int width, unsigned int height, unsigned int depth) :
   velocityGrid = new VelocityGrid(w, h, d);
   levelSet = new LevelSet(w, h, d);
   resetVelocityGrids();
-
+  frameNumber = 0;
   bubbles = std::vector<Bubble>();
   deadBubbleIndices = std::stack<int>();
 }
@@ -236,6 +236,8 @@ void State::addBubbles(std::vector<Bubble>& newBubbles) {
  * Write to stream
  */
 std::ostream& State::write(std::ostream& stream){
+  stream.write(reinterpret_cast<char*>(&frameNumber), sizeof(frameNumber));
+    
   stream.write(reinterpret_cast<char*>(&w), sizeof(w));
   stream.write(reinterpret_cast<char*>(&h), sizeof(h));
   stream.write(reinterpret_cast<char*>(&d), sizeof(d));
@@ -256,6 +258,8 @@ std::ostream& State::write(std::ostream& stream){
  * Read from stream
  */
 std::istream& State::read(std::istream& stream){
+  stream.read(reinterpret_cast<char*>(&frameNumber), sizeof(frameNumber));
+  
   stream.read(reinterpret_cast<char*>(&w), sizeof(w));
   stream.read(reinterpret_cast<char*>(&h), sizeof(h));
   stream.read(reinterpret_cast<char*>(&d), sizeof(d));
@@ -285,4 +289,9 @@ std::istream& State::read(std::istream& stream){
   stream.read(reinterpret_cast<char*>(&nextBubbleId), sizeof(nextBubbleId));
 
   return stream;
+}
+
+
+unsigned int State::getFrameNumber() const{
+  return frameNumber;
 }

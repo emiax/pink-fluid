@@ -43,12 +43,13 @@ public:
   std::ostream& write(std::ostream &stream);
   std::istream& read(std::istream &stream);
 
-
+  unsigned int getFrameNumber() const;
 private:
   void resetVelocityGrids();
   
   VelocityGrid *velocityGrid;
   unsigned int w, h, d;
+  unsigned int frameNumber;
   LevelSet *levelSet;
 
   int nextBubbleId = 0;
