@@ -105,6 +105,7 @@ void Simulator::step(float dt) {
   gradientSubtraction(stateTo, dt);
 
   deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
+  stateTo->frameNumber = stateFrom->frameNumber + 1;
   std::swap(stateFrom, stateTo);
 }
 

@@ -1,11 +1,11 @@
-global proc connectStates(string $meshName){
+global proc string connectStates(string $meshName){
         string $mySel[] = `ls -sl`;
         // create choice node with name
         string $choice = `createNode -n ($meshName + "_OBJ_Seq_choice") choice`;
         
         // create new mesh to hold the animation
         string $newMesh[] = `polyCube -ch 0 -n ($meshName + "_OBJ_Seq_Mesh")`;
-        print $newMesh[0];
+
         // connect choice output to new mesh inMesh attr
         string $meshShape[] = `listRelatives -s $newMesh[0]`;
         print $meshShape[0];
@@ -23,4 +23,6 @@ global proc connectStates(string $meshName){
             parent  -s -add $mySel[$i] $newMesh[0];
         }
         delete  `listRelatives -f -p $mySel`;
+
+        return $newMesh[0];
 }
