@@ -14,10 +14,11 @@
 #include <maya/MTransformationMatrix.h>
 
 // Pink-Fluid + deps
-#include <bubbleConfig.h>
+#include <stdio.h>
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/glm.hpp>
+#include <bubbleConfig.h>
 
 #include "pluginState.h"
 
@@ -48,7 +49,6 @@ public:
     MDoubleArray particleRadii;
     particleShape.radius(particleRadii);
     MMatrix invFluidTransMat = getInverseFluidTransform();
-    invFluidTransMat = invFluidTransMat.transpose(); // <-- why must I do this, Maya?
 
     cout << "Current Fluid Translation Matrix: " << endl;
     float transMatData[16];
@@ -60,6 +60,11 @@ public:
       cout << endl;
     }
     glm::mat4 glmInvTransMat = glm::make_mat4(transMatData);
+
+    for (int j = 0; j < 4; ++j){
+      for (int i = 0; i < 4; ++i) printf("%f ", glmInvTransMat[i][j]);
+      printf("\n");
+    }
 
     // Create bubbles
     std::vector<Bubble> bubbles;

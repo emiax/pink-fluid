@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
   std::string bubbleConfigFile = "";
   bool useInitialState = false;
   std::string initialStateFile = "";
+  int saveEachNthFrame = 1;
 
   for (int i = 0; i < argc; i++) {
     std::string v = argv[i];
@@ -59,7 +60,7 @@ int main(int argc, char* argv[]) {
     if (v == "-o") {
       if (++i < argc) {
         outputDirectory = std::string(argv[i]) + "/";
-        mkdir(argv[1], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        mkdir(argv[i], S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
         std::cout << "Exporting OBJ files to directory: " << outputDirectory << std::endl;
       } else {
         std::cout << "No directory provided after -o." << std::endl;
@@ -74,6 +75,25 @@ int main(int argc, char* argv[]) {
       } else {
         std::cout << "No config file specified after -b" << std::endl;
       }
+    }
+
+    if (v == "-e") {
+      // save each #:th frame
+      if (++i < argc) {
+        saveEachNthFrame = std::stoi(argv[i]);
+        std::cout << "Saving each: " << saveEachNthFrame << " frames" << std::endl;
+      } else {
+        std::cout << "No config file specified after -b" << std::endl;
+      }
+    }
+
+    if (v == "-h") {
+      printf("-r        - show real time ray casted rendering\n");
+      printf("-o <dir>  - specify output folder for states\n");
+      printf("-b <file> - specify bubble config file\n");
+      printf("-e <#>    - only save each #:th frame\n");
+      printf("-h        - this help message\n");
+      return 0;
     }
   }
 
@@ -132,6 +152,7 @@ int main(int argc, char* argv[]) {
   }
 
   int i = 0;
+  int savedFrame = 0;
   while (true) {
 
 
@@ -156,23 +177,20 @@ int main(int argc, char* argv[]) {
       rayCaster->render(currentState, matrix);
     }
 
-    std::string strDir = std::string(outputDirectory);
-    std::string strFrameNumber = std::to_string(i);
-    std::string file = strDir + "exported_" + strFrameNumber + ".obj";
-    objExporter.exportState(file, currentState);
-    std::ofstream fileStream(strDir + "exportedState_" + strFrameNumber + ".pf", std::ios::binary);
-    currentState->write(fileStream);
-    fileStream.close();
+    if (i % saveEachNthFrame == 0) {
+      std::string strDir = std::string(outputDirectory);
+      std::string strFrameNumber = std::to_string(savedFrame);
+      std::string file = strDir + "exportedState_" + strFrameNumber + ".pf";
 
-    // bubbleExporter.update(i, sim.getBubbleTracker());
-    // bubbleExporter.exportSnapshot(i, "bubbles_" + std::to_string(i) + ".mx");
+      std::ofstream fileStream(file, std::ios::binary);
+      currentState->write(fileStream);
+      fileStream.close();
 
-    // if (i > 600) {
-    //   bubbleExporter.exportBubbles("bubbles.mx");
-    //   break;
-    // }
+      ++savedFrame;
+      std::cout << "Exported frame " << i << " as file: " << file << std::endl;
+    }
 
-    std::cout << "Exported OBJ file: " << file << std::endl;
+    std::cout << "Simulated frame " << i << std::endl;
     ++i;
   }
 
