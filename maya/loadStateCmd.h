@@ -13,22 +13,38 @@
 #include <unistd.h>
 #include <face.h>
 #include <sdfTessellation.h>
+#include <sstream>
 
 class LoadStateCmd : public MPxCommand {
 public:
   void importBubbles(State *state) {
-    /*    MFnParticleSystem ps;
-          MPointArray points;
-          std::vector<Bubble> bubbles = state->getBubbles();
-          for (Bubble bubble : bubbles) {
-          glm::vec3 pos = bubble.position;
-          points.append(pos.x, pos.y, pos.z);
-          }
-          points.append(0, 0, 0);
+    MFnParticleSystem ps;
+    MPointArray points;
+    std::vector<Bubble> bubbles = state->getBubbles();
+    for (Bubble bubble : bubbles) {
+      glm::vec3 pos = bubble.position;
+      points.append(pos.x, pos.y, pos.z);
+    }
+    MStatus status;
+    ps.create(&status);
 
-          ps.create();
-          ps.emit(points);
-          ps.create();*/
+
+    int nBubbles = bubbles.size(); 
+    std::cout << "gonna emit " << nBubbles << " particles." << std::endl;
+
+    std::stringstream ss;
+    ss << "particle"; 
+    for (auto &bubble : bubbles) {
+      glm::vec3 pos = bubble.position;
+      ss << " -p " << pos.x << " " << pos.y << " " << pos.z;
+    }
+    ss << ";";
+
+    MGlobal::executeCommand(MString(ss.str().c_str()));
+    // todo: 
+    // radius.
+    // particle type.
+    // keyframing.
   }
 
   virtual MStatus doIt(const MArgList& args) {
