@@ -18,7 +18,7 @@
 
 class LoadStateCmd : public MPxCommand {
 public:
-  void importBubbles(State *state) {
+  void importBubbles(State *state, int frame = -1) {
     MFnParticleSystem ps;
     MPointArray points;
     std::vector<Bubble> bubbles = state->getBubbles();
@@ -45,6 +45,12 @@ public:
     MGlobal::executeCommand(MString(ss.str().c_str()), returnStrings);
     MString pSystemName = returnStrings[1];
 
+    if(frame != -1){
+      MGlobal::executeCommand(createKeyframeCommand(frame+0, pSystemName.asChar(), false));
+      MGlobal::executeCommand(createKeyframeCommand(frame+1, pSystemName.asChar(), true));
+      MGlobal::executeCommand(createKeyframeCommand(frame+2, pSystemName.asChar(), false));
+    }
+    
     std::string addRadiusAttrCmd = "addAttr -ln radiusPP -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
     std::string addRadiusDefaultAttrCmd = "addAttr -ln radiusPP0 -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
     MGlobal::executeCommand(addRadiusAttrCmd.c_str());
@@ -156,7 +162,7 @@ public:
       fnMesh.addPolygon(polygon);
     }
 
-    importBubbles(state);
+    importBubbles(state, frame);
       
     MObject smoothMesh = fnMesh.generateSmoothMesh();
 
