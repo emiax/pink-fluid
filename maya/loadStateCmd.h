@@ -27,7 +27,7 @@ public:
     }
     MStatus status;
 
-    int nBubbles = bubbles.size(); 
+    int nBubbles = bubbles.size();
     std::cout << "gonna emit " << nBubbles << " particles." << std::endl;
 
     std::stringstream ss;
@@ -47,11 +47,24 @@ public:
       MGlobal::executeCommand(createKeyframeCommand(frame+1, pSystemName.asChar(), true));
       MGlobal::executeCommand(createKeyframeCommand(frame+2, pSystemName.asChar(), false));
     }
-    
+
     std::string addRadiusAttrCmd = "addAttr -ln radiusPP -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
     std::string addRadiusDefaultAttrCmd = "addAttr -ln radiusPP0 -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
+
+    std::string addSpriteScaleXPPAttrCmd = "addAttr -ln spriteScaleXPP -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
+    std::string addSpriteScaleXPP0AttrCmd = "addAttr -ln spriteScaleXPP0 -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
+    std::string addSpriteScaleYPPAttrCmd = "addAttr -ln spriteScaleYPP -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
+    std::string addSpriteScaleYPP0AttrCmd = "addAttr -ln spriteScaleYPP0 -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
+
+    std::string setRenderTypeCmd = "setAttr \"" + std::string(pSystemName.asChar()) + ".particleRenderType\" 5";
+
     MGlobal::executeCommand(addRadiusAttrCmd.c_str());
     MGlobal::executeCommand(addRadiusDefaultAttrCmd.c_str());
+    MGlobal::executeCommand(addSpriteScaleXPPAttrCmd.c_str());
+    MGlobal::executeCommand(addSpriteScaleXPP0AttrCmd.c_str());
+    MGlobal::executeCommand(addSpriteScaleYPPAttrCmd.c_str());
+    MGlobal::executeCommand(addSpriteScaleYPP0AttrCmd.c_str());
+    MGlobal::executeCommand(setRenderTypeCmd.c_str());
 
     std::string setRadiusCmd = "";
     for (int i = 0; i < bubbles.size(); ++i) {
@@ -62,7 +75,16 @@ public:
                      + pSystemName.asChar() + ";\n";
     }
     MGlobal::executeCommand(setRadiusCmd.c_str());
+
+    std::string setSpriteScale = "dynExpression -s \"" +
+        std::string(pSystemName.asChar()) + ".spriteScaleXPP = " + std::string(pSystemName.asChar()) + ".radiusPP" + ";\\n" +
+        std::string(pSystemName.asChar()) + ".spriteScaleYPP = " + std::string(pSystemName.asChar()) + ".radiusPP" + ";\" " +
+        "-rad " + std::string(pSystemName.asChar());
+
+    MGlobal::executeCommand(setSpriteScale.c_str());
+
     cout << setRadiusCmd << endl;
+    cout << setSpriteScale << endl;
 
     // todo:
     // radius.
