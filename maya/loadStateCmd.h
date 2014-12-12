@@ -6,6 +6,7 @@
 #include <maya/MDGModifier.h>
 #include <maya/MFnAttribute.h>
 #include <maya/MFnTransform.h>
+#include <maya/MIOstream.h>
 #include <objExporter.h>
 #include <fstream>
 #include <state.h>
@@ -33,17 +34,35 @@ public:
     std::cout << "gonna emit " << nBubbles << " particles." << std::endl;
 
     std::stringstream ss;
-    ss << "particle"; 
+    ss << "particle";
     for (auto &bubble : bubbles) {
       glm::vec3 pos = bubble.position;
       ss << " -p " << pos.x << " " << pos.y << " " << pos.z;
     }
     ss << ";";
 
-    MGlobal::executeCommand(MString(ss.str().c_str()));
-    // todo: 
+    MStringArray returnStrings;
+    MGlobal::executeCommand(MString(ss.str().c_str()), returnStrings);
+    MString pSystemName = returnStrings[1];
+
+    std::string addRadiusAttrCmd = "addAttr -ln radiusPP -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
+    std::string addRadiusDefaultAttrCmd = "addAttr -ln radiusPP0 -dt doubleArray " + std::string(pSystemName.asChar()) + ";";
+    MGlobal::executeCommand(addRadiusAttrCmd.c_str());
+    MGlobal::executeCommand(addRadiusDefaultAttrCmd.c_str());
+
+    std::string setRadiusCmd = "";
+    for (int i = 0; i < bubbles.size(); ++i) {
+      Bubble &b = bubbles[i];
+      setRadiusCmd += "particle -e -attribute radiusPP -order "
+                     + std::to_string(i) + " -fv "
+                     + std::to_string(b.radius) + " "
+                     + pSystemName.asChar() + ";\n";
+    }
+    MGlobal::executeCommand(setRadiusCmd.c_str());
+    cout << setRadiusCmd << endl;
+
+    // todo:
     // radius.
-    // particle type.
     // keyframing.
   }
 

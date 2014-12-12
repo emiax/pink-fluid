@@ -85,7 +85,7 @@ void Simulator::step(float dt) {
   //   );*/
 
   bTracker->advect(stateFrom, stateTo, pressureGridTo, gravity, dt);
-  
+
   // // 2. first correction
   // pTracker->correct(stateTo->levelSet->distanceGrid);
   // // 3. reinit levelset

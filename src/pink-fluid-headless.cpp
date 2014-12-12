@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 
 
   // init level set
-  LevelSet *ls = factory::levelSet::twoPillars(w, h, d);
+  LevelSet *ls = factory::levelSet::ball(w, h, d);
   initialState.setLevelSet(ls);
 
   delete ls;
