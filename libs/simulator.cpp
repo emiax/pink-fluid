@@ -12,10 +12,12 @@
 #include <particleTracker.h>
 #include <bubbleTracker.h>
 
-Simulator::Simulator(const State& initialState, float scale) : gridSize(scale) {
+Simulator::Simulator(const State& initialState, float scale, bool usePls, bool useBubbleSpawning) : gridSize(scale) {
   stateFrom = new State(initialState);
   stateTo = new State(initialState);
 
+  this->usePls = usePls;
+  this->useBubbleSpawning = useBubbleSpawning;
 
   w = initialState.getW();
   h = initialState.getH();
@@ -74,20 +76,26 @@ void Simulator::step(float dt) {
 
   // PLS + bubble stack
   // 1. evolve particles + bubbles
-  pTracker->advect(stateFrom->velocityGrid, dt);
+  if (usePls) {
+    pTracker->advect(stateFrom->velocityGrid, dt);
+  }
 
   bTracker->advect(stateFrom, stateTo, pressureGridTo, gravity, dt);
 
-  // // 2. first correction
-  pTracker->correct(stateTo->levelSet->distanceGrid);
-  // // 3. reinit levelset
-  stateTo->levelSet->reinitialize();
-  // // 4. make bubbles
-  pTracker->feedEscaped(bTracker, stateTo);
-   // // 5. recorrect
-  pTracker->correct(stateTo->levelSet->distanceGrid);
-  // // 6. Radii adjustment
-  pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
+  if (usePls) {
+    // // 2. first correction
+    pTracker->correct(stateTo->levelSet->distanceGrid);
+    // // 3. reinit levelset
+    stateTo->levelSet->reinitialize();
+    if (useBubbleSpawning) {
+      // // 4. make bubbles
+      pTracker->feedEscaped(bTracker, stateTo);
+    }
+    // // 5. recorrect
+    pTracker->correct(stateTo->levelSet->distanceGrid);
+    // // 6. Radii adjustment
+    pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
+  }
 
   applyGravity(stateTo, gravity, dt);
   stateTo->levelSet->updateCellTypes();

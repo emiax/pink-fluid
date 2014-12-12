@@ -19,7 +19,6 @@
 class LoadStateCmd : public MPxCommand {
 public:
   void importBubbles(State *state, int frame = -1) {
-    MFnParticleSystem ps;
     MPointArray points;
     std::vector<Bubble> bubbles = state->getBubbles();
     for (Bubble bubble : bubbles) {
@@ -27,8 +26,6 @@ public:
       points.append(pos.x, pos.y, pos.z);
     }
     MStatus status;
-    ps.create(&status);
-
 
     int nBubbles = bubbles.size(); 
     std::cout << "gonna emit " << nBubbles << " particles." << std::endl;

@@ -42,6 +42,8 @@ int main(int argc, char* argv[]) {
   bool useInitialState = false;
   std::string initialStateFile = "";
   int saveEachNthFrame = 1;
+  bool useBubbleSpawning = true;
+  bool usePls = true;
 
   for (int i = 0; i < argc; i++) {
     std::string v = argv[i];
@@ -87,12 +89,22 @@ int main(int argc, char* argv[]) {
       }
     }
 
+    if (v == "-no-pls") {
+      usePls = false;
+    }
+
+    if (v == "-no-spawning") {
+      useBubbleSpawning = false;
+    }
+
     if (v == "-h") {
-      printf("-r        - show real time ray casted rendering\n");
-      printf("-o <dir>  - specify output folder for states\n");
-      printf("-b <file> - specify bubble config file\n");
-      printf("-e <#>    - only save each #:th frame\n");
-      printf("-h        - this help message\n");
+      printf("-r            - show real time ray casted rendering\n");
+      printf("-o <dir>      - specify output folder for states\n");
+      printf("-b <file>     - specify bubble config file\n");
+      printf("-e <#>        - only save each #:th frame\n");
+      printf("-h            - this help message\n");
+      printf("-no-pls       - deactivate particle level set (also deactivates bubble spawning)\n");
+      printf("-no-spawning  - deactivate spawning bubbles\n");
       return 0;
     }
   }
@@ -127,7 +139,7 @@ int main(int argc, char* argv[]) {
   }
     
   // init simulator
-  Simulator sim(initialState, 0.1f);
+  Simulator sim(initialState, 0.1f, usePls, useBubbleSpawning);
 
   BubbleConfig *bubbleConfig = nullptr;
 

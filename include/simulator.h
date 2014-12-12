@@ -16,7 +16,7 @@ class BubbleTracker;
 
 class Simulator{
 public:
-  Simulator(const State& initialState, float scale = 1.0f);
+  Simulator(const State& initialState, float scale = 1.0f, bool usePls = true, bool useBubbleSpawning = true);
   ~Simulator();
 
   void addBubbles(std::vector<Bubble>& bubbles);
@@ -56,6 +56,8 @@ private:
   PressureSolver *pressureSolver, *jacobiSolver;
   float deltaT;
   float gridSize;
+  bool usePls;
+  bool useBubbleSpawning;
 
   static constexpr unsigned int PARTICLES_PER_CELL = 64;
   ParticleTracker *pTracker;
