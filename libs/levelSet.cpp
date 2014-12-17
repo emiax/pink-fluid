@@ -111,16 +111,6 @@ void LevelSet::merge(LevelSet *other) {
       }
     }
   }
-
-  for(auto k = 0u; k < d; k++){
-    for(auto j = 0u; j < h; j++){
-      for(auto i = 0u; i < w; i++){
-        float aSdf = distanceGrid->get(i, j, k);
-        std::cout << aSdf << std::endl;
-      }
-    }
-  }
-
 }
 
 void LevelSet::reinitialize() {
