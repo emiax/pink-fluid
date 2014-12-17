@@ -28,13 +28,15 @@ class LevelSet{
   void reinitialize();
   void updateCellTypes();
   float getVolumeError();
-
+  
   OrdinalGrid<float> *distanceGrid;
   Grid<CellType> *cellTypeGrid;
   SignedDistanceFunction *initSDF;
 
   std::ostream& write(std::ostream&);
   std::istream& read(std::istream&);
+
+  void merge(LevelSet *ls);
 
  private:
   void updateInterfaceNeighbors();

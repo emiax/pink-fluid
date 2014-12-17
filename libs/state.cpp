@@ -36,9 +36,6 @@ State::State(const State& origin) {
  */
 State::~State() {
   delete velocityGrid;
-  if (levelSet) {
-    delete levelSet;
-  }
   delete levelSet;
 }
 
@@ -154,6 +151,10 @@ void State::setLevelSet(LevelSet *ls) {
     delete levelSet;
   }
   levelSet = new LevelSet(w, h, d, *(ls->initSDF), ls->getCellTypeGrid() );
+
+  levelSet->distanceGrid->setForEach([=](const unsigned int &i, const unsigned int &j, const unsigned int &k) {
+      return ls->distanceGrid->get(i, j, k);
+    });
 };
 
 /**

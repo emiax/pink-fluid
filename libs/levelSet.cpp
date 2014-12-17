@@ -13,7 +13,7 @@ LevelSet::LevelSet(unsigned int w, unsigned int h, unsigned int d, SignedDistanc
   oldDistanceGrid = new OrdinalGrid<float>(w, h, d);
   cellTypeGrid = new Grid<CellType>(w, h, d);
   initSDF = new SignedDistanceFunction(sdf.getFunction());
-
+  
   gridHeap = new GridHeap(w, h, d, distanceGrid);
   closestPointGrid = new Grid<glm::vec3>(w, h, d);
 
@@ -52,6 +52,7 @@ LevelSet::LevelSet(const LevelSet& origin) {
 
   doneGrid = new Grid<bool>(w, h, d);
   cellTypeGrid = new Grid<CellType>(*origin.cellTypeGrid);
+  initSDF = new SignedDistanceFunction(origin.initSDF->getFunction());
 
   distanceGrid = new OrdinalGrid<float>(*origin.distanceGrid);
   oldDistanceGrid = new OrdinalGrid<float>(w, h, d);
@@ -73,6 +74,54 @@ LevelSet::~LevelSet() {
   delete closestPointGrid;
 }
 
+
+void LevelSet::merge(LevelSet *other) {
+
+  OrdinalGrid<float> *oldSdf = oldDistanceGrid;
+  OrdinalGrid<float> *sdf = distanceGrid;
+  OrdinalGrid<float> *otherSdf = other->distanceGrid;
+
+  Grid<CellType> *cellTypes = cellTypeGrid;
+  Grid<CellType> *otherCellTypes = other->cellTypeGrid;
+  
+  if (w != other->w || h != other->h || d != other->d) {
+    return;
+  }
+
+  for(auto k = 0u; k < d; k++){
+    for(auto j = 0u; j < h; j++){
+      for(auto i = 0u; i < w; i++){
+        float aSdf = sdf->get(i, j, k);
+        float bSdf = otherSdf->get(i, j, k);
+
+        CellType aType = cellTypes->get(i, j, k);
+        CellType bType = otherCellTypes->get(i, j, k);
+
+        sdf->set(i, j, k, std::min(aSdf, bSdf));
+
+        if (aType == CellType::SOLID || bType == CellType::SOLID) {
+          cellTypes->set(i, j, k, CellType::SOLID);
+          sdf->set(i, j, k, 1000000); // a scientific constant for a shit ton of air.
+        } else if (aType == CellType::FLUID || bType == CellType::FLUID) {
+          cellTypes->set(i, j, k, CellType::FLUID);
+        } else {
+          cellTypes->set(i, j, k, CellType::EMPTY);
+        }
+
+      }
+    }
+  }
+
+  for(auto k = 0u; k < d; k++){
+    for(auto j = 0u; j < h; j++){
+      for(auto i = 0u; i < w; i++){
+        float aSdf = distanceGrid->get(i, j, k);
+        std::cout << aSdf << std::endl;
+      }
+    }
+  }
+
+}
 
 void LevelSet::reinitialize() {
   std::swap(oldDistanceGrid, distanceGrid);

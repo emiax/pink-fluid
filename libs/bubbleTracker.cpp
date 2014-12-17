@@ -88,6 +88,7 @@ void BubbleTracker::advect(State *stateFrom, State *stateTo, OrdinalGrid<double>
     }
     glm::vec3 pressureForce = - pressureGradient*K_P*clampedVolume;
     glm::vec3 viscosityForce = (fluidVelocity - b.velocity)*K_V;
+    //glm::vec3 buoyancyForce = -g * radius * radius * radius;
 
     b.velocity = (1/K_V)*(K_V*fluidVelocity + pressureForce);
     b.position = b.position + b.velocity*dt;

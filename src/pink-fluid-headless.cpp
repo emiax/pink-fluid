@@ -30,6 +30,7 @@
 #include <objExporter.h>
 #include <rayCaster.h>
 #include <bubbleConfig.h>
+#include <fileSequence.h>
 
 // #include <bubbleMaxExporter.h>
 
@@ -44,6 +45,7 @@ int main(int argc, char* argv[]) {
   int saveEachNthFrame = 1;
   bool useBubbleSpawning = true;
   bool usePls = true;
+  bool shortcut = false;
 
   for (int i = 0; i < argc; i++) {
     std::string v = argv[i];
@@ -97,11 +99,17 @@ int main(int argc, char* argv[]) {
       useBubbleSpawning = false;
     }
 
+    if (v == "-s") {
+      shortcut = true;
+    }
+
     if (v == "-h") {
       printf("-r            - show real time ray casted rendering\n");
       printf("-o <dir>      - specify output folder for states\n");
       printf("-b <file>     - specify bubble config file\n");
       printf("-e <#>        - only save each #:th frame\n");
+      printf("-i <file>     - load initial state\n");
+      printf("-s            - 'shortcut' simulation (read states from files, only simulate bubbles)\n");
       printf("-h            - this help message\n");
       printf("-no-pls       - deactivate particle level set (also deactivates bubble spawning)\n");
       printf("-no-spawning  - deactivate spawning bubbles\n");
@@ -113,19 +121,39 @@ int main(int argc, char* argv[]) {
     std::cout << "exporting OBJ files to current directory" << std::endl;
   }
 
+
+  FileSequence *fileSequence = nullptr;
+
+  if (shortcut) {
+      if (!useInitialState) {
+        std::cout << "cannot shortcut simulation without using -i." << std::endl;
+        return 0;
+      }
+      fileSequence = new FileSequence(initialStateFile);
+  }
+
+  
+
+
+  
   srand(time(NULL));
 
   //Set up the initial state.
-  unsigned int w = 32, h = 32, d = 32;
+  unsigned int w = 16, h = 16, d = 16;
   State initialState(w, h, d);
 
 
 
   // init level set
   LevelSet *ls = factory::levelSet::ball(w, h, d);
+  LevelSet *ls2 = factory::levelSet::stairs(w, h, d);
+  ls->merge(ls2);
+
+  delete ls2;
+  
   initialState.setLevelSet(ls);
 
-  delete ls;
+
   
   VelocityGrid *velocities = new VelocityGrid(w, h, d);
   initialState.setVelocityGrid(velocities);
@@ -137,6 +165,9 @@ int main(int argc, char* argv[]) {
       inputFileStream.close();
     }
   }
+
+
+  delete ls;
     
   // init simulator
   Simulator sim(initialState, 0.1f, usePls, useBubbleSpawning);
@@ -165,15 +196,32 @@ int main(int argc, char* argv[]) {
 
   int i = 0;
   int savedFrame = 0;
+
+
+      
   while (true) {
-
-
-    State *prev = sim.getCurrentState();
-    std::cout << "when getting current state we have " << prev->getBubbles().size() << " living bubbles." << std::endl;
-
-    // common for both render passes.
-    sim.step(deltaT);
     State *currentState = sim.getCurrentState();
+    State cachedState(*currentState);
+    
+    if (shortcut) {
+      std::cout << "shortcut " << i << std::endl;
+      std::ifstream inputFileStream(fileSequence->getFileNameRelative(i), std::ios::binary);
+      if(inputFileStream.is_open()){
+        cachedState.read(inputFileStream);
+        std::vector<Bubble> bubbles = currentState->getBubbles();
+        cachedState.setBubbles(bubbles);
+        sim.setCurrentState(cachedState);
+        inputFileStream.close();
+      } else {
+        std::cout << "no more cached files. disabling shortcutting." << std::endl;
+          shortcut = false;
+      }
+    }
+    
+    sim.step(deltaT, shortcut);
+    
+    // refresh current state after taking a simulation step.
+    currentState = sim.getCurrentState();
 
     if (bubbleConfig != nullptr) {
       // Manually added bubbles.

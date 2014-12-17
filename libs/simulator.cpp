@@ -54,6 +54,11 @@ State* Simulator::getCurrentState() {
   return stateFrom;
 }
 
+void Simulator::setCurrentState(const State& state) {
+  delete stateFrom;
+  stateFrom = new State(state);
+}
+
 /**
  * Add bubbles to stateFrom.
  */
@@ -65,47 +70,52 @@ void Simulator::addBubbles(std::vector<Bubble>& bubbles) {
  * Simulator step function. Iterates the simulation one time step, dt.
  * @param dt Time step, deltaT
  */
-void Simulator::step(float dt) {
+void Simulator::step(float dt, bool onlyBubbles) {
 
   glm::vec3 gravity = glm::vec3(0, -0.5, 0);
 
-  // stateFrom->levelSet->reinitialize();
-  extrapolateVelocity(stateFrom, stateFrom);
+  if (!onlyBubbles) {
+    // stateFrom->levelSet->reinitialize();
+    extrapolateVelocity(stateFrom, stateFrom);
 
-  advect(stateFrom, stateTo, dt);
+    advect(stateFrom, stateTo, dt);
 
-  // PLS + bubble stack
-  // 1. evolve particles + bubbles
-  if (usePls) {
-    pTracker->advect(stateFrom->velocityGrid, dt);
+    // PLS + bubble stack
+    // 1. evolve particles + bubbles
+    if (usePls) {
+      pTracker->advect(stateFrom->velocityGrid, dt);
+    }
   }
 
   bTracker->advect(stateFrom, stateTo, pressureGridTo, gravity, dt);
 
-  if (usePls) {
-    // // 2. first correction
-    pTracker->correct(stateTo->levelSet->distanceGrid);
-    // // 3. reinit levelset
-    stateTo->levelSet->reinitialize();
-    if (useBubbleSpawning) {
-      // // 4. make bubbles
-      pTracker->feedEscaped(bTracker, stateTo);
+  if (!onlyBubbles) {
+    if (usePls) {
+      // // 2. first correction
+      pTracker->correct(stateTo->levelSet->distanceGrid);
+      // // 3. reinit levelset
+      stateTo->levelSet->reinitialize();
+      if (useBubbleSpawning) {
+        // // 4. make bubbles
+        pTracker->feedEscaped(bTracker, stateTo);
+      }
+      // // 5. recorrect
+      pTracker->correct(stateTo->levelSet->distanceGrid);
+      // // 6. Radii adjustment
+      pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
     }
-    // // 5. recorrect
-    pTracker->correct(stateTo->levelSet->distanceGrid);
-    // // 6. Radii adjustment
-    pTracker->reinitializeParticles(stateTo->getSignedDistanceGrid());
+
+    applyGravity(stateTo, gravity, dt);
+    stateTo->levelSet->updateCellTypes();
+
+    calculateNegativeDivergence(stateTo, divergenceGrid);
+    pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
+    gradientSubtraction(stateTo, dt);
+
+    deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
+    stateTo->frameNumber = stateFrom->frameNumber + 1;
   }
 
-  applyGravity(stateTo, gravity, dt);
-  stateTo->levelSet->updateCellTypes();
-
-  calculateNegativeDivergence(stateTo, divergenceGrid);
-  pressureSolver->solve(divergenceGrid, stateTo, pressureGridTo, dt);
-  gradientSubtraction(stateTo, dt);
-
-  deltaT = calculateDeltaT(maxVelocity(stateTo->velocityGrid), gravity);
-  stateTo->frameNumber = stateFrom->frameNumber + 1;
   std::swap(stateFrom, stateTo);
 }
 

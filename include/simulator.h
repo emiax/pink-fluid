@@ -20,9 +20,9 @@ public:
   ~Simulator();
 
   void addBubbles(std::vector<Bubble>& bubbles);
-  void step(float dt);
+  void step(float dt, bool onlyBubbles = false);
   State* getCurrentState();
-
+  void setCurrentState(const State &state);
   // advection
   // glm::vec3 backTrackU(State const * readFrom, GridCoordinate x, float dt);
   // glm::vec3 backTrackV(State const * readFrom, GridCoordinate x, float dt);
