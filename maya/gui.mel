@@ -57,6 +57,32 @@ global proc appendBubbleList() {
     -width 150`;
 }
 
+global proc simulateFrames(){
+    global string $startSimFrame;
+    $startSimFrame = `intField
+      -minValue 0
+      -width 40
+      -value 0`;
+    global string $endSimFrame;
+    $endSimFrame = `intField
+      -minValue 1
+      -width 40
+      -value 100`;
+}
+
+global proc pfSimulateAction(){
+  global string $startSimFrame;
+  global string $endSimFrame;
+  
+  int $startFrame = `intField -query -v $startSimFrame`;
+  int $endFrame = `intField -query -v $endSimFrame`;
+  
+  print $startFrame;
+  print $endFrame;
+  
+  pfSimulate($startFrame, $endFrame);
+}
+
 $win = `window -title "fluid simulation" -widthHeight 175 300`;
   columnLayout;
     button -label "Load Fluid State..." -command "openFileBrowser";
@@ -68,13 +94,7 @@ $win = `window -title "fluid simulation" -widthHeight 175 300`;
     button -label "-" -command "removeBubbles";
 
     text "Simulate frames:";
-    intField
-      -minValue 0
-      -width 40
-      -value 0;
-    intField
-      -minValue 1
-      -width 40
-      -value 100;
-    button -label "Start simulation";
+    simulateFrames();
+    
+    button -label "Start simulation" -command "pfSimulateAction";
 showWindow;

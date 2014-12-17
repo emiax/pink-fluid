@@ -7,6 +7,7 @@
 #include "launchGuiCmd.h"
 #include "setBubblesCmd.h"
 #include "removeBubblesCmd.h"
+#include "simulateCmd.h"
 
 MStatus initializePlugin(MObject obj) {
   MFnPlugin pluginFn(obj, "PinkFluid", "0.1");
@@ -19,6 +20,7 @@ MStatus initializePlugin(MObject obj) {
   status = pluginFn.registerCommand("pfGUI", LaunchGuiCmd::creator);
   status = pluginFn.registerCommand("pfSetBubbles", SetBubblesCmd::creator);
   status = pluginFn.registerCommand("pfRemoveBubbles", RemoveBubblesCmd::creator);
+  status = pluginFn.registerCommand("pfSimulate", SimulateCmd::creator);
 
   MGlobal::executeCommand("pfGUI");
 
@@ -37,6 +39,7 @@ MStatus uninitializePlugin(MObject obj) {
   status = pluginFn.deregisterCommand("pfGUI");
   status = pluginFn.deregisterCommand("pfSetBubbles");
   status = pluginFn.deregisterCommand("pfRemoveBubbles");
+  status = pluginFn.deregisterCommand("pfSimulate");
 
   MGlobal::executeCommand("deleteUI $win");
 
