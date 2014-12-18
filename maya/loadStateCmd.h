@@ -23,7 +23,7 @@ public:
     std::vector<std::string> meshNames;
     std::vector<int> frameNumbers;
     MString numMeshesString = std::to_string(pathArray.length()).c_str();
-    std::string createProgressCommand = "progressWindow  -status \"Importing OBJ Sequence...\" -maxValue " + std::to_string(pathArray.length()) + " -title \"Importing\" -isInterruptable true;";
+    std::string createProgressCommand = "progressWindow  -status \"Importing State Sequence...\" -maxValue " + std::to_string(pathArray.length()) + " -title \"Importing\" -isInterruptable true;";
     MGlobal::executeCommand(createProgressCommand.c_str());
     for(int i = 0; i < pathArray.length(); i++){
       std::ifstream inputFileStream(pathArray[i].asChar(), std::ios::binary);

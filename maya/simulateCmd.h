@@ -23,7 +23,7 @@ public:
     
     std::vector<std::string> meshNames;
     std::vector<int> frameNumbers;
-    std::string createProgressCommand = "progressWindow  -status \"Importing OBJ Sequence...\" -maxValue " + std::to_string(endSimulateFrame) + " -title \"Importing\" -isInterruptable true;";
+    std::string createProgressCommand = "progressWindow  -status \"Simulating Fluid..\" -maxValue " + std::to_string(endSimulateFrame) + " -title \"Simulation\" -isInterruptable true;";
     MGlobal::executeCommand(createProgressCommand.c_str());
     std::cout << startSimulateFrame << std::endl;
     std::cout << endSimulateFrame << std::endl;
